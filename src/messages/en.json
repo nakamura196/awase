@@ -68,6 +68,25 @@
     "dtsTitle": "DTS",
     "dtsLead": "Browse and open DTS documents."
   },
+  "Xsl": {
+    "title": "XSL",
+    "lead": "Enter the URL of a TEI file to see it transformed with XSLT. Switch the stylesheet to compare how it looks.",
+    "urlLabel": "TEI URL",
+    "open": "Open",
+    "xslLabel": "Stylesheet",
+    "auto": "Auto (chosen from the TEI)",
+    "openInViewer": "Open in viewer",
+    "samples": "Samples",
+    "sampleKoui": "Kōi Genji Monogatari, Kiritsubo (reading view)",
+    "sampleGuide": "Introduction to TEI/XML encoding (tag statistics)",
+    "sampleOcr": "OCR transcription sample (with facsimile)",
+    "loading": "Transforming…",
+    "frameTitle": "TEI transformed with XSLT",
+    "errorFetch": "Could not fetch the TEI. Check the URL. A URL on another site cannot be read unless that site allows it.",
+    "errorStatus": "Could not fetch the TEI (HTTP {status}).",
+    "errorParse": "Could not read it as XML.",
+    "errorTransform": "The transformation failed. Check that the chosen stylesheet suits this TEI."
+  },
   "Help": {
     "title": "Help"
   },

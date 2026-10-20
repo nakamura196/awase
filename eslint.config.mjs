@@ -22,5 +22,7 @@ export default defineConfig([
   },
   globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts',
     // Copied from node_modules at build time (scripts/copy-maplibre-worker.mjs)
-    'public/maplibre/**']),
+    'public/maplibre/**',
+    // tei-tools から写した外部のコード（SaxonJS、XSL の出力が読む JS）
+    'public/vendor/**', 'public/xsl-assets/**']),
 ]);
