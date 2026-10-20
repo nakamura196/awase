@@ -100,6 +100,8 @@ export default function ImagePane({ pages, labels, index, onGo }: Props) {
             iiifContent={view.content}
             target={view.target}
             onSelect={onSelect}
+            // 本文と並べるので、資料情報の欄は閉じて始める（読む人は開ける）
+            panelOpen={false}
             locale={locale === 'en' ? 'en' : 'ja'}
             theme={resolvedTheme === 'dark' ? 'dark' : resolvedTheme === 'light' ? 'light' : 'auto'}
             className="h-full"

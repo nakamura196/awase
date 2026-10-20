@@ -18,7 +18,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@nakamura196/iiif-viewer": "https://github.com/nakamura196/iiif-kasane/releases/download/iiif-viewer-v0.1.1/nakamura196-iiif-viewer-0.1.1.tgz",
+    "@nakamura196/iiif-viewer": "https://github.com/nakamura196/iiif-kasane/releases/download/iiif-viewer-v0.1.2/nakamura196-iiif-viewer-0.1.2.tgz",
     "@nakamura196/react-ui": "github:nakamura196/react-ui#v0.5.0",
     "@next/third-parties": "^16.4.0",
     "@react-three/drei": "^10.7.9",
