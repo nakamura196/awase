@@ -170,3 +170,21 @@ lint（警告 13 件は写した MapView のもの）・test 29 件・build・ba
 npm audit の high 1 件は開発用の部品（braces、eslint-config-next 経由）。
 GitHub Pages 用の書き出しは、`/awase` を付けた 1 回だけにした（kasane は 2 回書き出していた）。
 LICENSE の著作権者は kasane のまま（中村・小川）。awase で変えるかは未決。
+
+## 2026-10-19 viewer の text ペイン（ブランチ text-pane、0a0496b）
+
+- 作り: TEI の要素を `tei-<小文字の名前>` の部品にし、属性はそのまま写す（CETEIcean と同じ）。見た目は CSS（`src/components/viewer/tei.css`）。
+  手を足したのは lb（`<br>`）・pb（@n の目印）・ref/ptr（リンク）・graphic（画像）・choice と app（見せない方を指を置いたときに出す）だけ
+- **React で部品を作らず、DOM で直接作った。** 理由: TEI には `ref`・`key` という属性があり、React ではこの 2 つが特別な意味を持つので、
+  属性をそのまま写せない。あわせて、校異源氏 01 で部品が 1,137 個あり、React に持たせると重い
+- **CETEIcean そのものは入れなかった。** 中身は「名前を付け替えて CSS で見せる」だけで、自前でも 150 行で済む。
+  入れると、外から読んだ TEI の属性（`onclick` など）をそのまま写す既定の動きを抑える手間のほうが大きい
+- 安全: innerHTML は使わない。`on*` と `style` の属性は落とす。リンク・画像の URL は http(s) とページ内の `#id` だけ
+- 字下げの空白（改行を含む空白だけの文字列）は落とした。縦書きで部品の間に空きが出るため。
+  英文で `<persName>A</persName>\n <persName>B</persName>` のように改行をはさむと、語の間の空白も消える（未対処）
+- 落とし穴: 縦書き（`writing-mode: vertical-rl`）の枠は、幅を `100%` と決めないと中身の長さ（校異源氏 01 で 12,479px）まで広がり、
+  横にスクロールしない。最初は本文の終わりが見えていた
+- 校異源氏の和歌は `seg` の中の `lg` なので、行の中では改行せずに句を空けて流す（`tei-seg tei-lg` を inline に）
+- 確かめたこと: e2e 6 件（見本 `e2e/fixtures/sample.xml` を route で返す）と入口 28 件、build・basepath・export。
+  校異源氏 01（縦）と与謝野訳（横）を 1280px と 390px で目視
+- まだ: `?u=` を複数受ける（書簡の横断）、config.json（PTV）、pb@facs と画像ペインの連動、`?panes=`
