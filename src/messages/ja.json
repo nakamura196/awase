@@ -155,6 +155,7 @@
     "add": "並べる",
     "parallelTitle": "{count} つの本文を並べて表示",
     "images": "画像",
+    "pager": "頁送り",
     "prevPage": "前の頁",
     "nextPage": "次の頁",
     "pageLabel": "{n} 頁",

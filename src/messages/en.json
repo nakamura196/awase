@@ -155,6 +155,7 @@
     "add": "Add",
     "parallelTitle": "{count} texts side by side",
     "images": "Images",
+    "pager": "Page navigation",
     "prevPage": "Previous page",
     "nextPage": "Next page",
     "pageLabel": "Page {n}",

@@ -61,17 +61,24 @@ function useCanvasIds(manifest: string | undefined): string[] | null {
   return manifest && state?.manifest === manifest ? state.ids : null;
 }
 
-/** ビューアに渡すもの。マニフェストがあればそれを、無ければ IIIF の画像 1 枚（info.json）を開く */
-function viewerOf(page: FacsTarget | null, canvasIds: string[] | null = null): { content: string; target?: ViewerTarget } | null {
+/**
+ * ビューアに渡すもの。マニフェストがあればそれを、無ければ IIIF の画像 1 枚（info.json）を開く。
+ * highlight: 範囲に枠を描くか。頁の画像では切る（頁全体の範囲に枠を描くと、外側が暗く塗られて灰色の帯に見える）
+ */
+function viewerOf(
+  page: FacsTarget | null,
+  canvasIds: string[] | null = null,
+  highlight = true,
+): { content: string; target?: ViewerTarget } | null {
   if (!page) return null;
   const xywh = page.region;
   if (page.manifest) {
     const canvasId = page.canvas && ((canvasIds && matchCanvas(canvasIds, page.canvas)) ?? page.canvas);
-    return { content: page.manifest, target: canvasId ? { canvasId, xywh } : undefined };
+    return { content: page.manifest, target: canvasId ? { canvasId, xywh, highlight } : undefined };
   }
   if (page.service) {
     // info.json から作られるマニフェストの Canvas は「<base>/canvas/1」（kasane の imageInfoManifest.ts）
-    return { content: `${page.service}/info.json`, target: { canvasId: `${page.service}/canvas/1`, xywh } };
+    return { content: `${page.service}/info.json`, target: { canvasId: `${page.service}/canvas/1`, xywh, highlight } };
   }
   return null;
 }
@@ -103,7 +110,11 @@ export default function ImagePane({ pages, labels, index, onGo, place }: Props) 
   const canvasIds = useCanvasIds(shown?.manifest);
   // マニフェストの Canvas を引き終えてからビューアを開く（書かれた Canvas が見つからず、1 枚目を開いてしまわないように）
   const waiting = Boolean(shown?.manifest && shown.canvas && !canvasIds);
-  const view = useMemo(() => (waiting ? null : viewerOf(shown, canvasIds)), [shown, canvasIds, waiting]);
+  // 枠を描くのは異文の箇所の範囲だけ
+  const view = useMemo(
+    () => (waiting ? null : viewerOf(shown, canvasIds, Boolean(placeTarget))),
+    [shown, canvasIds, waiting, placeTarget],
+  );
 
   const go = (i: number) => {
     // 頁を送ったら、異文の箇所の画像は閉じる
@@ -135,15 +146,16 @@ export default function ImagePane({ pages, labels, index, onGo, place }: Props) 
       data-xywh={view?.target?.xywh?.join(',')}
       data-place={placeTarget ? place?.n : undefined}
     >
-      <div className="flex items-center gap-2 text-sm">
-        <button type="button" disabled={prev < 0} onClick={() => go(prev)} className={button}>
-          {t('prevPage')}
+      {/* 頁送りはこの 1 組だけ（ビューアの頁送りは pager={false} で隠す）。本文の頁の順に、別の画像にもまたがって移る */}
+      <div className="flex items-center justify-center gap-2 text-sm" role="group" aria-label={t('pager')}>
+        <button type="button" disabled={prev < 0} onClick={() => go(prev)} className={button} aria-label={t('prevPage')} title={t('prevPage')}>
+          ‹
         </button>
-        <span className="flex-1 text-center text-[var(--ds-fg-muted)]" data-testid="image-page" aria-live="polite">
+        <span className="tabular-nums text-[var(--ds-fg)]" data-testid="image-page" aria-live="polite">
           {label ? t('pageLabel', { n: label }) : t('pageIndex', { index: index + 1, total: pages.length })}
         </span>
-        <button type="button" disabled={next < 0} onClick={() => go(next)} className={button}>
-          {t('nextPage')}
+        <button type="button" disabled={next < 0} onClick={() => go(next)} className={button} aria-label={t('nextPage')} title={t('nextPage')}>
+          ›
         </button>
       </div>
       {place && cur && (
@@ -189,6 +201,8 @@ export default function ImagePane({ pages, labels, index, onGo, place }: Props) 
             onSelect={onSelect}
             // 本文と並べるので、資料情報の欄は閉じて始める（読む人は開ける）
             panelOpen={false}
+            // 頁送りは上の 1 組に任せる。矢印キーでめくれば、onSelect で本文が付いてくる
+            pager={false}
             locale={locale === 'en' ? 'en' : 'ja'}
             theme={resolvedTheme === 'dark' ? 'dark' : resolvedTheme === 'light' ? 'light' : 'auto'}
             className="h-full"

@@ -143,8 +143,11 @@ test('画像ペインで次の頁へ移ると、本文もその頁へ動く（pb
 
 test('ビューアの側で次の画像へめくると、その画像の頁へ本文も動く', async ({ page }) => {
   await open(page);
-  await expect(pane(page).getByText('1 / 2')).toBeVisible({ timeout: 30_000 });
-  await pane(page).getByRole('button').filter({ hasText: '›' }).click();
+  // ビューアの頁送りは隠してある（頁送りは awase の 1 組だけ）。ビューアの中でめくるのはキーで
+  await expect(pane(page).locator('[data-iiif-stage] img')).toBeVisible({ timeout: 30_000 });
+  await expect(pane(page).getByRole('group', { name: '頁送り' })).toHaveCount(1);
+  await pane(page).locator('[data-iiif-stage]').click();
+  await page.keyboard.press('PageDown');
   await expect(label(page)).toHaveText('5 頁');
   await expect(page.locator('tei-pb[n="5"]')).toHaveClass(/is-current/);
 });

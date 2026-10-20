@@ -157,12 +157,16 @@ function Toggle({ pressed, onClick, children }: { pressed: boolean; onClick: () 
       type="button"
       aria-pressed={pressed}
       onClick={onClick}
-      className={`rounded border px-3 py-1 text-sm ${
+      // 入は淡い地に印、切は枠だけ。塗りつぶしの青は「押すと何か起きる」ボタンと紛れるので使わない
+      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm ${
         pressed
-          ? 'border-[var(--ds-primary)] bg-[var(--ds-primary)] text-white'
-          : 'border-[var(--ds-border)] text-[var(--ds-fg)]'
+          ? 'border-[var(--ds-primary)] bg-[var(--ds-primary)]/10 text-[var(--ds-primary)]'
+          : 'border-[var(--ds-border)] text-[var(--ds-fg-muted)] hover:text-[var(--ds-fg)]'
       }`}
     >
+      <span aria-hidden="true" className={`w-3 text-center ${pressed ? '' : 'opacity-40'}`}>
+        {pressed ? '✓' : '+'}
+      </span>
       {children}
     </button>
   );
