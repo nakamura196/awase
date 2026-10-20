@@ -1,107 +1,137 @@
 /* =============================================================================
- * theme.css — Toyo Bunko design tokens (static viewer, no build step)
+ * theme.css — awase の見た目に合わせた、XSL の出力用の色と書体
  *
- * Plain-CSS port of the canonical design system:
- *   @toyo/design-system  (repo: toyo-ui)  →  src/theme.css  (Tailwind v4 @theme)
+ * 元は tei-tools（MIT、nakamura196、コミット 839d787）の theme.css で、東洋文庫の
+ * 臙脂（enji）の配色だった。変換結果の HTML と js/shared/*.js が読む変数の名前は
+ * そのまま残し、値だけを awase のデザイントークン（@nakamura196/react-ui の
+ * tokens.css、UTokyo Blue を基調）に置き換えた。
  *
- * Why a port instead of importing it: toyo-ui/theme.css is a Tailwind v4 `@theme`
- * block (and uses `--color-*` / `--font-*` names so Tailwind can generate
- * utilities). A plain browser ignores unknown at-rules, so `@theme {}` would not
- * cascade here. The transformed TEI views (view.html replaces the whole document)
- * have no build step, so we mirror the *values* into a real `:root` with the bare
- * names the XSL + js/shared scripts already reference. Keep values in sync with toyo-ui;
- * a perfect 1:1 is not possible without Tailwind (per project decision).
+ * 名前に enji が残っているのは、XSL の出力が var(--enji-*) を直接読むため。
+ * 中身は青の段階（--ds-blue-*）にしてある。
  *
- * Loaded via <link> (parse-time → no FOUC). Layers, mirroring toyo-ui:
- *   1. enji brand ramp           (= toyo-ui --color-enji-*)
- *   2. semantic brand            (= --color-brand*)
- *   3. surfaces / ink / line     (= --color-surface, -ink, -line families)
- *   4. category accents          (= --color-museum/-library/-research/-academia)
- *      …reused as the named-entity colors (--ne-*) the OCR view needs.
- *   5. typography                (= --font-sans/-serif/-display) + --text-display
- *   6. dark scheme overrides     (= toyo-ui @layer base .dark)
- *   7. chrome (--tei-*)          viewer-only top bar/modal, themed to match the
- *                                site header (docs/style.css .site-header = enji).
+ * ダークは awase 側が <html class="dark"> を付けて切り替える（XslContent.tsx）。
  * ============================================================================= */
 :root {
-  /* 1. 臙脂 (enji) brand ramp — anchored on the official #76161b */
-  --enji-50: #fbf2f2;
-  --enji-100: #f6e0e1;
-  --enji-200: #ecc1c3;
-  --enji-300: #db9598;
-  --enji-400: #c5666b;
-  --enji-500: #a83f45;
-  --enji-600: #8c2a2f;
-  --enji-700: #76161b; /* brand DEFAULT (official) */
-  --enji-800: #5f1216;
-  --enji-900: #4c1013;
-  --enji-950: #2d090b;
+  /* 1. 色の段階（XSL の出力が直接読むので名前は enji のまま。値は UTokyo Blue） */
+  --enji-50: #e7f3fd;
+  --enji-100: #cee8fc;
+  --enji-200: #b6dcfa;
+  --enji-300: #9dd1f8;
+  --enji-400: #6db9f5;
+  --enji-500: #3ca2f1;
+  --enji-600: #0b8bee;
+  --enji-700: #096fbe;
+  --enji-800: #07538f;
+  --enji-900: #04385f;
+  --enji-950: #021c30;
 
-  /* 2. Semantic brand (re-pointed under .dark below) */
+  /* 2. 差し色 */
   --brand: var(--enji-700);
   --brand-strong: var(--enji-800);
   --brand-soft: var(--enji-50);
 
-  /* 3. Surfaces / ink / rules */
-  --surface: #f5f0ed;        /* page background (warm cream) */
-  --surface-raised: #ffffff; /* cards, panels, modal */
-  --surface-sunken: #ece4dd; /* wells, alt rows */
-  --ink: #1a1714;            /* primary text (warm near-black) */
-  --ink-muted: #5a5a5a;      /* secondary text */
-  --ink-subtle: #8a857c;     /* tertiary text */
-  --line: #e0d8cf;           /* hairline borders on cream */
+  /* 3. 地・文字・罫（= --ds-bg / --ds-surface / --ds-fg / --ds-border） */
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f7f9fb;
+  --ink: #1a1a1a;
+  --ink-muted: #51607a;
+  --ink-subtle: #7a8699;
+  --line: #e2e8f0;
 
-  /* 4. Category accents (official taxonomy; white text on each — see toyo-ui
-        ACCESSIBILITY.md). The OCR view reuses these as named-entity colors. */
-  --museum: #573b21;   /* 茶 cha    — 博物館 */
-  --library: #1e3c69;  /* 紺 kon    — 図書館 */
-  --research: #827826; /* 古色 kosho — 研究 (white 4.50:1 — AA min) */
-  --academia: #1b6b63; /* 緑青 rokusho — アカデミア */
+  /* 4. 固有表現の色（OCR ビュー） */
+  --museum: #7a4b1e;
+  --library: #07538f;
+  --research: #6b6200;
+  --academia: #1b6b63;
+  --ne-pers: var(--library);
+  --ne-place: var(--academia);
+  --ne-org: var(--museum);
+  --ne-date: var(--research);
 
-  --ne-pers: var(--library);   /* 人名  → 紺 */
-  --ne-place: var(--academia); /* 地名  → 緑青 */
-  --ne-org: var(--museum);     /* 団体名 → 茶 */
-  --ne-date: var(--research);  /* 日付  → 古色 */
+  /* 5. 書体（awase と同じ Noto。入っていなければ OS の書体） */
+  --font-sans: "Noto Sans JP", ui-sans-serif, system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  --font-serif: "Noto Serif JP", ui-serif, Georgia, "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --font-display: var(--font-serif);
+  --font-text: var(--font-serif);
 
-  /* 5. Typography (webfonts loaded per-view; literals are the fallbacks).
-        toyo-ui: sans = Gothic (UI/data-dense), serif = Mincho (headings/prose),
-        display = EB Garamond (Latin/numerals). --font-text is the OCR view's
-        transcription face = display. */
-  --font-sans: "BIZ UDPGothic", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
-  --font-serif: "BIZ UDPMincho", "Hiragino Mincho ProN", "Yu Mincho", "游明朝", serif;
-  --font-display: "EB Garamond", "BIZ UDPMincho", serif;
-  --font-text: var(--font-display); /* back-compat alias used by .linetext */
+  --text-display: 2.5rem;
 
-  --text-display: 2.5rem; /* 40px — page titles / 大見出し */
-
-  /* 7. Chrome: shared top bar + modal (js/shared/tei-header.js).
-        Themed to match the site header (docs/style.css .site-header): enji
-        gradient + white text. Override here, never in the script. */
-  --tei-bar-bg: linear-gradient(135deg, var(--enji-700) 0%, var(--enji-600) 100%);
-  --tei-bar-fg: #ffffff;                            /* bar text (white on enji) */
-  --tei-bar-accent: #ffffff;                        /* home link / wordmark */
-  --tei-bar-accent-strong: rgba(255, 255, 255, .22); /* active toggle bg */
-  --tei-bar-hover: rgba(255, 255, 255, .16);         /* button hover bg */
-  --tei-bar-hover-soft: rgba(255, 255, 255, .10);    /* home hover bg */
-  --tei-bar-divider: rgba(255, 255, 255, .28);       /* src-link separator */
-  --tei-overlay: rgba(20, 17, 14, .55);              /* modal backdrop scrim */
-  --tei-modal-head: var(--brand);                    /* modal section heading → enji */
+  /* 6. 上の帯（js/shared/tei-header.js）。awase のヘッダーと同じ、白地に細い罫 */
+  --tei-bar-bg: var(--surface);
+  --tei-bar-fg: var(--ink);
+  --tei-bar-accent: var(--brand);
+  --tei-bar-accent-strong: var(--brand-soft);
+  --tei-bar-hover: var(--surface-sunken);
+  --tei-bar-hover-soft: var(--surface-sunken);
+  --tei-bar-divider: var(--line);
+  --tei-overlay: rgba(1, 14, 24, .5);
+  --tei-modal-head: var(--brand);
 }
 
-/* 6. Dark scheme — mirrors toyo-ui @layer base .dark. The viewer doesn't toggle
-      .dark today, but keeping this makes the port faithful and future-ready. */
+/* 7. ダーク（= tokens.css の .dark） */
 .dark {
-  --brand: var(--enji-300);
-  --brand-strong: var(--enji-200);
-  --brand-soft: var(--enji-950);
+  --enji-50: #032a47;
+  --enji-100: #04385f;
+  --enji-700: #6db9f5;
+  --enji-800: #9dd1f8;
 
-  --surface: #1c1a18;
-  --surface-raised: #26231f;
-  --surface-sunken: #15130f;
+  --brand: #6db9f5;
+  --brand-strong: #9dd1f8;
+  --brand-soft: #032a47;
 
-  --ink: #ece6df;
-  --ink-muted: #b7b0a6;
-  --ink-subtle: #8f8a82;
+  --surface: #010e18;
+  --surface-raised: #021c30;
+  --surface-sunken: #021c30;
+  --ink: #e7f3fd;
+  --ink-muted: #9dd1f8;
+  --ink-subtle: #6d8aa3;
+  --line: #04385f;
 
-  --line: #3a342d;
+  --library: #6db9f5;
+  --academia: #5fc2b6;
+  --museum: #d9a066;
+  --research: #c9bd4a;
+
+  color-scheme: dark;
+}
+
+body {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* 帯は awase の中で使うので、tei-tools のトップへの戻り口は出さない */
+.tei-home {
+  display: none !important;
+}
+
+.tei-topbar {
+  border-bottom: 1px solid var(--line);
+}
+
+/* 頁送りの帯（js/shared/tei-pager.js が色を直に書いているので、ここで上書きする） */
+.tei-pager-bar {
+  background: var(--surface-sunken) !important;
+  border-bottom-color: var(--line) !important;
+}
+.tei-pager-bar button {
+  background: var(--surface-raised) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+}
+.tei-pager-bar button:hover:not(:disabled) {
+  background: var(--brand-soft) !important;
+}
+.tei-pager-counter {
+  color: var(--ink-muted) !important;
+}
+
+/* 影印の地（XSL の出力が焦げ茶を直に書いている）。awase の画像の枠と同じ色にする */
+.facsimile-col .facsimile,
+.facsimile-src {
+  background: var(--surface-sunken) !important;
+}
+.facsimile-src {
+  color: var(--ink-subtle) !important;
 }
