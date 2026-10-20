@@ -23,6 +23,12 @@
   margin-inline: auto;
 }
 
+/* 並べて読むときは、横書きも枠の高さに収め、列ごとにスクロールさせる（列どうしの連動は useScrollSync.ts） */
+.awase-text.is-scroll:not(.is-vertical) {
+  height: 100%;
+  overflow-y: auto;
+}
+
 /* 塊 */
 .awase-text :is(tei-text, tei-body, tei-front, tei-back, tei-div, tei-p, tei-ab, tei-lg, tei-sp,
   tei-list, tei-item, tei-head, tei-figure, tei-table, tei-row, tei-quote[rend~='block'],

@@ -12,6 +12,8 @@ interface Props {
   vertical: boolean;
   showLineBreaks: boolean;
   showPageBreaks: boolean;
+  /** 横書きでも枠の高さに収めて、中でスクロールさせる（並べて読むとき） */
+  scroll?: boolean;
   /** 移動・強調する xml:id。ほかの列の @corresp から指されている要素・範囲にも印を付ける（src/lib/tei/link.ts） */
   focusId?: string | null;
   /** 本文を押したとき。対応の id（無ければ押した所の xml:id）を渡す */
@@ -46,6 +48,7 @@ export default function TextPane({
   vertical,
   showLineBreaks,
   showPageBreaks,
+  scroll = false,
   focusId,
   onSelect,
 }: Props) {
@@ -100,6 +103,7 @@ export default function TextPane({
     vertical ? 'is-vertical' : '',
     showLineBreaks ? 'show-lb' : '',
     showPageBreaks ? 'show-pb' : '',
+    scroll ? 'is-scroll' : '',
   ].filter(Boolean);
 
   return (
@@ -107,6 +111,8 @@ export default function TextPane({
       ref={ref}
       className={classes.join(' ')}
       onClick={handleClick}
+      // 中でスクロールする枠は、キーでも動かせるようにする
+      tabIndex={vertical || scroll ? 0 : undefined}
       data-testid="text-pane"
       lang={tei.documentElement.getAttribute('xml:lang') ?? undefined}
     />
