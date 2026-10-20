@@ -282,3 +282,24 @@ LICENSE の著作権者は kasane のまま（中村・小川）。awase で変�
 
 - 右の資料情報の欄が画像ペインの半分近くを取っていた。kasane の iiif-viewer v0.1.2 で `panelOpen` が入ったので（kasane #266）、`panelOpen={false}` を渡した。読む人はボタンで開ける
 - 確かめたこと: e2e 49 件、build。校異源氏 w3id の 01.xml を開き、欄が閉じて始まり、画像が広く出ることを画面で確認した。コンソールのエラーなし
+
+## 2026-10-20 異文の一覧（apparatus ペイン、koui の互換。ブランチ apparatus）
+
+- koui（TEI-EAJ/koui、pages/index.vue）の機能を 4 つの PR に分けて写す。この PR はその 1 つ目で、異文の一覧と本文との行き来
+  - 2: `?wit=` で本文を伝本の読みに入れ替える（koui の `target`）
+  - 3: 伝本ごとの一致度。koui の Chart.vue（lem との編集距離の合計）を、グラフの部品を入れずに CSS の横棒で出す
+  - 4: app@facs の画像。zone を引いて画像ペインに渡す
+  - 作らない: 異文表のダイアログ、箇所ごとの異なり数のグラフ（Chart4Diff.vue）。一覧と一致度で足りるため
+- 読み方（`src/lib/tei/apparatus.ts`）。koui と同じ決まり
+  - 伝本は listWit の witness@xml:id と、その中身を名前にする
+  - 箇所は本文として描く範囲の app を文書の順に数える（render.ts と同じ範囲）。rdgGrp の中の lem・rdg も拾う
+  - lem・rdg の @wit に名前の無い伝本は、lem と同じ読みとみなす。一覧では lem の行に薄く出す
+- 本文との結び方: app に xml:id があればそれ、無ければ `awase-app-<番号>` を id にし、URL の `id=` で結ぶ。
+  一覧の行を押すと本文のその箇所に枠が付き、本文の箇所を押すと一覧のその行が選ばれる。一覧は枠の中だけを動かし、ページ全体は動かさない
+- `?panes=` に `apparatus` を足した。書かなければ全部出す。ツールバーの「異文」で出し入れする。異文の無い TEI ではボタンも出さない
+- 確かめたこと: vitest 65 件、e2e 全 53 件（異文の 4 件を含む）。
+  実データ: koui の 01_with_wit_images.xml（縦書き）で「異文 557 箇所」「伝本（18）」。ファイルの中の app も 557 個で一致した。
+  40 番を選ぶと本文の「大納言はなくなりて」に枠が付く。del は本文と同じく取り消し線で出る
+- 気づいたこと（画像、前からあるもの）: 同じファイルで、頁の表示は「5 頁」「10 頁」と動くのに、画像は 1/218 のまま動かない。
+  TEI の graphic@n は `https://www.dl.ndl.go.jp/api/iiif/3437686/canvas/22`（www 付き）で、NDL のマニフェストの Canvas の id は `https://dl.ndl.go.jp/…/canvas/22`（www 無し）。
+  文字列が一致しないのでビューアが Canvas を見つけられない。校異源氏 w3id では一致しているので動いていた。PR 4（app@facs）で同じファイルを使うので、そこで直す

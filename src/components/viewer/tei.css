@@ -264,3 +264,20 @@
   background: var(--ds-primary);
   opacity: 1;
 }
+
+/* 異文の一覧（ApparatusPane）の読み。本文と同じ印を付ける */
+.awase-apparatus tei-del {
+  text-decoration: line-through;
+  color: var(--ds-fg-muted);
+}
+.awase-apparatus tei-add {
+  color: var(--ds-primary);
+}
+.awase-apparatus tei-lb::after {
+  content: ' ';
+}
+
+/* 本文の異文箇所。一覧から選べるので、押せることが分かるようにする */
+.awase-text tei-app[data-awase-app] {
+  cursor: pointer;
+}
