@@ -151,3 +151,11 @@ GitHub Pages（nakamura196.github.io/awase）。kasane の deploy-pages.yml を�
 - 画像の部品は、kasane の `packages/iiif-viewer` を **npm に公開して使う**（案 A）。公開はまだ
 - 注意: 無料プランでは private リポジトリから GitHub Pages を出せない。配るときは public にするか、
   Cloudflare Pages など別の無料枠に出す
+
+## 2026-10-19 訂正: archivebase の text アプリは XSLTProcessor を使っていなかった
+
+上の「archivebase の text アプリは `XSLTProcessor` を使っているので、同じ対応が要る」は誤り。
+2026-07-13（archivebase c607292f）から、TEI→HTML の変換はサーバ側（libxslt の `xsltproc`、`/api/tei/{id}/html`）で行っている。
+`public/tei/view.html` は使われずに残っていた旧部品で、これを見て誤認した。本番の `/html` が 200 を返すことを確認した。
+旧部品の削除と、サーバ側に移ってから 404 になっていた `theme.css` の参照の修正は archivebase PR #643。
+awase で SaxonJS を使う方針は変えない（静的配信でサーバが無いため）。
