@@ -1,0 +1,137 @@
+/* =============================================================================
+ * theme.css — awase の見た目に合わせた、XSL の出力用の色と書体
+ *
+ * 元は tei-tools（MIT、nakamura196、コミット 839d787）の theme.css で、東洋文庫の
+ * 臙脂（enji）の配色だった。変換結果の HTML と js/shared/*.js が読む変数の名前は
+ * そのまま残し、値だけを awase のデザイントークン（@nakamura196/react-ui の
+ * tokens.css、UTokyo Blue を基調）に置き換えた。
+ *
+ * 名前に enji が残っているのは、XSL の出力が var(--enji-*) を直接読むため。
+ * 中身は青の段階（--ds-blue-*）にしてある。
+ *
+ * ダークは awase 側が <html class="dark"> を付けて切り替える（XslContent.tsx）。
+ * ============================================================================= */
+:root {
+  /* 1. 色の段階（XSL の出力が直接読むので名前は enji のまま。値は UTokyo Blue） */
+  --enji-50: #e7f3fd;
+  --enji-100: #cee8fc;
+  --enji-200: #b6dcfa;
+  --enji-300: #9dd1f8;
+  --enji-400: #6db9f5;
+  --enji-500: #3ca2f1;
+  --enji-600: #0b8bee;
+  --enji-700: #096fbe;
+  --enji-800: #07538f;
+  --enji-900: #04385f;
+  --enji-950: #021c30;
+
+  /* 2. 差し色 */
+  --brand: var(--enji-700);
+  --brand-strong: var(--enji-800);
+  --brand-soft: var(--enji-50);
+
+  /* 3. 地・文字・罫（= --ds-bg / --ds-surface / --ds-fg / --ds-border） */
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f7f9fb;
+  --ink: #1a1a1a;
+  --ink-muted: #51607a;
+  --ink-subtle: #7a8699;
+  --line: #e2e8f0;
+
+  /* 4. 固有表現の色（OCR ビュー） */
+  --museum: #7a4b1e;
+  --library: #07538f;
+  --research: #6b6200;
+  --academia: #1b6b63;
+  --ne-pers: var(--library);
+  --ne-place: var(--academia);
+  --ne-org: var(--museum);
+  --ne-date: var(--research);
+
+  /* 5. 書体（awase と同じ Noto。入っていなければ OS の書体） */
+  --font-sans: "Noto Sans JP", ui-sans-serif, system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  --font-serif: "Noto Serif JP", ui-serif, Georgia, "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --font-display: var(--font-serif);
+  --font-text: var(--font-serif);
+
+  --text-display: 2.5rem;
+
+  /* 6. 上の帯（js/shared/tei-header.js）。awase のヘッダーと同じ、白地に細い罫 */
+  --tei-bar-bg: var(--surface);
+  --tei-bar-fg: var(--ink);
+  --tei-bar-accent: var(--brand);
+  --tei-bar-accent-strong: var(--brand-soft);
+  --tei-bar-hover: var(--surface-sunken);
+  --tei-bar-hover-soft: var(--surface-sunken);
+  --tei-bar-divider: var(--line);
+  --tei-overlay: rgba(1, 14, 24, .5);
+  --tei-modal-head: var(--brand);
+}
+
+/* 7. ダーク（= tokens.css の .dark） */
+.dark {
+  --enji-50: #032a47;
+  --enji-100: #04385f;
+  --enji-700: #6db9f5;
+  --enji-800: #9dd1f8;
+
+  --brand: #6db9f5;
+  --brand-strong: #9dd1f8;
+  --brand-soft: #032a47;
+
+  --surface: #010e18;
+  --surface-raised: #021c30;
+  --surface-sunken: #021c30;
+  --ink: #e7f3fd;
+  --ink-muted: #9dd1f8;
+  --ink-subtle: #6d8aa3;
+  --line: #04385f;
+
+  --library: #6db9f5;
+  --academia: #5fc2b6;
+  --museum: #d9a066;
+  --research: #c9bd4a;
+
+  color-scheme: dark;
+}
+
+body {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* 帯は awase の中で使うので、tei-tools のトップへの戻り口は出さない */
+.tei-home {
+  display: none !important;
+}
+
+.tei-topbar {
+  border-bottom: 1px solid var(--line);
+}
+
+/* 頁送りの帯（js/shared/tei-pager.js が色を直に書いているので、ここで上書きする） */
+.tei-pager-bar {
+  background: var(--surface-sunken) !important;
+  border-bottom-color: var(--line) !important;
+}
+.tei-pager-bar button {
+  background: var(--surface-raised) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+}
+.tei-pager-bar button:hover:not(:disabled) {
+  background: var(--brand-soft) !important;
+}
+.tei-pager-counter {
+  color: var(--ink-muted) !important;
+}
+
+/* 影印の地（XSL の出力が焦げ茶を直に書いている）。awase の画像の枠と同じ色にする */
+.facsimile-col .facsimile,
+.facsimile-src {
+  background: var(--surface-sunken) !important;
+}
+.facsimile-src {
+  color: var(--ink-subtle) !important;
+}
