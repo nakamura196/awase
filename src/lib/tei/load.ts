@@ -2,6 +2,8 @@
 // 失敗の理由（取れない・XML でない・TEI でない）を分けて返し、画面で言い分ける。
 // ?u= には PTV（parallel_text_viewer）の config.json も来る。そのときは束ねている本文の URL を返す。
 
+import { addZonePageBreaks } from './facs';
+
 export type LoadError =
   | { kind: 'fetch'; status?: number }
   | { kind: 'parse'; message: string }
@@ -28,7 +30,8 @@ const isJson = (text: string) => /^\s*[{[]/.test(text);
 
 /**
  * PTV の config.json を読む。url_main・url_sub（相対なら config の URL が基準）と direction だけを使う。
- * url_map・image_map（画像との対応）と query_main・query_sub は、画像ペインを作るときに使う
+ * url_map・image_map（画像との対応）は読まない。同じことが本文の sourceDoc（範囲ごとの行と画像）に書いてあり、
+ * そちらから頁の画像を引く（src/lib/tei/facs.ts の addZonePageBreaks）。query_main・query_sub も使わない
  */
 export function parseConfig(text: string, baseUrl?: string): ParallelConfig {
   let json: unknown;
@@ -59,6 +62,8 @@ export function parseTei(text: string): Document {
   if (error) throw new TeiLoadError({ kind: 'parse', message: (error.textContent ?? '').trim().slice(0, 300) });
   const root = doc.documentElement.localName;
   if (root !== 'TEI' && root !== 'teiCorpus') throw new TeiLoadError({ kind: 'notTei', root });
+  // 頁の目印が無く、本文が画像の範囲ごとに書かれている文書は、範囲を頁にする
+  addZonePageBreaks(doc);
   return doc;
 }
 
