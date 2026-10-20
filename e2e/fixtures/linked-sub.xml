@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader><fileDesc><titleStmt><title>対応の見本・訳</title></titleStmt><publicationStmt><p/></publicationStmt><sourceDesc><p/></sourceDesc></fileDesc></teiHeader>
+  <text><body><p>
+    <s xml:id="t1">訳の一文目。</s>
+    <s xml:id="t2">訳の二文目。</s>
+    <s xml:id="t3">訳の三文目。</s>
+  </p></body></text>
+</TEI>

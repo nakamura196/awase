@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { renderTeiText } from '@/lib/tei/render';
+import { findLinked, linkIdAt, pointFromCoords } from '@/lib/tei/link';
 import './tei.css';
 
 interface Props {
@@ -11,14 +12,34 @@ interface Props {
   vertical: boolean;
   showLineBreaks: boolean;
   showPageBreaks: boolean;
-  /** 開いたときに移動・強調する xml:id */
+  /** 移動・強調する xml:id。ほかの列の @corresp から指されている要素・範囲にも印を付ける（src/lib/tei/link.ts） */
   focusId?: string | null;
-  /** id のある要素を押したとき */
+  /** 本文を押したとき。対応の id（無ければ押した所の xml:id）を渡す */
   onSelect?: (id: string) => void;
 }
 
 // 本文ペイン。TEI を tei-* の部品に置き換えて（src/lib/tei/render.ts）、この枠の中に置く。
 // 部品は React ではなく DOM で直接作る。数千の要素を React に持たせると重いため（CETEIcean と同じ作り）。
+
+// 目印から次の目印までの範囲は要素に収まらないので、要素を足さずに色を付ける仕組み（CSS Custom Highlight）を使う。
+// 名前はページで 1 つなので、列ごとに自分の範囲だけを足し引きする
+const HIGHLIGHT = 'awase-link';
+
+function highlightRegistry(): Highlight | null {
+  if (typeof CSS === 'undefined' || !('highlights' in CSS)) return null;
+  let h = CSS.highlights.get(HIGHLIGHT);
+  if (!h) {
+    h = new Highlight();
+    CSS.highlights.set(HIGHLIGHT, h);
+  }
+  return h;
+}
+
+// ほかの列に、この id の要素があるか
+function hasElsewhere(self: Element, id: string): boolean {
+  const sel = `[id="${CSS.escape(id)}"]`;
+  return Array.from(document.querySelectorAll('.awase-text')).some((pane) => pane !== self && pane.querySelector(sel));
+}
 export default function TextPane({
   tei,
   baseUrl,
@@ -29,6 +50,8 @@ export default function TextPane({
   onSelect,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  // この列で押して選んだときは、この列は動かさない（押した所が逃げないように）
+  const selfSelected = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -41,11 +64,17 @@ export default function TextPane({
     const el = ref.current;
     if (!el) return;
     el.querySelectorAll('.is-selected').forEach((n) => n.classList.remove('is-selected'));
+    const keep = selfSelected.current;
+    selfSelected.current = false;
     if (!focusId) return;
-    const target = el.querySelector(`[id="${CSS.escape(focusId)}"]`);
-    if (!target) return;
-    target.classList.add('is-selected');
-    target.scrollIntoView({ block: 'center', inline: 'center' });
+    const { elements, ranges } = findLinked(el, focusId);
+    for (const target of elements) target.classList.add('is-selected');
+    const highlight = highlightRegistry();
+    for (const r of ranges) highlight?.add(r);
+    if (elements[0] && !keep) elements[0].scrollIntoView({ block: 'center', inline: 'center' });
+    return () => {
+      for (const r of ranges) highlight?.delete(r);
+    };
   }, [tei, focusId, vertical]);
 
   // 縦書きは右から読むので、開いたとき右端を見せる（ブラウザによって最初の位置が違う）
@@ -56,11 +85,14 @@ export default function TextPane({
   }, [tei, vertical, focusId]);
 
   function handleClick(e: React.MouseEvent<HTMLDivElement>) {
-    if (!onSelect) return;
+    const root = ref.current;
+    if (!onSelect || !root) return;
     const target = e.target as Element;
     if (target.closest('a')) return;
-    const withId = target.closest('[id]');
-    if (withId && ref.current?.contains(withId) && withId !== ref.current) onSelect(withId.id);
+    const id = linkIdAt(root, target, pointFromCoords(document, e.clientX, e.clientY), (i) => hasElsewhere(root, i));
+    if (!id || id === focusId) return;
+    selfSelected.current = true;
+    onSelect(id);
   }
 
   const classes = [

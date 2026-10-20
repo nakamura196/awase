@@ -220,3 +220,30 @@
 .awase-text :is(tei-teiheader, tei-facsimile, tei-standoff) {
   display: none;
 }
+
+/* 並べた列どうしの対応（src/lib/tei/link.ts）。目印から次の目印までの範囲 */
+::highlight(awase-link) {
+  background-color: color-mix(in srgb, var(--ds-primary) 20%, transparent);
+}
+
+/* 対応の目印（anchor など、中身の無い要素）。どこで区切れるかが分かるように小さく見せる */
+.awase-text [corresp]:empty::before {
+  content: '';
+  display: inline-block;
+  width: 0.4em;
+  height: 0.4em;
+  margin: 0 0.1em;
+  border-radius: 50%;
+  vertical-align: super;
+  background: var(--ds-fg-muted);
+  opacity: 0.5;
+}
+
+.awase-text [corresp]:empty.is-selected {
+  outline: none;
+}
+
+.awase-text [corresp]:empty.is-selected::before {
+  background: var(--ds-primary);
+  opacity: 1;
+}

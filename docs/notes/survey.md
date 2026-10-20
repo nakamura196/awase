@@ -197,3 +197,23 @@ LICENSE の著作権者は kasane のまま（中村・小川）。awase で変�
 - 広い画面（lg、1024px 以上）は横に等分、狭い画面は縦に積む。列の数に上限は付けていない
 - 確かめたこと: e2e に 1 件足して 35 件（入口を含む）、vitest 44 件。校異源氏 01 と与謝野訳を 1280px（横・縦）と 390px で目視
 - まだ: 列どうしのスクロールの連動（PTV は段落の対応で合わせる。対応を何で取るかは config.json と一緒に考える）
+
+## 2026-10-19 列どうしの対応（ブランチ corresp-link）
+
+- 見本: PTV の `data/pt/config.json`（絵入源氏 桐壺 `pt/01.xml` と与謝野訳 `yosano.xml`）。
+  絵入源氏は `<line>` の途中に `<anchor corresp="yosano_genji_ids.xml#YG0000000100"/>` が 199 個あり、与謝野訳の `<s xml:id="YG…">`（138 個）を指す
+- **指す先のファイル名（`yosano_genji_ids.xml`）は、与謝野訳の URL と一致しない。** そこで `#` の後の id だけで突き合わせた（`src/lib/tei/link.ts`）
+- URL の `id` に「指される側の id」を持つ。どの列も、その id を xml:id に持つ要素、または `@corresp` で指す要素を探して印を付ける。
+  どちらの列から押しても同じ id になるので、双方向になる。訳の文を押せば `id=YG…`、本文を押しても直前の anchor が指す `YG…` になる
+- anchor は中身の無い目印なので、「その目印から次の目印の手前まで」を対応する範囲とみなした。範囲は行（`line`）をまたぐので要素に印を付けられない。
+  要素を足さずに色を付ける CSS Custom Highlight（`CSS.highlights`）を使った（Chrome 105・Safari 17.2・Firefox 140 から）
+- 本文を押した位置が、行の中で anchor の前か後かは、押した座標から文字の位置を取って決める（`caretPositionFromPoint`、無ければ `caretRangeFromPoint`）
+- 対応の無い所（最初の anchor より前など）を押したときは、これまでどおり押した所の xml:id を選ぶ。指す先がほかの列に無い `@corresp` は使わない
+- 押した列は動かさず、ほかの列だけを対応する所へ動かす
+- config.json は `url_main`・`url_sub`・`direction` だけを使い、読んだら `?u=本文&u=訳&dir=` に書き直す（履歴は増やさない）。`?config=` でも受ける。
+  `url_map`・`image_map`・`query_main`・`query_sub` は画像ペインを作るときに使う
+- 確かめたこと: vitest 51 件、e2e 3 件を足して（見本 `e2e/fixtures/linked-*.xml`）viewer 10 件・入口 28 件、build・basepath・export。
+  実データで、与謝野訳 YG0000000300 を押すと絵入源氏の「おなしほど。それより下らうの更衣たちはましてやすからず」が光る。1280px と 390px で目視
+- 気づいたこと: 絵入源氏の anchor は所々に間が空く。YG0000005000 の次の anchor まで本文が長く続くので、光る範囲も長い（データの側の事情）
+- まだ: 範囲の終わりを「次の目印」以外で決める書き方（`@corresp` を持つ `seg` で囲む、`spanTo`）への対応は、要素ごとの対応（`seg@corresp`）だけ。
+  スクロールの連動（押さずに読み進めたとき、もう片方もついてくる）は未実装

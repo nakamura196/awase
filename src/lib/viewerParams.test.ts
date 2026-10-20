@@ -5,6 +5,10 @@ describe('getSources', () => {
   it('u と tei を書いた順に集める', () => {
     expect(getSources(new URLSearchParams('u=a&dir=v&tei=b&u=c'))).toEqual(['a', 'b', 'c']);
   });
+
+  it('config も同じ並びに入れる', () => {
+    expect(getSources(new URLSearchParams('config=x&u=a'))).toEqual(['x', 'a']);
+  });
   it('空の値は飛ばす', () => {
     expect(getSources(new URLSearchParams('u=&u=%20&u=a'))).toEqual(['a']);
   });

@@ -7,20 +7,23 @@ import CommonLayout from '@/components/layout/Common';
 import PageContainer from '@/components/layout/PageContainer';
 import TextPane from '@/components/viewer/TextPane';
 import HeaderPanel from '@/components/viewer/HeaderPanel';
-import { loadTei, TeiLoadError, type LoadError } from '@/lib/tei/load';
+import { loadSource, TeiLoadError, type LoadError, type ParallelConfig } from '@/lib/tei/load';
 import { summarizeHeader } from '@/lib/tei/header';
 import { getSources } from '@/lib/viewerParams';
 
 // URL で受け取るパラメータ（docs/notes/survey.md「viewer の URL」）。
-// いま使っているのは u / tei（どちらも繰り返し可）/ dir / id / embed と、表示の切り替えの lb / pb。ほかはペインを足すときに使う
+// いま使っているのは u / tei / config（どれも繰り返し可）/ dir / id / embed と、表示の切り替えの lb / pb。ほかはペインを足すときに使う
 export const VIEWER_PARAMS = ['u', 'tei', 'config', 'manifest', 'curation', 'panes', 'dir', 'wit', 'xsl', 'id', 'embed'] as const;
 
 const KOUI = 'https://w3id.org/kouigenjimonogatari/tei/01.xml';
 const YOSANO = 'https://tei-eaj.github.io/parallel_text_viewer/data/yosano.xml';
+// 絵入源氏 桐壺と与謝野訳を束ねた PTV の config.json。絵入源氏の anchor@corresp が与謝野訳の文を指す
+const EIRI_CONFIG = 'https://tei-eaj.github.io/parallel_text_viewer/data/pt/config.json';
 const SAMPLES = [
   { key: 'sampleKoui', urls: [KOUI], dir: 'v' },
   { key: 'sampleYosano', urls: [YOSANO], dir: 'h' },
   { key: 'sampleParallel', urls: [KOUI, YOSANO], dir: 'h' },
+  { key: 'sampleLinked', urls: [EIRI_CONFIG], dir: 'v' },
 ] as const;
 
 // URL の引数を書き換える。履歴を増やさない（表示の切り替え）か、増やす（別の TEI を開く）かを選ぶ
@@ -36,12 +39,23 @@ function updateParams(changes: Record<string, string | null>, push = false) {
 }
 
 // 読む TEI の一覧を書き換える。並べ方が変わるので履歴に残す。書くときは u にそろえる
-function setSources(sources: string[]) {
+function setSources(sources: string[], push = true) {
   const params = new URLSearchParams(window.location.search);
   params.delete('u');
   params.delete('tei');
+  params.delete('config');
   for (const s of sources) params.append('u', s);
-  window.history.pushState(null, '', `${window.location.pathname}?${params.toString()}`);
+  const url = `${window.location.pathname}?${params.toString()}`;
+  if (push) window.history.pushState(null, '', url);
+  else window.history.replaceState(null, '', url);
+}
+
+// config.json を、束ねている本文の URL に開く。開いた形を URL に残す（履歴は増やさない）
+function expandConfig(index: number, config: ParallelConfig) {
+  const sources = getSources(new URLSearchParams(window.location.search));
+  sources.splice(index, 1, ...config.sources);
+  if (config.vertical !== undefined) updateParams({ dir: config.vertical ? 'v' : 'h' });
+  setSources(sources, false);
 }
 
 type State =
@@ -171,14 +185,17 @@ function Column({
 
   useEffect(() => {
     const ac = new AbortController();
-    loadTei(src, ac.signal)
-      .then((tei) => setState({ status: 'ready', tei }))
+    loadSource(src, ac.signal)
+      .then((loaded) => {
+        if (loaded.kind === 'config') expandConfig(index, loaded.config);
+        else setState({ status: 'ready', tei: loaded.tei });
+      })
       .catch((e) => {
         if ((e as Error).name === 'AbortError') return;
         setState({ status: 'error', error: e instanceof TeiLoadError ? e.detail : { kind: 'fetch' } });
       });
     return () => ac.abort();
-  }, [src]);
+  }, [src, index]);
 
   const header = useMemo(() => (state.status === 'ready' ? summarizeHeader(state.tei) : null), [state]);
 
@@ -268,7 +285,7 @@ function Reader({ sources }: { sources: string[] }) {
   // 改行と頁の目印は既定で見せる。消したときだけ URL に残す
   const showLb = search.get('lb') !== '0';
   const showPb = search.get('pb') !== '0';
-  // id は列ごとに探す。同じ id を持つ列が複数あれば、どれにも印が付く
+  // id は列ごとに探す。その id を持つ要素と、@corresp でそれを指す要素・範囲に印が付く（src/lib/tei/link.ts）
   const focusId = search.get('id');
   const many = sources.length > 1;
 

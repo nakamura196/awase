@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader><fileDesc><titleStmt><title>対応の見本・本文</title></titleStmt><publicationStmt><p/></publicationStmt><sourceDesc><p/></sourceDesc></fileDesc></teiHeader>
+  <text><body><p>
+    <line xml:id="m1">はじめの前置き。<anchor corresp="sub_ids.xml#t1"/>一つ目の本文。</line>
+    <line xml:id="m2">続き。<anchor corresp="sub_ids.xml#t2"/>二つ目の本文。</line>
+    <line xml:id="m3"><seg corresp="#t3">三つ目は要素ごと。</seg></line>
+  </p></body></text>
+</TEI>
