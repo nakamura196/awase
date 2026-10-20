@@ -124,6 +124,11 @@
     "vertical": "Vertical",
     "lineBreaks": "Line breaks",
     "pageBreaks": "Pages",
+    "apparatus": "Variants",
+    "apparatusCount": "{count} variant locations",
+    "witnesses": "Witnesses ({count})",
+    "omitted": "(om.)",
+    "silentWitness": "not named; assumed to read as the lemma",
     "scrollSync": "Sync scrolling",
     "untitled": "(Untitled)",
     "headerDetails": "Bibliographic details",
@@ -151,6 +156,8 @@
     "pageIndex": "{index} / {total}",
     "noImage": "No image for this page.",
     "openManifest": "Open the IIIF manifest",
-    "openImage": "Open the image"
+    "openImage": "Open the image",
+    "textPane": "Text",
+    "panes": "Panes"
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getSources } from './viewerParams';
+import { getSources, paneShown, togglePane } from './viewerParams';
 
 describe('getSources', () => {
   it('u と tei を書いた順に集める', () => {
@@ -17,5 +17,28 @@ describe('getSources', () => {
   });
   it('無ければ空', () => {
     expect(getSources(new URLSearchParams('dir=v'))).toEqual([]);
+  });
+});
+
+describe('paneShown', () => {
+  it('panes を書かなければ全部出す', () => {
+    expect(paneShown(null, 'image')).toBe(true);
+    expect(paneShown(null, 'apparatus')).toBe(true);
+  });
+  it('書いたら、含むものだけ出す（koui の互換 panes=text,apparatus）', () => {
+    expect(paneShown('text,apparatus', 'apparatus')).toBe(true);
+    expect(paneShown('text,apparatus', 'image')).toBe(false);
+  });
+});
+
+describe('togglePane', () => {
+  it('全部出ているところから 1 つ消す', () => {
+    expect(togglePane(null, 'image')).toBe('text,apparatus');
+  });
+  it('消したものを戻して全部そろえば書かない', () => {
+    expect(togglePane('text,apparatus', 'image')).toBeNull();
+  });
+  it('両方消す', () => {
+    expect(togglePane('text,apparatus', 'apparatus')).toBe('text');
   });
 });

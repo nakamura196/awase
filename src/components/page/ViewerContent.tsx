@@ -8,14 +8,16 @@ import PageContainer from '@/components/layout/PageContainer';
 import TextPane from '@/components/viewer/TextPane';
 import HeaderPanel from '@/components/viewer/HeaderPanel';
 import ImagePane from '@/components/viewer/ImagePane';
+import ApparatusPane from '@/components/viewer/ApparatusPane';
 import { useScrollSync } from '@/components/viewer/useScrollSync';
 import { loadSource, TeiLoadError, type LoadError, type ParallelConfig } from '@/lib/tei/load';
 import { summarizeHeader } from '@/lib/tei/header';
 import { pageBreaks, pageTarget, readFacsimile } from '@/lib/tei/facs';
-import { getSources } from '@/lib/viewerParams';
+import { getSources, paneShown, togglePane } from '@/lib/viewerParams';
+import { textApps } from '@/lib/tei/apparatus';
 
 // URL で受け取るパラメータ（docs/notes/survey.md「viewer の URL」）。
-// いま使っているのは u / tei / config（どれも繰り返し可）/ dir / id / embed / panes（image を含むかだけを見る）と、
+// いま使っているのは u / tei / config（どれも繰り返し可）/ dir / id / embed / panes（image と apparatus を出すか）と、
 // 表示の切り替えの lb / pb / sync。ほかはペインを足すときに使う
 export const VIEWER_PARAMS = ['u', 'tei', 'config', 'manifest', 'curation', 'panes', 'dir', 'wit', 'xsl', 'id', 'embed'] as const;
 
@@ -166,6 +168,62 @@ function Toggle({ pressed, onClick, children }: { pressed: boolean; onClick: () 
   );
 }
 
+// 本文の横のペインの並べ方（Tailwind が拾えるよう、クラス名を書き切る）
+const LG_COLS: Record<number, string> = { 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3' };
+
+type PaneKey = 'image' | 'text' | 'apparatus';
+
+// ペインを横に並べられないとき（狭い画面と、本文を並べて読むとき）に、1 つずつ切り替えるタブ
+function PaneTabs({
+  panes,
+  active,
+  onChange,
+  className,
+}: {
+  panes: PaneKey[];
+  active: PaneKey;
+  onChange: (p: PaneKey) => void;
+  className: string;
+}) {
+  const t = useTranslations('Viewer');
+  const label: Record<PaneKey, string> = { image: t('images'), text: t('textPane'), apparatus: t('apparatus') };
+  return (
+    <div role="tablist" aria-label={t('panes')} className={`flex shrink-0 gap-1 border-b border-[var(--ds-border)] ${className}`}>
+      {panes.map((p) => (
+        <button
+          key={p}
+          type="button"
+          role="tab"
+          aria-selected={p === active}
+          onClick={() => onChange(p)}
+          className={`-mb-px border-b-2 px-3 py-1 text-sm ${
+            p === active
+              ? 'border-[var(--ds-primary)] font-bold text-[var(--ds-fg)]'
+              : 'border-transparent text-[var(--ds-fg-muted)] hover:text-[var(--ds-fg)]'
+          }`}
+        >
+          {label[p]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// 列ごとに「〜がある」を集める（ツールバーのボタンを出すかどうか）
+function useColumnFlags() {
+  const [flags, setFlags] = useState<ReadonlySet<number>>(new Set());
+  const update = useCallback((i: number, has: boolean) => {
+    setFlags((prev) => {
+      if (prev.has(i) === has) return prev;
+      const next = new Set(prev);
+      if (has) next.add(i);
+      else next.delete(i);
+      return next;
+    });
+  }, []);
+  return [flags, update] as const;
+}
+
 // 本文を 1 つ読み、書誌と本文を出す列。複数の TEI を並べるときは、この列を横に並べる
 function Column({
   src,
@@ -177,6 +235,8 @@ function Column({
   focusId,
   showImages,
   onHasImages,
+  showApparatus,
+  onHasApparatus,
 }: {
   src: string;
   index: number;
@@ -188,6 +248,9 @@ function Column({
   showImages: boolean;
   /** この列に画像の引ける頁があるか（ツールバーの「画像」を出すかどうか） */
   onHasImages: (index: number, has: boolean) => void;
+  showApparatus: boolean;
+  /** この列に異文（app）があるか（ツールバーの「異文」を出すかどうか） */
+  onHasApparatus: (index: number, has: boolean) => void;
 }) {
   const t = useTranslations('Viewer');
   const [state, setState] = useState<State>({ status: 'loading' });
@@ -222,12 +285,25 @@ function Column({
   }, [state, src]);
   useEffect(() => onHasImages(index, Boolean(facs)), [facs, index, onHasImages]);
   const imaged = showImages && facs !== null;
-  // 横書きの 1 列はページ全体がスクロールするので、画像を画面に留める
-  const pageScroll = !vertical && count === 1;
+  // 異文（app）。1 つでもあれば、異文の一覧を本文の横に出せる
+  const hasApparatus = useMemo(() => state.status === 'ready' && textApps(state.tei).length > 0, [state]);
+  useEffect(() => onHasApparatus(index, hasApparatus), [hasApparatus, index, onHasApparatus]);
+  const withApparatus = showApparatus && hasApparatus;
+  // 出すペイン。1 列のときは広い画面で横に並べる。狭い画面と、本文を並べて読むときは、タブで 1 つずつ出す
+  const panes: PaneKey[] = [...(imaged ? (['image'] as const) : []), 'text', ...(withApparatus ? (['apparatus'] as const) : [])];
+  const [tab, setTab] = useState<PaneKey>('text');
+  const active = panes.includes(tab) ? tab : 'text';
+  const tabbed = panes.length > 1;
+  // タブで隠すペイン。1 列のときは、広い画面では隠さない
+  const paneClass = (p: PaneKey) => `h-full min-h-0 ${p === active ? '' : count === 1 ? 'hidden lg:block' : 'hidden'}`;
 
   return (
-    <section className="flex min-w-0 flex-col gap-4" data-testid="text-column" aria-label={header?.title || src}>
-      <div className="flex items-start gap-2">
+    <section
+      className={`flex min-h-0 min-w-0 flex-col gap-2 ${count > 1 ? 'h-[85dvh] lg:h-full' : 'h-full'}`}
+      data-testid="text-column"
+      aria-label={header?.title || src}
+    >
+      <div className="flex shrink-0 items-start gap-2">
         <div className="min-w-0 flex-1">
           {state.status === 'ready' && header ? (
             <HeaderPanel header={header} sourceUrl={src} headingLevel={count > 1 ? 2 : 1} />
@@ -250,12 +326,12 @@ function Column({
       {state.status === 'loading' && <p className="text-[var(--ds-fg-muted)]">{t('loading')}</p>}
       {state.status === 'error' && <ErrorMessage error={state.error} />}
       {state.status === 'ready' && (
-        // grid-cols-1 で列の幅を枠に収める（縦書きの本文が、中身の長さまで列を広げないように）
-        <div className={imaged ? `grid grid-cols-1 gap-4 ${count === 1 ? 'lg:grid-cols-2' : ''}` : ''}>
+        <>
+        {tabbed && <PaneTabs panes={panes} active={active} onChange={setTab} className={count === 1 ? 'lg:hidden' : ''} />}
+        {/* grid-cols-1 で列の幅を枠に収める（縦書きの本文が、中身の長さまで列を広げないように） */}
+        <div className={`grid min-h-0 flex-1 grid-cols-1 grid-rows-1 gap-4 ${count === 1 ? (LG_COLS[panes.length] ?? '') : ''}`}>
         {imaged && facs && (
-          <div
-            className={`h-[45vh] ${count === 1 ? 'lg:h-[min(80vh,48rem)]' : ''} ${pageScroll ? 'lg:sticky lg:top-4 lg:self-start' : ''}`}
-          >
+          <div className={paneClass('image')}>
             <ImagePane
               pages={facs.pages}
               labels={facs.labels}
@@ -267,18 +343,14 @@ function Column({
             />
           </div>
         )}
-        <div
-          className={`rounded border border-[var(--ds-border)] bg-[var(--ds-surface)] p-4 sm:p-6 ${
-            vertical || count > 1 ? 'h-[min(80vh,48rem)]' : ''
-          }`}
-        >
+        <div className={`${paneClass('text')} rounded border border-[var(--ds-border)] bg-[var(--ds-surface)] p-4 sm:p-6`}>
           <TextPane
             tei={state.tei}
             baseUrl={src}
             vertical={vertical}
             showLineBreaks={showLb}
             showPageBreaks={showPb}
-            scroll={count > 1}
+            scroll
             focusId={focusId}
             onSelect={(id) => updateParams({ id })}
             pageImages={imaged ? facs?.hasImage : undefined}
@@ -287,7 +359,13 @@ function Column({
             pageRequest={pageRequest}
           />
         </div>
+        {withApparatus && (
+          <div className={paneClass('apparatus')}>
+            <ApparatusPane tei={state.tei} baseUrl={src} focusId={focusId} onSelect={(id) => updateParams({ id })} />
+          </div>
+        )}
         </div>
+        </>
       )}
     </section>
   );
@@ -341,26 +419,19 @@ function Reader({ sources }: { sources: string[] }) {
   const sync = search.get('sync') !== '0';
   const columns = useRef<HTMLDivElement>(null);
   useScrollSync(columns, many && sync);
-  // 頁の画像（pb@facs）。panes を書いたときは、image を含むときだけ出す
+  // 頁の画像（pb@facs）と異文の一覧。panes を書いたときは、含むものだけ出す
   const panes = search.get('panes');
-  const showImages = !panes || panes.split(',').includes('image');
-  // 画像の引ける列があるときだけ、ツールバーに「画像」を出す
-  const [imageColumns, setImageColumns] = useState<ReadonlySet<number>>(new Set());
-  const onHasImages = useCallback((i: number, has: boolean) => {
-    setImageColumns((prev) => {
-      if (prev.has(i) === has) return prev;
-      const next = new Set(prev);
-      if (has) next.add(i);
-      else next.delete(i);
-      return next;
-    });
-  }, []);
+  const showImages = paneShown(panes, 'image');
+  const showApparatus = paneShown(panes, 'apparatus');
+  // 画像の引ける列・異文のある列があるときだけ、ツールバーにそのボタンを出す
+  const [imageColumns, onHasImages] = useColumnFlags();
+  const [apparatusColumns, onHasApparatus] = useColumnFlags();
 
   return (
-    <div className="flex flex-col gap-4 px-4 py-6 sm:px-8 bg-[var(--ds-bg)]">
+    <div className="flex h-full min-h-0 flex-col gap-3 bg-[var(--ds-bg)] px-4 py-3 sm:px-6">
       {/* 1 つのときは本文の題名が見出しになる。並べるときは列ごとの題名を h2 にし、ページの見出しを別に置く */}
       {many && <h1 className="sr-only">{t('parallelTitle', { count: sources.length })}</h1>}
-      <div className="flex flex-wrap items-center gap-2" role="toolbar" aria-label={t('display')}>
+      <div className="flex shrink-0 flex-wrap items-center gap-2" role="toolbar" aria-label={t('display')}>
         <Toggle pressed={vertical} onClick={() => updateParams({ dir: vertical ? 'h' : 'v' })}>
           {t('vertical')}
         </Toggle>
@@ -371,8 +442,13 @@ function Reader({ sources }: { sources: string[] }) {
           {t('pageBreaks')}
         </Toggle>
         {imageColumns.size > 0 && (
-          <Toggle pressed={showImages} onClick={() => updateParams({ panes: showImages ? 'text' : null })}>
+          <Toggle pressed={showImages} onClick={() => updateParams({ panes: togglePane(panes, 'image') })}>
             {t('images')}
+          </Toggle>
+        )}
+        {apparatusColumns.size > 0 && (
+          <Toggle pressed={showApparatus} onClick={() => updateParams({ panes: togglePane(panes, 'apparatus') })}>
+            {t('apparatus')}
           </Toggle>
         )}
         {many && (
@@ -382,10 +458,12 @@ function Reader({ sources }: { sources: string[] }) {
         )}
         <AddText />
       </div>
-      {/* 並べるときは、狭い画面では縦に積み、広い画面では横に並べる */}
+      {/* 画面の残りの高さに収める。並べるときは、狭い画面では縦に積んでこの枠をスクロールし、広い画面では横に並べる */}
       <div
         ref={columns}
-        className={many ? 'grid gap-6 lg:grid-cols-[repeat(var(--awase-cols),minmax(0,1fr))]' : ''}
+        className={`min-h-0 flex-1 ${
+          many ? 'grid gap-6 overflow-y-auto lg:grid-cols-[repeat(var(--awase-cols),minmax(0,1fr))] lg:overflow-hidden' : 'flex flex-col'
+        }`}
         style={many ? ({ '--awase-cols': sources.length } as React.CSSProperties) : undefined}
       >
         {sources.map((src, i) => (
@@ -401,6 +479,8 @@ function Reader({ sources }: { sources: string[] }) {
             focusId={focusId}
             showImages={showImages}
             onHasImages={onHasImages}
+            showApparatus={showApparatus}
+            onHasApparatus={onHasApparatus}
           />
         ))}
       </div>
@@ -412,8 +492,17 @@ function Viewer() {
   const search = useSearchParams();
   const sources = getSources(search);
   const embed = search.get('embed') === '1';
-  const body = sources.length ? <Reader sources={sources} /> : <Entry />;
-  return embed ? body : <CommonLayout>{body}</CommonLayout>;
+  if (!sources.length) return embed ? <Entry /> : <CommonLayout><Entry /></CommonLayout>;
+  // 本文を開いたら画面の高さに収める（ページ全体はスクロールさせない）
+  return embed ? (
+    <div className="h-[100dvh]">
+      <Reader sources={sources} />
+    </div>
+  ) : (
+    <CommonLayout fullScreen>
+      <Reader sources={sources} />
+    </CommonLayout>
+  );
 }
 
 export default function ViewerContent() {

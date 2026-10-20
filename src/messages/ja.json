@@ -124,6 +124,11 @@
     "vertical": "縦書き",
     "lineBreaks": "改行",
     "pageBreaks": "頁",
+    "apparatus": "異文",
+    "apparatusCount": "異文 {count} 箇所",
+    "witnesses": "伝本（{count}）",
+    "omitted": "（なし）",
+    "silentWitness": "名前の無い伝本。底本と同じ読みとみなす",
     "scrollSync": "スクロール連動",
     "untitled": "（題名なし）",
     "headerDetails": "書誌の詳細",
@@ -151,6 +156,8 @@
     "pageIndex": "{index} / {total}",
     "noImage": "この頁には画像がありません。",
     "openManifest": "IIIF マニフェストを開く",
-    "openImage": "画像を開く"
+    "openImage": "画像を開く",
+    "textPane": "本文",
+    "panes": "ペイン"
   }
 }
