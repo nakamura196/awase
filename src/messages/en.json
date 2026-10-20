@@ -156,6 +156,8 @@
     "pageIndex": "{index} / {total}",
     "noImage": "No image for this page.",
     "openManifest": "Open the IIIF manifest",
-    "openImage": "Open the image"
+    "openImage": "Open the image",
+    "textPane": "Text",
+    "panes": "Panes"
   }
 }

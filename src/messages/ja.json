@@ -156,6 +156,8 @@
     "pageIndex": "{index} / {total}",
     "noImage": "この頁には画像がありません。",
     "openManifest": "IIIF マニフェストを開く",
-    "openImage": "画像を開く"
+    "openImage": "画像を開く",
+    "textPane": "本文",
+    "panes": "ペイン"
   }
 }
