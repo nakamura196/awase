@@ -16,8 +16,8 @@ export const XSL_PARAMS = ['u', 'url', 'tei', 'xsl', 'embed'] as const;
 
 const SAMPLES = [
   { key: 'sampleKoui', u: 'https://w3id.org/kouigenjimonogatari/tei/01.xml', xsl: 'reading' },
-  { key: 'sampleGuide', u: 'https://toyo-bunko.github.io/tei-tools/xml/tei-guide/tei.xml', xsl: 'analysis' },
-  { key: 'sampleOcr', u: 'https://toyo-bunko.github.io/tei-tools/xml/ocr-sample/tei.xml', xsl: null },
+  { key: 'sampleGuide', u: 'https://tei-tools.toyobunko-lab.jp/xml/tei-guide/tei.xml', xsl: 'analysis' },
+  { key: 'sampleOcr', u: 'https://tei-tools.toyobunko-lab.jp/xml/ocr-sample/tei.xml', xsl: null },
 ] as const;
 
 type Failure = 'fetch' | 'parse' | 'transform';
