@@ -1,0 +1,68 @@
+{
+ "@context": "https://dtsapi.org/context/v1.0.json",
+ "dtsVersion": "1.0",
+ "@id": "urn:kouigenjimonogatari.1",
+ "title": "桐壺",
+ "description": "校異源氏物語 桐壺",
+ "@type": "Resource",
+ "dublinCore": {
+  "creator": [
+   "裏源氏勉強会"
+  ],
+  "title": [
+   {
+    "lang": "ja",
+    "value": "桐壺"
+   }
+  ],
+  "description": [
+   {
+    "lang": "ja",
+    "value": "校異源氏物語 桐壺"
+   }
+  ],
+  "license": [
+   "https://creativecommons.org/publicdomain/zero/1.0/"
+  ]
+ },
+ "totalParents": 1,
+ "totalChildren": 0,
+ "collection": "/api/v2/dts/collection?id=urn:kouigenjimonogatari.1{&page,nav}",
+ "document": "/api/v2/dts/document?resource=urn:kouigenjimonogatari.1{&ref,start,end,tree,mediaType}",
+ "navigation": "/api/v2/dts/navigation?resource=urn:kouigenjimonogatari.1{&ref,start,end,down,tree,page}",
+ "citationTrees": [
+  {
+   "@type": "CitationTree",
+   "description": "ページ・行による引用構造",
+   "citeStructure": [
+    {
+     "@type": "CiteStructure",
+     "citeType": "page",
+     "citeStructure": [
+      {
+       "@type": "CiteStructure",
+       "citeType": "line"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "@type": "CitationTree",
+   "identifier": "waka",
+   "description": "和歌（短歌）による引用構造",
+   "citeStructure": [
+    {
+     "@type": "CiteStructure",
+     "citeType": "waka",
+     "citeStructure": [
+      {
+       "@type": "CiteStructure",
+       "citeType": "ku"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
