@@ -93,16 +93,21 @@ export function textApps(tei: Document): Element[] {
   return out;
 }
 
+/** その app の読み（rdgGrp の中も拾う。入れ子の app の読みは入れない） */
+function appReadings(app: Element): Reading[] {
+  const readings: Reading[] = [];
+  for (const el of Array.from(app.querySelectorAll('lem, rdg'))) {
+    if (el.parentElement?.closest('app') !== app) continue;
+    readings.push({ kind: el.localName === 'lem' ? 'lem' : 'rdg', wits: witIds(el.getAttribute('wit')), el });
+  }
+  return readings;
+}
+
 export function readApparatus(tei: Document, witnesses: Witness[]): ApparatusEntry[] {
   const all = witnesses.map((w) => w.id);
   return textApps(tei).map((app, i) => {
     const n = i + 1;
-    const readings: Reading[] = [];
-    // rdgGrp の中の読みも拾う
-    for (const el of Array.from(app.querySelectorAll('lem, rdg'))) {
-      if (el.parentElement?.closest('app') !== app) continue;
-      readings.push({ kind: el.localName === 'lem' ? 'lem' : 'rdg', wits: witIds(el.getAttribute('wit')), el });
-    }
+    const readings = appReadings(app);
     const hasLem = readings.some((r) => r.kind === 'lem');
     return {
       n,
@@ -111,4 +116,73 @@ export function readApparatus(tei: Document, witnesses: Witness[]): ApparatusEnt
       silent: hasLem ? silentWitnesses(all, readings.flatMap((r) => r.wits)) : [],
     };
   });
+}
+
+/** 2 つの文字列の編集距離（1 字の挿入・削除・置換をそれぞれ 1 と数える）。サロゲートペアの字も 1 字と数える */
+export function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  const s = Array.from(a);
+  const t = Array.from(b);
+  if (!s.length) return t.length;
+  if (!t.length) return s.length;
+  let prev = Array.from({ length: t.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= s.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= t.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (s[i - 1] === t[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[t.length];
+}
+
+/**
+ * 読みの文字（空白を除く）。del の中の字も数える（koui と同じ）。
+ * 読みの中に入れ子の app があれば、その伝本の読み（wit が null なら lem）だけを取る。
+ * textContent のままだと、入れ子の lem と rdg の字が両方入ってしまう（koui の見本で 31 箇所）
+ */
+export function readingText(el: Element, wit: string | null = null): string {
+  let out = '';
+  const walk = (node: Node) => {
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType === 3) out += child.nodeValue ?? '';
+      else if (child.nodeType !== 1) continue;
+      else if ((child as Element).localName === 'app') {
+        const readings = appReadings(child as Element);
+        const i = wit ? readingFor(readings, wit) : readings.findIndex((r) => r.kind === 'lem');
+        if (i >= 0) walk(readings[i].el);
+      } else walk(child);
+    }
+  };
+  walk(el);
+  return out.replace(/\s+/g, '');
+}
+
+export interface WitnessDistance {
+  /** lem との編集距離の合計 */
+  distance: number;
+  /** lem と違う読みの箇所の数 */
+  places: number;
+}
+
+/**
+ * 伝本ごとの、lem との違い（koui の Chart.vue と同じ、編集距離の合計）。
+ * 箇所ごとの読みは ?wit= と同じ決まり（readingFor）で選ぶ。lem の無い箇所は数えない
+ */
+export function witnessDistances(entries: Pick<ApparatusEntry, 'readings'>[], witnesses: string[]): Map<string, WitnessDistance> {
+  const out = new Map(witnesses.map((id) => [id, { distance: 0, places: 0 }]));
+  for (const { readings } of entries) {
+    const lem = readings.findIndex((r) => r.kind === 'lem');
+    if (lem < 0) continue;
+    let lemText: string | null = null;
+    for (const [id, sum] of out) {
+      const i = readingFor(readings, id);
+      if (i === lem) continue;
+      lemText ??= readingText(readings[lem].el);
+      const d = levenshtein(lemText, readingText(readings[i].el, id));
+      sum.distance += d;
+      if (d > 0) sum.places += 1;
+    }
+  }
+  return out;
 }

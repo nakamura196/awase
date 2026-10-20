@@ -128,6 +128,8 @@
     "apparatusCount": "{count} variant locations",
     "witnesses": "Witnesses ({count})",
     "omitted": "(om.)",
+    "witnessDistanceNote": "Bars show how far each witness differs from the lemma (sum of edit distances). Click one to read the text as that witness",
+    "witnessDistance": "{distance} chars, {places} locations",
     "moreWitnesses": "+{count} more",
     "readAs": "Text reads",
     "readAsLemma": "Lemma (base text)",

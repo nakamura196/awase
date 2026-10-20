@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appId, foldSigla, readingFor, silentWitnesses, witIds } from './apparatus';
+import { appId, foldSigla, levenshtein, readingFor, silentWitnesses, witIds, witnessDistances } from './apparatus';
 
 describe('witIds', () => {
   it('# を外して略号を並べる（koui の見本）', () => {
@@ -49,5 +49,39 @@ describe('readingFor', () => {
   });
   it('lem が無く、名前も無ければ -1', () => {
     expect(readingFor([{ kind: 'rdg', wits: ['乙'] }], '丙')).toBe(-1);
+  });
+});
+
+describe('levenshtein', () => {
+  it('挿入・削除・置換を 1 と数える', () => {
+    expect(levenshtein('ありけり', 'おはしけり')).toBe(3);
+    expect(levenshtein('給ける', 'たまふ')).toBe(3);
+    expect(levenshtein('', 'ありけり')).toBe(4);
+    expect(levenshtein('同じ', '同じ')).toBe(0);
+  });
+  it('サロゲートペアの字も 1 字', () => {
+    expect(levenshtein('𠮟る', '叱る')).toBe(1);
+  });
+});
+
+describe('witnessDistances', () => {
+  // 読みの要素は子の文字だけを使うので、文字の子を 1 つ持つ代役で足りる（入れ子の app は e2e で見る）
+  const r = (kind: 'lem' | 'rdg', wit: string, text: string) => ({
+    kind,
+    wits: witIds(wit),
+    el: { childNodes: [{ nodeType: 3, nodeValue: text }] } as unknown as Element,
+  });
+  const entries = [
+    { readings: [r('lem', '#底 #甲', '給ける'), r('rdg', '#乙', 'たまふ')] },
+    // 甲の読みは <del>おはし</del>けり。del の中の字も数える
+    { readings: [r('lem', '#底', 'あり けり'), r('rdg', '#甲', 'おはしけり'), r('rdg', '#乙', '')] },
+    { readings: [r('rdg', '#甲', 'lem の無い箇所')] },
+  ];
+  it('lem との編集距離を伝本ごとに足す。名前の無い伝本は lem と同じ', () => {
+    const d = witnessDistances(entries, ['底', '甲', '乙', '丙']);
+    expect(d.get('底')).toEqual({ distance: 0, places: 0 });
+    expect(d.get('甲')).toEqual({ distance: 3, places: 1 });
+    expect(d.get('乙')).toEqual({ distance: 7, places: 2 });
+    expect(d.get('丙')).toEqual({ distance: 0, places: 0 });
   });
 });

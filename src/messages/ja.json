@@ -128,6 +128,8 @@
     "apparatusCount": "異文 {count} 箇所",
     "witnesses": "伝本（{count}）",
     "omitted": "（なし）",
+    "witnessDistanceNote": "横棒は lem との違い（編集距離の合計）。押すとその伝本の読みで本文を出す",
+    "witnessDistance": "{distance} 字・{places} 箇所",
     "moreWitnesses": "ほか {count} 本",
     "readAs": "本文の読み",
     "readAsLemma": "底本（lem）",
