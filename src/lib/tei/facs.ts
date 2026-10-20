@@ -142,6 +142,40 @@ export function pageTarget(
   return parseIiifImageUrl(direct) ?? { image: direct };
 }
 
+/** 異文の箇所（app@facs）の画像。範囲が複数あれば、書かれた順にすべて。引けない参照は飛ばす */
+export function facsTargets(value: string | null | undefined, facsimile: Map<string, FacsTarget>): FacsTarget[] {
+  return localRefs(value).flatMap((id) => facsimile.get(id) ?? []);
+}
+
+/**
+ * Canvas id を比べるための形。http・https と、ホスト名の頭の www. の有無を区別しない。
+ * koui の見本の graphic@n は www.dl.ndl.go.jp、国立国会図書館のマニフェストの Canvas id は dl.ndl.go.jp で、
+ * 文字列のままでは一致しない（docs/notes/survey.md の 2026-10-20 の節）
+ */
+export function canvasKey(id: string): string {
+  return id
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www\./i, '')
+    .replace(/\/$/, '');
+}
+
+/** マニフェストの Canvas の中から、書かれた Canvas id に当たるものを探す。そのまま一致するものを先に見る */
+export function matchCanvas(ids: string[], wanted: string): string | undefined {
+  if (ids.includes(wanted)) return wanted;
+  const key = canvasKey(wanted);
+  return ids.find((id) => canvasKey(id) === key);
+}
+
+/** マニフェスト（Presentation API の 2 と 3）の Canvas id を順に */
+export function manifestCanvasIds(manifest: unknown): string[] {
+  const m = manifest as { items?: { id?: string }[]; sequences?: { canvases?: { '@id'?: string }[] }[] } | null;
+  const ids = Array.isArray(m?.items)
+    ? m.items.map((c) => c?.id)
+    : (m?.sequences ?? []).flatMap((s) => (s?.canvases ?? []).map((c) => c?.['@id']));
+  return ids.filter((id): id is string => typeof id === 'string');
+}
+
 /**
  * 本文の頁の目印。本文ペインが描く範囲（src/lib/tei/render.ts の renderTeiText）と同じ所から、同じ順で拾う。
  * 画面の tei-pb と、この配列の何番目かで対応させるため

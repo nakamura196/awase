@@ -190,9 +190,15 @@
 .awase-text tei-app > tei-wit {
   display: none;
 }
+/* 地の色を全部の箇所に塗ると本文が読みにくいので、点線の傍線だけにする（縦書きでは右の傍線） */
 .awase-text tei-app[title] {
-  background: color-mix(in srgb, var(--ds-primary) 12%, transparent);
+  text-decoration: underline dotted color-mix(in srgb, var(--ds-primary) 70%, transparent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.3em;
   cursor: help;
+}
+.awase-text tei-app[title]:hover {
+  background: color-mix(in srgb, var(--ds-primary) 10%, transparent);
 }
 
 /* 注。行の中に小さく括弧で */
@@ -263,4 +269,34 @@
 .awase-text [corresp]:empty.is-selected::before {
   background: var(--ds-primary);
   opacity: 1;
+}
+
+/* 異文の一覧（ApparatusPane）の読み。本文と同じ印を付ける */
+.awase-apparatus tei-del {
+  text-decoration: line-through;
+  color: var(--ds-fg-muted);
+}
+.awase-apparatus tei-add {
+  color: var(--ds-primary);
+}
+.awase-apparatus tei-lb::after {
+  content: ' ';
+}
+
+/* 伝本を選んだとき（?wit=）。その伝本の読みだけを見せ、lem と違う箇所に色を付ける */
+.awase-text[data-awase-wit] tei-app > tei-lem:not([data-awase-chosen]),
+.awase-text[data-awase-wit] tei-app tei-rdggrp > :is(tei-lem, tei-rdg):not([data-awase-chosen]) {
+  display: none;
+}
+.awase-text[data-awase-wit] tei-app > tei-rdg[data-awase-chosen],
+.awase-text[data-awase-wit] tei-app > tei-rdggrp:has(> [data-awase-chosen]) {
+  display: inline;
+}
+.awase-text[data-awase-wit] tei-app[data-awase-variant] {
+  background: color-mix(in srgb, #f59e0b 30%, transparent);
+}
+
+/* 本文の異文箇所。一覧から選べるので、押せることが分かるようにする */
+.awase-text tei-app[data-awase-app] {
+  cursor: pointer;
 }

@@ -43,14 +43,15 @@ export default function HeaderPanel({
   ]);
 
   return (
-    <div className="space-y-1">
-      <Heading className="text-xl font-bold text-[var(--ds-fg)]" style={{ fontFamily: 'var(--ds-font-serif)' }}>
+    <div className="space-y-0.5">
+      <Heading className="text-lg font-bold text-[var(--ds-fg)]" style={{ fontFamily: 'var(--ds-font-serif)' }}>
         {header.title || t('untitled')}
       </Heading>
       {header.authors.length > 0 && <p className="text-sm text-[var(--ds-fg-muted)]">{header.authors.join(', ')}</p>}
-      <details className="text-sm">
+      {/* 開いた中身は本文の上に重ねる。ビューアは画面の高さに収めているので、押し下げるとペインが縮む */}
+      <details className="relative text-sm">
         <summary className="cursor-pointer text-[var(--ds-fg-muted)]">{t('headerDetails')}</summary>
-        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+        <dl className="absolute left-0 top-full z-30 mt-1 grid max-h-[60dvh] w-[min(40rem,calc(100vw-2rem))] grid-cols-[auto_1fr] gap-x-4 gap-y-1 overflow-auto rounded border border-[var(--ds-border)] bg-[var(--ds-surface)] p-3 shadow-lg">
           {rows.map(([k, v]) => (
             <div key={k} className="contents">
               <dt className="text-[var(--ds-fg-muted)]">{k}</dt>

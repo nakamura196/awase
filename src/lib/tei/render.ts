@@ -4,12 +4,15 @@
 //
 // innerHTML は使わず、要素を 1 つずつ作る。外から読んだ TEI にスクリプトが紛れていても動かないように。
 import { htmlAttrName, htmlTagName, isIndentation, safeUrl } from './attrs';
+import { appId, textApps } from './apparatus';
 
 export interface RenderContext {
   /** 部品を作る先の文書（ブラウザの document） */
   doc: Document;
   /** TEI の URL。相対 URL を解決する基準 */
   baseUrl?: string;
+  /** 本文の app の番号（1 から）。apparatus ペインの行と結ぶ id を付けるのに使う */
+  appNumbers?: Map<Element, number>;
 }
 
 /** 部品を作ったあとに手を足す処理。戻り値 false なら子を写さない */
@@ -75,8 +78,12 @@ const BEHAVIORS: Record<string, Behavior> = {
       .join(' / ');
     if (alt) el.title = alt;
   },
-  // 異文。本文には lem を見せ、指を置くと諸本の読みを出す（並べて見るのは apparatus ペイン）
-  app(src, el) {
+  // 異文。本文には lem を見せ、指を置くと諸本の読みを出す（並べて見るのは apparatus ペイン）。
+  // xml:id の無い app には番号の id を付け、apparatus ペインの行から探せるようにする
+  app(src, el, ctx) {
+    const n = ctx.appNumbers?.get(src);
+    if (n && !el.id) el.id = appId(n);
+    if (n) el.setAttribute('data-awase-app', String(n));
     const lines = Array.from(src.children)
       .filter((c) => c.localName === 'lem' || c.localName === 'rdg')
       .map((c) => {
@@ -137,6 +144,7 @@ export function renderElement(src: Element, ctx: RenderContext): HTMLElement {
  * teiHeader と facsimile・standOff は本文ペインには出さない（ヘッダーの欄・画像ペインが受け持つ）。
  */
 export function renderTeiText(tei: Document, ctx: RenderContext): DocumentFragment {
+  if (!ctx.appNumbers) ctx = { ...ctx, appNumbers: new Map(textApps(tei).map((app, i) => [app, i + 1])) };
   const frag = ctx.doc.createDocumentFragment();
   const root = tei.documentElement;
   const texts = Array.from(root.getElementsByTagNameNS('*', 'text')).filter(

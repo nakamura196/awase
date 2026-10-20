@@ -9,3 +9,19 @@ export function getSources(params: Pick<URLSearchParams, 'forEach'>): string[] {
   });
   return out;
 }
+
+// 本文の横に出せるペイン。panes を書かなければ、使えるものを全部出す
+export const OPTIONAL_PANES = ['image', 'apparatus'] as const;
+export type OptionalPane = (typeof OPTIONAL_PANES)[number];
+
+/** panes の値（null は書いていない）で、そのペインを出すか */
+export function paneShown(panes: string | null, name: OptionalPane): boolean {
+  return panes === null || panes.split(',').map((p) => p.trim()).includes(name);
+}
+
+/** ペインの出し入れを切り替えた後の panes の値。全部出すときは書かない（null） */
+export function togglePane(panes: string | null, name: OptionalPane): string | null {
+  const shown = OPTIONAL_PANES.filter((p) => (p === name ? !paneShown(panes, p) : paneShown(panes, p)));
+  if (shown.length === OPTIONAL_PANES.length) return null;
+  return ['text', ...shown].join(',');
+}
