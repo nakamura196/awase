@@ -159,3 +159,14 @@ GitHub Pages（nakamura196.github.io/awase）。kasane の deploy-pages.yml を�
 `public/tei/view.html` は使われずに残っていた旧部品で、これを見て誤認した。本番の `/html` が 200 を返すことを確認した。
 旧部品の削除と、サーバ側に移ってから 404 になっていた `theme.css` の参照の修正は archivebase PR #643。
 awase で SaxonJS を使う方針は変えない（静的配信でサーバが無いため）。
+
+## 2026-10-19 土台を写した
+
+iiif-kasane c1769bb から、git 管理のファイルだけを写した（871a030・e92c9d6・79b3e1c）。
+設計案で「外す」とした機能に加えて、samples と usecases も外した。中身が IIIF の見本に結びついているため、TEI の見本で作り直す。
+`packages/iiif-viewer` は写していない。地図の部品がそこから借りていた型と関数は、`src/components/map/geo.ts` に小さく写した。
+viewer・compare・xsl・dts は、受け取る URL の引数を表に出すだけの仮のページ。
+lint（警告 13 件は写した MapView のもの）・test 29 件・build・basepath・export は通る。
+npm audit の high 1 件は開発用の部品（braces、eslint-config-next 経由）。
+GitHub Pages 用の書き出しは、`/awase` を付けた 1 回だけにした（kasane は 2 回書き出していた）。
+LICENSE の著作権者は kasane のまま（中村・小川）。awase で変えるかは未決。
