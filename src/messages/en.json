@@ -143,6 +143,14 @@
     "addLabel": "URL of a TEI file to add",
     "addPlaceholder": "Add a TEI URL",
     "add": "Add",
-    "parallelTitle": "{count} texts side by side"
+    "parallelTitle": "{count} texts side by side",
+    "images": "Images",
+    "prevPage": "Previous page",
+    "nextPage": "Next page",
+    "pageLabel": "Page {n}",
+    "pageIndex": "{index} / {total}",
+    "noImage": "No image for this page.",
+    "openManifest": "Open the IIIF manifest",
+    "openImage": "Open the image"
   }
 }

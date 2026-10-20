@@ -109,8 +109,19 @@
 .awase-text tei-pb:not([n]) .awase-pb-label::before {
   content: '¶';
 }
-.awase-text:not(.show-pb) tei-pb {
+/* 消すのは目印の札だけにする。目印そのものは中身の無い部品として残し、読んでいる頁を測る（TextPane.tsx） */
+.awase-text:not(.show-pb) .awase-pb-label {
   display: none;
+}
+/* 画像のある頁の目印は、押すとその頁の画像を出す */
+.awase-text tei-pb[data-awase-facs] .awase-pb-label {
+  cursor: pointer;
+  color: var(--ds-primary);
+  border-color: currentColor;
+}
+.awase-text tei-pb.is-current .awase-pb-label {
+  background: var(--ds-primary);
+  color: white;
 }
 
 /* 文字の扱い */

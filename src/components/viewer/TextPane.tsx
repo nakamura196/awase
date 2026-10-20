@@ -18,6 +18,14 @@ interface Props {
   focusId?: string | null;
   /** 本文を押したとき。対応の id（無ければ押した所の xml:id）を渡す */
   onSelect?: (id: string) => void;
+  /** 頁の目印ごとに、画像が引けるか（画像ペインがあるとき） */
+  pageImages?: boolean[];
+  /** 画像ペインで見ている頁（何番目の pb か）。その目印に印を付ける */
+  page?: number;
+  /** 読んでいる頁（何番目の pb か）が変わったとき。頁の目印を押したときも */
+  onPageChange?: (index: number) => void;
+  /** この頁（何番目の pb か）へ動かす。seq は同じ頁へ 2 度動かすときのため */
+  pageRequest?: { index: number; seq: number } | null;
 }
 
 // 本文ペイン。TEI を tei-* の部品に置き換えて（src/lib/tei/render.ts）、この枠の中に置く。
@@ -42,6 +50,19 @@ function hasElsewhere(self: Element, id: string): boolean {
   const sel = `[id="${CSS.escape(id)}"]`;
   return Array.from(document.querySelectorAll('.awase-text')).some((pane) => pane !== self && pane.querySelector(sel));
 }
+
+// 読んでいる頁。読み始めの端（横書きは上、縦書きは右）から 4 分の 1 の所を、最後に越えた頁の目印。
+// 頁の目印は文書の順に並んでいるので、越えたものは先頭からひと続きになる
+function currentPage(pbs: Element[], frame: { top: number; right: number; width: number; height: number }, vertical: boolean) {
+  const edge = vertical ? frame.right - frame.width / 4 : frame.top + frame.height / 4;
+  let cur = 0;
+  for (let i = 0; i < pbs.length; i++) {
+    const r = pbs[i].getBoundingClientRect();
+    if (vertical ? r.right >= edge : r.top <= edge) cur = i;
+    else break;
+  }
+  return cur;
+}
 export default function TextPane({
   tei,
   baseUrl,
@@ -51,6 +72,10 @@ export default function TextPane({
   scroll = false,
   focusId,
   onSelect,
+  pageImages,
+  page,
+  onPageChange,
+  pageRequest,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   // この列で押して選んだときは、この列は動かさない（押した所が逃げないように）
@@ -87,11 +112,71 @@ export default function TextPane({
     el.scrollLeft = el.scrollWidth;
   }, [tei, vertical, focusId]);
 
+  // 読み進めたら、読んでいる頁を知らせる。枠の中でスクロールしないとき（横書きの 1 列）はページ全体のスクロールを見る
+  // onPageChange は列の setState をそのまま受けるので、描き直しのたびに変わらない
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !onPageChange) return;
+    const pbs = Array.from(el.querySelectorAll('tei-pb'));
+    if (!pbs.length) return;
+    const inner = vertical || scroll;
+    let raf = 0;
+    let last = -1;
+    const measure = () => {
+      raf = 0;
+      const frame = inner
+        ? el.getBoundingClientRect()
+        : { top: 0, right: window.innerWidth, width: window.innerWidth, height: window.innerHeight };
+      const i = currentPage(pbs, frame, vertical);
+      if (i !== last) {
+        last = i;
+        onPageChange(i);
+      }
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(measure);
+    };
+    const target: HTMLElement | Window = inner ? el : window;
+    target.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    // 開いたときの位置（縦書きの右端寄せ・id への移動）が決まってから測る
+    onScroll();
+    return () => {
+      target.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [tei, vertical, scroll, onPageChange]);
+
+  // 画像の引ける頁の目印と、いま見ている頁の目印に印を付ける
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.querySelectorAll('tei-pb').forEach((pb, i) => {
+      pb.toggleAttribute('data-awase-facs', Boolean(pageImages?.[i]));
+      pb.classList.toggle('is-current', pageImages !== undefined && i === page);
+    });
+  }, [tei, pageImages, page]);
+
+  // 画像ペインから頁を移ったとき、本文もその頁の頭へ動かす
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !pageRequest) return;
+    el.querySelectorAll('tei-pb')[pageRequest.index]?.scrollIntoView({ block: 'start', inline: 'start' });
+  }, [pageRequest]);
+
   function handleClick(e: React.MouseEvent<HTMLDivElement>) {
     const root = ref.current;
-    if (!onSelect || !root) return;
+    if (!root) return;
     const target = e.target as Element;
     if (target.closest('a')) return;
+    // 頁の目印を押したら、その頁の画像を出す
+    const pb = target.closest('tei-pb');
+    if (pb && onPageChange) {
+      onPageChange(Array.from(root.querySelectorAll('tei-pb')).indexOf(pb));
+      return;
+    }
+    if (!onSelect) return;
     const id = linkIdAt(root, target, pointFromCoords(document, e.clientX, e.clientY), (i) => hasElsewhere(root, i));
     if (!id || id === focusId) return;
     selfSelected.current = true;

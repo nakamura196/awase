@@ -1,19 +1,22 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import CommonLayout from '@/components/layout/Common';
 import PageContainer from '@/components/layout/PageContainer';
 import TextPane from '@/components/viewer/TextPane';
 import HeaderPanel from '@/components/viewer/HeaderPanel';
+import ImagePane from '@/components/viewer/ImagePane';
 import { useScrollSync } from '@/components/viewer/useScrollSync';
 import { loadSource, TeiLoadError, type LoadError, type ParallelConfig } from '@/lib/tei/load';
 import { summarizeHeader } from '@/lib/tei/header';
+import { pageBreaks, pageTarget, readFacsimile } from '@/lib/tei/facs';
 import { getSources } from '@/lib/viewerParams';
 
 // URL で受け取るパラメータ（docs/notes/survey.md「viewer の URL」）。
-// いま使っているのは u / tei / config（どれも繰り返し可）/ dir / id / embed と、表示の切り替えの lb / pb / sync。ほかはペインを足すときに使う
+// いま使っているのは u / tei / config（どれも繰り返し可）/ dir / id / embed / panes（image を含むかだけを見る）と、
+// 表示の切り替えの lb / pb / sync。ほかはペインを足すときに使う
 export const VIEWER_PARAMS = ['u', 'tei', 'config', 'manifest', 'curation', 'panes', 'dir', 'wit', 'xsl', 'id', 'embed'] as const;
 
 const KOUI = 'https://w3id.org/kouigenjimonogatari/tei/01.xml';
@@ -172,6 +175,8 @@ function Column({
   showLb,
   showPb,
   focusId,
+  showImages,
+  onHasImages,
 }: {
   src: string;
   index: number;
@@ -180,9 +185,15 @@ function Column({
   showLb: boolean;
   showPb: boolean;
   focusId: string | null;
+  showImages: boolean;
+  /** この列に画像の引ける頁があるか（ツールバーの「画像」を出すかどうか） */
+  onHasImages: (index: number, has: boolean) => void;
 }) {
   const t = useTranslations('Viewer');
   const [state, setState] = useState<State>({ status: 'loading' });
+  // 画像ペインで見ている頁と、本文をその頁へ動かす頼み（何番目の pb か）
+  const [page, setPage] = useState(0);
+  const [pageRequest, setPageRequest] = useState<{ index: number; seq: number } | null>(null);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -199,6 +210,20 @@ function Column({
   }, [src, index]);
 
   const header = useMemo(() => (state.status === 'ready' ? summarizeHeader(state.tei) : null), [state]);
+
+  // 頁の目印（pb）ごとの画像。facs・corresp から facsimile を引く（src/lib/tei/facs.ts）。1 つも引けなければ null
+  const facs = useMemo(() => {
+    if (state.status !== 'ready') return null;
+    const map = readFacsimile(state.tei, src);
+    const pbs = pageBreaks(state.tei);
+    const pages = pbs.map((pb) => pageTarget({ facs: pb.getAttribute('facs'), corresp: pb.getAttribute('corresp') }, map, src));
+    if (!pages.some(Boolean)) return null;
+    return { pages, labels: pbs.map((pb) => pb.getAttribute('n')), hasImage: pages.map(Boolean) };
+  }, [state, src]);
+  useEffect(() => onHasImages(index, Boolean(facs)), [facs, index, onHasImages]);
+  const imaged = showImages && facs !== null;
+  // 横書きの 1 列はページ全体がスクロールするので、画像を画面に留める
+  const pageScroll = !vertical && count === 1;
 
   return (
     <section className="flex min-w-0 flex-col gap-4" data-testid="text-column" aria-label={header?.title || src}>
@@ -225,6 +250,23 @@ function Column({
       {state.status === 'loading' && <p className="text-[var(--ds-fg-muted)]">{t('loading')}</p>}
       {state.status === 'error' && <ErrorMessage error={state.error} />}
       {state.status === 'ready' && (
+        // grid-cols-1 で列の幅を枠に収める（縦書きの本文が、中身の長さまで列を広げないように）
+        <div className={imaged ? `grid grid-cols-1 gap-4 ${count === 1 ? 'lg:grid-cols-2' : ''}` : ''}>
+        {imaged && facs && (
+          <div
+            className={`h-[45vh] ${count === 1 ? 'lg:h-[min(80vh,48rem)]' : ''} ${pageScroll ? 'lg:sticky lg:top-4 lg:self-start' : ''}`}
+          >
+            <ImagePane
+              pages={facs.pages}
+              labels={facs.labels}
+              index={page}
+              onGo={(i) => {
+                setPage(i);
+                setPageRequest((r) => ({ index: i, seq: (r?.seq ?? 0) + 1 }));
+              }}
+            />
+          </div>
+        )}
         <div
           className={`rounded border border-[var(--ds-border)] bg-[var(--ds-surface)] p-4 sm:p-6 ${
             vertical || count > 1 ? 'h-[min(80vh,48rem)]' : ''
@@ -239,7 +281,12 @@ function Column({
             scroll={count > 1}
             focusId={focusId}
             onSelect={(id) => updateParams({ id })}
+            pageImages={imaged ? facs?.hasImage : undefined}
+            page={page}
+            onPageChange={imaged ? setPage : undefined}
+            pageRequest={pageRequest}
           />
+        </div>
         </div>
       )}
     </section>
@@ -294,6 +341,20 @@ function Reader({ sources }: { sources: string[] }) {
   const sync = search.get('sync') !== '0';
   const columns = useRef<HTMLDivElement>(null);
   useScrollSync(columns, many && sync);
+  // 頁の画像（pb@facs）。panes を書いたときは、image を含むときだけ出す
+  const panes = search.get('panes');
+  const showImages = !panes || panes.split(',').includes('image');
+  // 画像の引ける列があるときだけ、ツールバーに「画像」を出す
+  const [imageColumns, setImageColumns] = useState<ReadonlySet<number>>(new Set());
+  const onHasImages = useCallback((i: number, has: boolean) => {
+    setImageColumns((prev) => {
+      if (prev.has(i) === has) return prev;
+      const next = new Set(prev);
+      if (has) next.add(i);
+      else next.delete(i);
+      return next;
+    });
+  }, []);
 
   return (
     <div className="flex flex-col gap-4 px-4 py-6 sm:px-8 bg-[var(--ds-bg)]">
@@ -309,6 +370,11 @@ function Reader({ sources }: { sources: string[] }) {
         <Toggle pressed={showPb} onClick={() => updateParams({ pb: showPb ? '0' : null })}>
           {t('pageBreaks')}
         </Toggle>
+        {imageColumns.size > 0 && (
+          <Toggle pressed={showImages} onClick={() => updateParams({ panes: showImages ? 'text' : null })}>
+            {t('images')}
+          </Toggle>
+        )}
         {many && (
           <Toggle pressed={sync} onClick={() => updateParams({ sync: sync ? '0' : null })}>
             {t('scrollSync')}
@@ -333,6 +399,8 @@ function Reader({ sources }: { sources: string[] }) {
             showLb={showLb}
             showPb={showPb}
             focusId={focusId}
+            showImages={showImages}
+            onHasImages={onHasImages}
           />
         ))}
       </div>

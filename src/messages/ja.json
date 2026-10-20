@@ -143,6 +143,14 @@
     "addLabel": "並べる TEI の URL",
     "addPlaceholder": "並べる TEI の URL",
     "add": "並べる",
-    "parallelTitle": "{count} つの本文を並べて表示"
+    "parallelTitle": "{count} つの本文を並べて表示",
+    "images": "画像",
+    "prevPage": "前の頁",
+    "nextPage": "次の頁",
+    "pageLabel": "{n} 頁",
+    "pageIndex": "{index} / {total}",
+    "noImage": "この頁には画像がありません。",
+    "openManifest": "IIIF マニフェストを開く",
+    "openImage": "画像を開く"
   }
 }

@@ -238,3 +238,29 @@ LICENSE の著作権者は kasane のまま（中村・小川）。awase で変�
 - 確かめたこと: vitest 56 件（`followOffset` 5 件を足した）、e2e 41 件（連動 3 件を足した。横・縦・切ったとき）、lint、build・basepath・export
 - ついでに直した: 狭い画面でツールバーのボタンが 1 つ増え、「並べる」の欄がつぶれてはみ出したので、欄を次の行へ折り返すようにした
 - まだ: 対応点の多い組み合わせ（同じ xml:id が数千ある 2 本）では、スクロールのたびに全部の点の位置を測る（1 フレーム 1 回にまとめてある）。重ければ二分探索にする
+
+## 2026-10-20 頁の目印（pb@facs）と画像ペイン（ブランチ pb-facs）
+
+- **kasane の画像部品（`@nakamura196/iiif-viewer`）は npm に未公開だった**（`npm view` で 404。kasane 側に公開の作業も無い）。
+  そのまま公開もできない。入口（exports）が TypeScript の元のファイルを指し、3D の部品（three ほか）を入れる側で用意する前提になっている。
+  そこで、画像ペインは仮の作り（IIIF の画像を 1 枚出すだけ）にし、TEI から頁の画像を引く側を先に作った。部品を公開したら、表示だけを差し替える
+- facsimile の書き方は資料ごとに違い、3 通りを読む（`src/lib/tei/facs.ts`）
+  - koui・tei_viewer（`TEI-EAJ/koui/static/data/01_with_wit_images.xml`）: `surfaceGrp@facs` が manifest、`graphic@n` が canvas、`graphic@url` が IIIF の画像、`pb@facs="#zone"`
+  - 校異源氏 w3id（`https://w3id.org/kouigenjimonogatari/tei/01.xml`）: `facsimile@sameAs` が manifest、`surface@sameAs` が canvas、`graphic@sameAs` が IIIF Image の base。
+    **`pb@corresp="#zone"` で範囲を指し、`pb@facs` には切り出した画像の URL を直接書いている**
+  - TEI の標準: `pb@facs="#surface"`、または `pb@facs` に画像の URL
+  - 引く順: facs と corresp の `#id` を先に見て、無ければ facs の URL。IIIF の URL なら base と範囲に分ける
+- 画像は、頁の範囲（zone）だけを IIIF で切り出して取る。校異源氏・koui は見開き 1 枚に 2 頁の範囲があるので、片方の頁だけが出る
+- **国立国会図書館の IIIF は、大きさの指定 `!w,h` に 500 を返す**（`.../R0000022/0,0,3445,4706/!1600,1600/0/default.jpg`）。`1600,`（幅だけ）は 200。
+  幅だけの指定から始め、読めなければ `max`、`full` の順に取り直す。範囲の幅より大きくは取らない（v3 は `^` が無いと拡大を断る）
+- 読んでいる頁: 読み始めの端（横書きは上、縦書きは右）から 4 分の 1 の所を、最後に越えた pb。頁の目印を消しても（`pb=0`）測れるよう、
+  消すのは目印の札だけにし、pb は中身の無い部品として残した
+- 落とし穴 2 つ
+  - 縦書きの本文を grid に入れると、列が中身の長さまで広がり、狭い画面で画面からはみ出した。`grid-cols-1`（minmax(0,1fr)）で収めた
+  - 横書きの 1 列では画像を画面に留めたい（sticky）が、共通のレイアウトの `main` の `overflow-hidden` がスクロールの枠になって効かなかった。
+    `overflow-clip`（切るだけで枠にならない）に替えた
+- URL: `panes` に `image` を含まなければ画像を出さない（ツールバーの「画像」で `panes=text` を書く）。見ている頁は URL に残していない
+- 確かめたこと: vitest 67 件（facs 11 件を足した）、e2e 48 件（画像の 7 件を足した。見本は e2e の中に書き、画像は 1×1 の PNG を返す）、lint、build・basepath・export。
+  実データ: 校異源氏 w3id 01 を縦 1280px・横 1280px・縦 390px、koui の見本を縦 1280px で。次の頁を 2 回押すと 7 頁になり、
+  本文の 7 頁の書き出し「この御方の御いさめをのみぞ猶わづらはしう」が画像の右端の行と一致した
+- まだ: 拡大・移動（kasane の部品）、PTV の config.json の url_map・image_map（行ごとの画像の位置）、並べた列それぞれの画像、見ている頁を URL に残すか
