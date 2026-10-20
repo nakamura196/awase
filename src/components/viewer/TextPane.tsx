@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { renderTeiText } from '@/lib/tei/render';
+import { readingFor, witIds } from '@/lib/tei/apparatus';
 import { findLinked, linkIdAt, pointFromCoords } from '@/lib/tei/link';
 import './tei.css';
 
@@ -24,6 +25,8 @@ interface Props {
   page?: number;
   /** 読んでいる頁（何番目の pb か）が変わったとき。頁の目印を押したときも */
   onPageChange?: (index: number) => void;
+  /** 異文の箇所で見せる伝本（?wit= の略号）。無ければ lem */
+  wit?: string | null;
   /** この頁（何番目の pb か）へ動かす。seq は同じ頁へ 2 度動かすときのため */
   pageRequest?: { index: number; seq: number } | null;
 }
@@ -94,6 +97,7 @@ export default function TextPane({
   page,
   onPageChange,
   pageRequest,
+  wit,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   // この列で押して選んだときは、この列は動かさない（押した所が逃げないように）
@@ -104,6 +108,30 @@ export default function TextPane({
     if (!el) return;
     el.replaceChildren(renderTeiText(tei, { doc: document, baseUrl }));
   }, [tei, baseUrl]);
+
+  // 伝本を選んだときは、異文の箇所ごとにその伝本の読みへ入れ替える（見せ方は tei.css）。
+  // 描き直さずに印を付け替えるだけなので、読んでいる位置は動かない
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.querySelectorAll('[data-awase-chosen]').forEach((n) => n.removeAttribute('data-awase-chosen'));
+    el.querySelectorAll('[data-awase-variant]').forEach((n) => n.removeAttribute('data-awase-variant'));
+    if (!wit) {
+      el.removeAttribute('data-awase-wit');
+      return;
+    }
+    el.setAttribute('data-awase-wit', wit);
+    for (const app of Array.from(el.querySelectorAll('tei-app'))) {
+      const readings = Array.from(app.querySelectorAll('tei-lem, tei-rdg')).filter((r) => r.parentElement?.closest('tei-app') === app);
+      const i = readingFor(
+        readings.map((r) => ({ kind: r.localName === 'tei-lem' ? 'lem' : 'rdg', wits: witIds(r.getAttribute('wit')) })),
+        wit,
+      );
+      if (i < 0) continue;
+      readings[i].setAttribute('data-awase-chosen', '');
+      if (readings[i].localName === 'tei-rdg') app.setAttribute('data-awase-variant', '');
+    }
+  }, [tei, baseUrl, wit]);
 
   // 選んだ要素へ移動して印を付ける。縦書きに切り替えたときも移動し直す
   useEffect(() => {

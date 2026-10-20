@@ -47,7 +47,7 @@ test('listWit と app があれば、異文の一覧を本文の横に出す', a
   await expect(rows.nth(1)).toContainText('（なし）');
   // 伝本の一覧
   await pane.getByText('伝本（4）').click();
-  await expect(pane.getByText('乙本')).toBeVisible();
+  await expect(pane.locator('dd', { hasText: '乙本' })).toBeVisible();
 });
 
 test('一覧の行を押すと本文のその箇所に印が付き、本文の箇所を押すと一覧の行が選ばれる', async ({ page }) => {
@@ -90,4 +90,62 @@ test('異文の無い TEI では、一覧もボタンも出ない', async ({ pag
   await expect(page.getByTestId('text-pane')).toContainText('異文なし');
   await expect(page.getByTestId('apparatus-pane')).toHaveCount(0);
   await expect(page.getByRole('button', { name: '異文' })).toHaveCount(0);
+});
+
+test('伝本の多い読みは「ほか N 本」に畳み、行を選ぶとすべて出す', async ({ page }) => {
+  const url = 'https://example.org/koui/many.xml';
+  const ids = ['A', 'B', 'C', 'D', 'E', 'F'];
+  await page.route(url, (route) =>
+    route.fulfill({
+      body: `<TEI xmlns="http://www.tei-c.org/ns/1.0"><teiHeader><fileDesc><sourceDesc><listWit>${ids
+        .map((id) => `<witness xml:id="${id}">${id}本</witness>`)
+        .join('')}</listWit></sourceDesc></fileDesc></teiHeader>
+        <text><body><p>はじめ<app><lem wit="#A #B #C #D">給ける</lem><rdg wit="#E">たまふ</rdg></app></p></body></text></TEI>`,
+      contentType: 'application/xml',
+      headers: { 'access-control-allow-origin': '*' },
+    }),
+  );
+  await page.goto(`/ja/viewer/?u=${encodeURIComponent(url)}`);
+  const row = page.getByTestId('apparatus-pane').getByRole('listitem').first();
+  // lem の 4 本と、名前の無い F の 5 本のうち、先頭の 3 本だけ見せる
+  const more = row.getByText('ほか 2 本');
+  await expect(more).toBeVisible();
+  await expect(more).toHaveAttribute('title', 'D本、F本（名前の無い伝本。底本と同じ読みとみなす）');
+  await expect(row.getByTitle('D本', { exact: true })).toHaveCount(0);
+  await row.getByRole('button').click();
+  await expect(row.getByText('ほか 2 本')).toHaveCount(0);
+  await expect(row.getByTitle('D本', { exact: true })).toBeVisible();
+  await expect(row.getByTitle('F本（名前の無い伝本。底本と同じ読みとみなす）')).toBeVisible();
+});
+
+test('伝本を選ぶと、本文の異文の箇所がその伝本の読みに替わる（?wit=）', async ({ page }) => {
+  await open(page);
+  const pane = page.getByTestId('apparatus-pane');
+  const text = page.getByTestId('text-pane');
+  const first = text.locator('tei-app[data-awase-app="1"]');
+  await expect(first.locator('tei-lem')).toBeVisible();
+  await expect(first.locator('tei-rdg')).toBeHidden();
+
+  await pane.getByRole('combobox').selectOption('乙');
+  await expect(page).toHaveURL(/wit=%E4%B9%99/);
+  // 1 箇所目は 乙 の読み、lem と違うので印が付く
+  await expect(first.locator('tei-rdg')).toBeVisible();
+  await expect(first.locator('tei-lem')).toBeHidden();
+  await expect(first).toHaveAttribute('data-awase-variant', '');
+  // 3 箇所目は lem に 乙 の名前があるので lem のまま
+  const third = text.locator('tei-app[data-awase-app="3"]');
+  await expect(third.locator('tei-lem')).toBeVisible();
+  await expect(third).not.toHaveAttribute('data-awase-variant');
+  // 一覧でも、本文に見せている読みに印が付く
+  await expect(pane.getByRole('listitem').first().locator('[data-awase-chosen]')).toContainText('たまふ');
+
+  // 丙は名前が無いので、どこも lem のまま。URL から直に開いても同じ
+  await open(page, `&wit=${encodeURIComponent('丙')}`);
+  await expect(pane.getByRole('combobox')).toHaveValue('丙');
+  await expect(first.locator('tei-lem')).toBeVisible();
+  await expect(text.locator('[data-awase-variant]')).toHaveCount(0);
+
+  // 底本に戻すと、URL から wit が消える
+  await pane.getByRole('combobox').selectOption('');
+  await expect(page).not.toHaveURL(/wit=/);
 });

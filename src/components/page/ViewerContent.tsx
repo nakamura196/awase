@@ -237,6 +237,7 @@ function Column({
   onHasImages,
   showApparatus,
   onHasApparatus,
+  wit,
 }: {
   src: string;
   index: number;
@@ -251,6 +252,8 @@ function Column({
   showApparatus: boolean;
   /** この列に異文（app）があるか（ツールバーの「異文」を出すかどうか） */
   onHasApparatus: (index: number, has: boolean) => void;
+  /** 異文の箇所で見せる伝本（?wit=） */
+  wit: string | null;
 }) {
   const t = useTranslations('Viewer');
   const [state, setState] = useState<State>({ status: 'loading' });
@@ -357,11 +360,19 @@ function Column({
             page={page}
             onPageChange={imaged ? setPage : undefined}
             pageRequest={pageRequest}
+            wit={wit}
           />
         </div>
         {withApparatus && (
           <div className={paneClass('apparatus')}>
-            <ApparatusPane tei={state.tei} baseUrl={src} focusId={focusId} onSelect={(id) => updateParams({ id })} />
+            <ApparatusPane
+              tei={state.tei}
+              baseUrl={src}
+              focusId={focusId}
+              onSelect={(id) => updateParams({ id })}
+              wit={wit}
+              onWitChange={(w) => updateParams({ wit: w })}
+            />
           </div>
         )}
         </div>
@@ -414,6 +425,8 @@ function Reader({ sources }: { sources: string[] }) {
   const showPb = search.get('pb') !== '0';
   // id は列ごとに探す。その id を持つ要素と、@corresp でそれを指す要素・範囲に印が付く（src/lib/tei/link.ts）
   const focusId = search.get('id');
+  // 異文の箇所で見せる伝本（koui の ?wit=）。書かなければ lem
+  const wit = search.get('wit');
   const many = sources.length > 1;
   // 並べた列のスクロール連動。既定で入れ、切ったときだけ URL に残す
   const sync = search.get('sync') !== '0';
@@ -481,6 +494,7 @@ function Reader({ sources }: { sources: string[] }) {
             onHasImages={onHasImages}
             showApparatus={showApparatus}
             onHasApparatus={onHasApparatus}
+            wit={wit}
           />
         ))}
       </div>
