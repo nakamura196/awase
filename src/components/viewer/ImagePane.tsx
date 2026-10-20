@@ -146,15 +146,16 @@ export default function ImagePane({ pages, labels, index, onGo, place }: Props) 
       data-xywh={view?.target?.xywh?.join(',')}
       data-place={placeTarget ? place?.n : undefined}
     >
-      <div className="flex items-center gap-2 text-sm">
-        <button type="button" disabled={prev < 0} onClick={() => go(prev)} className={button}>
-          {t('prevPage')}
+      {/* 頁送りはこの 1 組だけ（ビューアの頁送りは pager={false} で隠す）。本文の頁の順に、別の画像にもまたがって移る */}
+      <div className="flex items-center justify-center gap-2 text-sm" role="group" aria-label={t('pager')}>
+        <button type="button" disabled={prev < 0} onClick={() => go(prev)} className={button} aria-label={t('prevPage')} title={t('prevPage')}>
+          ‹
         </button>
-        <span className="flex-1 text-center text-[var(--ds-fg-muted)]" data-testid="image-page" aria-live="polite">
+        <span className="tabular-nums text-[var(--ds-fg)]" data-testid="image-page" aria-live="polite">
           {label ? t('pageLabel', { n: label }) : t('pageIndex', { index: index + 1, total: pages.length })}
         </span>
-        <button type="button" disabled={next < 0} onClick={() => go(next)} className={button}>
-          {t('nextPage')}
+        <button type="button" disabled={next < 0} onClick={() => go(next)} className={button} aria-label={t('nextPage')} title={t('nextPage')}>
+          ›
         </button>
       </div>
       {place && cur && (
@@ -200,6 +201,8 @@ export default function ImagePane({ pages, labels, index, onGo, place }: Props) 
             onSelect={onSelect}
             // 本文と並べるので、資料情報の欄は閉じて始める（読む人は開ける）
             panelOpen={false}
+            // 頁送りは上の 1 組に任せる。矢印キーでめくれば、onSelect で本文が付いてくる
+            pager={false}
             locale={locale === 'en' ? 'en' : 'ja'}
             theme={resolvedTheme === 'dark' ? 'dark' : resolvedTheme === 'light' ? 'light' : 'auto'}
             className="h-full"

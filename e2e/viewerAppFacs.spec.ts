@@ -115,8 +115,10 @@ test('www 付きの graphic@n でも、マニフェストの Canvas を引いて
   await shows(page, `${WWW}manifest.json`, `${IIIF}canvas/1`, '0,0,200,150');
   await page.locator('tei-pb[n="2"] .awase-pb-label').click();
   await shows(page, `${WWW}manifest.json`, `${IIIF}canvas/2`, '0,0,200,150');
-  // ビューアが Canvas を見つけている（1 枚目のままにならない）
-  await expect(pane(page).getByText('2 / 2')).toBeVisible({ timeout: 30_000 });
+  // ビューアが Canvas を見つけている（1 枚目のままにならない）。ビューアの頁送りは隠してあるので、出ている画像で見る
+  await expect(pane(page).locator('[data-iiif-stage] img')).toHaveAttribute('src', new RegExp(`^${IIIF}b/`), {
+    timeout: 30_000,
+  });
 });
 
 test('画像のある異文の箇所を選ぶと、その範囲を出し、資料ごとに切り替えられる', async ({ page }) => {
