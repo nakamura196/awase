@@ -17,6 +17,8 @@ interface Props {
   wit?: string | null;
   /** 伝本を選び替えたとき。null は lem に戻す */
   onWitChange?: (wit: string | null) => void;
+  /** 画像の範囲（app@facs）が引ける箇所の id。選ぶと画像ペインにその範囲が出る */
+  imaged?: Set<string>;
 }
 
 // 異文の一覧（koui の右の欄）。箇所ごとに、読みとその伝本を並べる。
@@ -76,6 +78,7 @@ function Entry({
   selected,
   onSelect,
   wit,
+  imaged,
 }: {
   entry: ApparatusEntry;
   names: Map<string, string>;
@@ -83,6 +86,7 @@ function Entry({
   selected: boolean;
   onSelect?: (id: string) => void;
   wit?: string | null;
+  imaged?: boolean;
 }) {
   const t = useTranslations('Viewer');
   // 本文に見せている読み（伝本を選んだときだけ印を付ける）
@@ -98,7 +102,14 @@ function Entry({
           selected ? 'bg-[color-mix(in_srgb,var(--ds-primary)_20%,transparent)] outline outline-1 outline-[var(--ds-primary)]' : 'hover:bg-[var(--ds-bg)]'
         }`}
       >
-        <span className="w-8 shrink-0 text-right text-xs tabular-nums text-[var(--ds-fg-muted)]">{entry.n}</span>
+        <span className="flex w-8 shrink-0 flex-col items-end text-xs tabular-nums text-[var(--ds-fg-muted)]">
+          {entry.n}
+          {imaged && (
+            <span title={t('placeHasImage')} aria-label={t('placeHasImage')} data-awase-imaged="">
+              ▣
+            </span>
+          )}
+        </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           {entry.readings.map((r, i) => (
             <span
@@ -125,7 +136,7 @@ function Entry({
   );
 }
 
-export default function ApparatusPane({ tei, baseUrl, focusId, onSelect, wit, onWitChange }: Props) {
+export default function ApparatusPane({ tei, baseUrl, focusId, onSelect, wit, onWitChange, imaged }: Props) {
   const t = useTranslations('Viewer');
   const witnesses: Witness[] = useMemo(() => readWitnesses(tei), [tei]);
   const entries = useMemo(() => readApparatus(tei, witnesses), [tei, witnesses]);
@@ -214,7 +225,7 @@ export default function ApparatusPane({ tei, baseUrl, focusId, onSelect, wit, on
       <div ref={list} className="min-h-0 flex-1 overflow-auto p-1" tabIndex={0}>
         <ol className="flex flex-col">
           {entries.map((e) => (
-            <Entry key={e.id} entry={e} names={names} baseUrl={baseUrl} selected={e.id === focusId} onSelect={onSelect} wit={wit} />
+            <Entry key={e.id} entry={e} names={names} baseUrl={baseUrl} selected={e.id === focusId} onSelect={onSelect} wit={wit} imaged={imaged?.has(e.id)} />
           ))}
         </ol>
       </div>

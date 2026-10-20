@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { imageSrcs, localRefs, pageTarget, parseIiifImageUrl } from './facs';
+import { canvasKey, facsTargets, imageSrcs, localRefs, manifestCanvasIds, matchCanvas, pageTarget, parseIiifImageUrl } from './facs';
 
 describe('parseIiifImageUrl', () => {
   it('base と切り出しの範囲を取る（校異源氏の pb@facs）', () => {
@@ -74,5 +74,53 @@ describe('imageSrcs', () => {
   it('IIIF でない画像はそのまま', () => {
     expect(imageSrcs({ image: 'https://example.org/p.jpg' })).toEqual(['https://example.org/p.jpg']);
     expect(imageSrcs({})).toEqual([]);
+  });
+});
+
+describe('facsTargets', () => {
+  const a = { service: 'https://example.org/iiif/a' };
+  const b = { service: 'https://example.org/iiif/b' };
+  const map = new Map([
+    ['zone_a', a],
+    ['zone_b', b],
+  ]);
+
+  it('app@facs の範囲を書かれた順にすべて引く（koui の見本は 3 つの資料）', () => {
+    expect(facsTargets('#zone_b #zone_a', map)).toEqual([b, a]);
+  });
+
+  it('引けない参照と画像の URL は飛ばす', () => {
+    expect(facsTargets('#nothing https://example.org/x.jpg #zone_a', map)).toEqual([a]);
+    expect(facsTargets(null, map)).toEqual([]);
+  });
+});
+
+describe('canvasKey と matchCanvas', () => {
+  const ndl = ['https://dl.ndl.go.jp/api/iiif/3437686/canvas/22', 'https://dl.ndl.go.jp/api/iiif/3437686/canvas/23'];
+
+  it('www の有無と http・https を区別しない', () => {
+    expect(canvasKey('https://www.dl.ndl.go.jp/api/iiif/3437686/canvas/22')).toBe(canvasKey(ndl[0]));
+    expect(canvasKey('http://example.org/c/1/')).toBe(canvasKey('https://example.org/c/1'));
+  });
+
+  it('koui の見本の www 付きの graphic@n から、マニフェストの Canvas を引く', () => {
+    expect(matchCanvas(ndl, 'https://www.dl.ndl.go.jp/api/iiif/3437686/canvas/23')).toBe(ndl[1]);
+  });
+
+  it('そのまま一致するものを先に使う。無ければ undefined', () => {
+    expect(matchCanvas(['http://example.org/c/1', 'https://example.org/c/1'], 'https://example.org/c/1')).toBe('https://example.org/c/1');
+    expect(matchCanvas(ndl, 'https://dl.ndl.go.jp/api/iiif/3437686/canvas/99')).toBeUndefined();
+  });
+
+  it('番号の続きは別の Canvas（canvas/2 と canvas/22 を取り違えない）', () => {
+    expect(matchCanvas(ndl, 'https://dl.ndl.go.jp/api/iiif/3437686/canvas/2')).toBeUndefined();
+  });
+});
+
+describe('manifestCanvasIds', () => {
+  it('Presentation API 2 と 3 の Canvas id を読む', () => {
+    expect(manifestCanvasIds({ sequences: [{ canvases: [{ '@id': 'c1' }, { '@id': 'c2' }] }] })).toEqual(['c1', 'c2']);
+    expect(manifestCanvasIds({ items: [{ id: 'c1' }, {}] })).toEqual(['c1']);
+    expect(manifestCanvasIds(null)).toEqual([]);
   });
 });
