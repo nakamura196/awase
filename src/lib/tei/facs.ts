@@ -152,3 +152,26 @@ export function pageBreaks(tei: Document): Element[] {
   if (Array.from(tei.getElementsByTagNameNS('*', 'text')).length > 0) return inText;
   return all.filter((pb) => !pb.closest('teiHeader, facsimile, standOff'));
 }
+
+/**
+ * 頁の目印（pb）が 1 つも無く、本文が sourceDoc の範囲（zone）に収まっている文書（PTV の絵入源氏）では、
+ * 本文を含む範囲の頭に、その範囲を指す頁の目印を足す。足した目印は type="awase-zone" で見分ける。
+ * こうすると、pb@facs の文書と同じ仕組み（頁の画像・頁の移動）がそのまま使える
+ */
+export function addZonePageBreaks(tei: Document): number {
+  if (tei.getElementsByTagNameNS('*', 'pb').length > 0) return 0;
+  let added = 0;
+  for (const sourceDoc of Array.from(tei.getElementsByTagNameNS('*', 'sourceDoc'))) {
+    for (const zone of Array.from(sourceDoc.getElementsByTagNameNS('*', 'zone'))) {
+      const id = xmlId(zone);
+      // 本文の無い範囲（挿絵だけの範囲など）と、範囲の中の範囲は頁にしない
+      if (!id || !zone.textContent?.trim() || zone.parentElement?.closest('zone')) continue;
+      const pb = tei.createElementNS(zone.namespaceURI, 'pb');
+      pb.setAttribute('facs', `#${id}`);
+      pb.setAttribute('type', 'awase-zone');
+      zone.insertBefore(pb, zone.firstChild);
+      added++;
+    }
+  }
+  return added;
+}

@@ -282,3 +282,17 @@ LICENSE の著作権者は kasane のまま（中村・小川）。awase で変�
 
 - 右の資料情報の欄が画像ペインの半分近くを取っていた。kasane の iiif-viewer v0.1.2 で `panelOpen` が入ったので（kasane #266）、`panelOpen={false}` を渡した。読む人はボタンで開ける
 - 確かめたこと: e2e 49 件、build。校異源氏 w3id の 01.xml を開き、欄が閉じて始まり、画像が広く出ることを画面で確認した。コンソールのエラーなし
+
+## 2026-10-20 PTV の絵入源氏で画像を出した（ブランチ ptv-map）
+
+- 当初は config.json の `url_map`（map.json）と `image_map`（image_map.json）を読んで画像を出すつもりだった。中身を見ると、どちらも要らなかった
+  - `image_map.json` は IIIF Curation（Range 1 つ）で、members 50 件。各 member は Canvas の半分（`#xywh=` が見開きの片側）と、その頁の最初の行の id（`line_id`）
+  - `map.json` は与謝野訳の文の id（YG…、255 件）→ 絵入源氏の行の id と文字の範囲（`…0000000001#0:22`）。画像の位置ではない（10/19 のメモの「画像の位置」は誤り）
+  - 本文 `pt/01.xml` には `<text>` も pb も無く、`<sourceDoc><surfaceGrp facs="manifest"><surface><graphic n="canvas"/><zone ulx… xml:id>` の中に `<line>` が入っている。
+    zone は 50 個で、image_map の 50 件と同じ。つまり画像との対応は本文の中に既にある
+- そこで、pb が 1 つも無く sourceDoc の zone に本文があるときは、本文を含む zone の頭に `<pb facs="#zone" type="awase-zone"/>` を足すことにした（`addZonePageBreaks`、読み込みの直後）。
+  あとは pb@facs の文書と同じ仕組みで動く。本文の無い zone と、zone の中の zone は頁にしない
+- 与謝野訳との対応は、本文の `<anchor corresp="…#YG…"/>`（199 件）で既に取れている（10/19 の corresp-link）。map.json の文字の範囲のほうが細かいが、今回は使わない
+- 確かめたこと: e2e 50 件（sourceDoc の見本を 1 件足した）、vitest 67 件、lint（警告 13 件は触っていないファイル）、build・basepath・export。
+  実データ: `?u=<PTV の config.json>` を幅 1400px で開き、絵入源氏の列が 50 頁になり、2 頁目で Canvas 3 の右半分（2808,0,2808,3744）が枠で囲まれた
+- まだ: map.json の文字の範囲で、訳の文を押したときに原文の行の一部だけを光らせるか

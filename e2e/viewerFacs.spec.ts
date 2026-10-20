@@ -185,3 +185,41 @@ test('画像の無い TEI では「画像」を出さない', async ({ page }) =
   await expect(page.getByRole('toolbar').getByRole('button', { name: '画像' })).toHaveCount(0);
   await expect(page.getByTestId('image-pane')).toHaveCount(0);
 });
+
+// PTV の絵入源氏の書き方。pb が無く、本文の行が sourceDoc の範囲（zone）に収まっている。範囲を頁として扱う
+const SOURCE_DOC = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader><fileDesc><titleStmt><title>範囲ごとの本文</title></titleStmt><publicationStmt><p/></publicationStmt><sourceDesc><p/></sourceDesc></fileDesc></teiHeader>
+  <sourceDoc>
+    <surfaceGrp facs="${IIIF}manifest.json">
+      <surface>
+        <graphic n="${IIIF}canvas/1" url="${IIIF}a/full/full/0/default.jpg"/>
+        <zone xml:id="zone_1" ulx="100" uly="0" lrx="200" lry="150">${'<lb/><line>一の範囲の行。</line>'.repeat(20)}</zone>
+        <zone xml:id="zone_2" ulx="0" uly="0" lrx="100" lry="150">${'<lb/><line>二の範囲の行。</line>'.repeat(20)}</zone>
+      </surface>
+      <surface>
+        <graphic n="${IIIF}canvas/2" url="${IIIF}b/full/full/0/default.jpg"/>
+        <zone xml:id="zone_3" ulx="0" uly="0" lrx="200" lry="150"/>
+        <zone xml:id="zone_4" ulx="0" uly="0" lrx="200" lry="150">${'<lb/><line>三の範囲の行。</line>'.repeat(20)}</zone>
+      </surface>
+    </surfaceGrp>
+  </sourceDoc>
+</TEI>`;
+
+test('pb が無く本文が範囲（zone）ごとに書かれていれば、範囲を頁にして画像を出す（PTV の絵入源氏）', async ({ page }) => {
+  await page.route(`${BASE}sourcedoc.xml`, (route) =>
+    route.fulfill({ body: SOURCE_DOC, contentType: 'application/xml', headers: { 'access-control-allow-origin': '*' } }),
+  );
+  await page.goto(`/ja/viewer/?u=${encodeURIComponent(`${BASE}sourcedoc.xml`)}`);
+  await expect(page.getByTestId('text-pane')).toContainText('一の範囲の行');
+  // 本文の無い範囲（zone_3）は頁にしない
+  await expect(page.locator('tei-pb')).toHaveCount(3);
+  await expect(label(page)).toHaveText('1 / 3');
+  await shows(page, `${IIIF}manifest.json`, `${IIIF}canvas/1`, '100,0,100,150');
+  const next = pane(page).getByRole('button', { name: '次の頁' });
+  await next.click();
+  await shows(page, `${IIIF}manifest.json`, `${IIIF}canvas/1`, '0,0,100,150');
+  await next.click();
+  await shows(page, `${IIIF}manifest.json`, `${IIIF}canvas/2`, '0,0,200,150');
+  await expect(next).toBeDisabled();
+});
