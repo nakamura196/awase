@@ -2,7 +2,8 @@ import { test, expect, type Page } from '@playwright/test';
 
 // 頁の目印（pb@facs）と画像ペインの連動。facsimile の書き方を 2 通り混ぜてある（src/lib/tei/facs.ts）
 // - 1・2 頁: koui の書き方（surfaceGrp@facs が manifest、graphic@url が IIIF の画像、pb@facs="#zone"）
-// - 3 頁: facsimile に無く、pb@facs に IIIF の切り出しの URL を直接書く
+// - 3 頁: facsimile に無く、pb@facs に IIIF の切り出しの URL を直接書く（ビューアは info.json を開く）
+// - 5 頁: koui の書き方で、マニフェストの 2 枚目の Canvas
 const BASE = 'https://example.org/facs/';
 const IIIF = 'https://example.org/iiif/';
 const para = (s: string) => `<p>${s.repeat(60)}</p>`;
@@ -16,6 +17,10 @@ const TEI = `<?xml version="1.0" encoding="UTF-8"?>
         <zone xml:id="z1" ulx="100" uly="0" lrx="200" lry="150"/>
         <zone xml:id="z2" ulx="0" uly="0" lrx="100" lry="150"/>
       </surface>
+      <surface>
+        <graphic n="${IIIF}canvas/2" url="${IIIF}b/full/full/0/default.jpg"/>
+        <zone xml:id="z5" ulx="0" uly="0" lrx="200" lry="150"/>
+      </surface>
     </surfaceGrp>
   </facsimile>
   <text><body>
@@ -23,12 +28,57 @@ const TEI = `<?xml version="1.0" encoding="UTF-8"?>
     <pb n="2" facs="#z2"/>${para('二の頁の本文。')}
     <pb n="3" facs="${IIIF}c/0,0,50,50/full/0/default.jpg"/>${para('三の頁の本文。')}
     <pb n="4"/>${para('四の頁の本文。')}
+    <pb n="5" facs="#z5"/>${para('五の頁の本文。')}
   </body></text>
 </TEI>`;
 const PLAIN = TEI.replace(/<facsimile>[\s\S]*<\/facsimile>/, '').replace(/ facs="[^"]*"/g, '');
 
 // 1×1 の PNG
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
+const canvas = (n: number, image: string) => ({
+  id: `${IIIF}canvas/${n}`,
+  type: 'Canvas',
+  width: 200,
+  height: 150,
+  items: [
+    {
+      id: `${IIIF}canvas/${n}/page`,
+      type: 'AnnotationPage',
+      items: [
+        {
+          id: `${IIIF}canvas/${n}/page/image`,
+          type: 'Annotation',
+          motivation: 'painting',
+          target: `${IIIF}canvas/${n}`,
+          body: {
+            id: `${IIIF}${image}/full/max/0/default.jpg`,
+            type: 'Image',
+            format: 'image/jpeg',
+            width: 200,
+            height: 150,
+            service: [{ id: `${IIIF}${image}`, type: 'ImageService3', profile: 'level0' }],
+          },
+        },
+      ],
+    },
+  ],
+});
+const MANIFEST = {
+  '@context': 'http://iiif.io/api/presentation/3/context.json',
+  id: `${IIIF}manifest.json`,
+  type: 'Manifest',
+  label: { none: ['画像の見本'] },
+  items: [canvas(1, 'a'), canvas(2, 'b')],
+};
+const info = (id: string) => ({
+  '@context': 'http://iiif.io/api/image/3/context.json',
+  id,
+  type: 'ImageService3',
+  protocol: 'http://iiif.io/api/image',
+  profile: 'level0',
+  width: 200,
+  height: 150,
+});
 
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -39,17 +89,29 @@ test.beforeEach(async ({ page }) => {
       ? route.fulfill({ body, contentType: 'application/xml', headers: { 'access-control-allow-origin': '*' } })
       : route.fulfill({ status: 404 });
   });
-  await page.route(`${IIIF}**`, (route) => route.fulfill({ body: PNG, contentType: 'image/png' }));
+  await page.route(`${IIIF}**`, (route) => {
+    const url = route.request().url();
+    const headers = { 'access-control-allow-origin': '*' };
+    if (url.endsWith('/manifest.json')) return route.fulfill({ json: MANIFEST, headers });
+    if (url.endsWith('/info.json')) return route.fulfill({ json: info(url.replace(/\/info\.json$/, '')), headers });
+    return route.fulfill({ body: PNG, contentType: 'image/png', headers });
+  });
 });
 
 const open = (page: Page, extra = '') => page.goto(`/ja/viewer/?u=${encodeURIComponent(`${BASE}facs.xml`)}${extra}`);
-const image = (page: Page) => page.getByTestId('image-pane').locator('img');
+const pane = (page: Page) => page.getByTestId('image-pane');
+// ビューアに渡したもの（開いた IIIF と、寄せる Canvas・範囲）
+const shows = async (page: Page, content: string, canvas: string, xywh: string) => {
+  await expect(pane(page)).toHaveAttribute('data-iiif-content', content);
+  await expect(pane(page)).toHaveAttribute('data-canvas', canvas);
+  await expect(pane(page)).toHaveAttribute('data-xywh', xywh);
+};
 const label = (page: Page) => page.getByTestId('image-page');
 
 test('開いたときは最初の頁の画像を、その範囲だけ出す', async ({ page }) => {
   await open(page);
   await expect(label(page)).toHaveText('1 頁');
-  await expect(image(page)).toHaveAttribute('src', `${IIIF}a/100,0,100,150/100,/0/default.jpg`);
+  await shows(page, `${IIIF}manifest.json`, `${IIIF}canvas/1`, '100,0,100,150');
   await expect(page.getByTestId('image-pane').getByRole('link')).toHaveAttribute('href', `${IIIF}manifest.json`);
   await expect(page.locator('tei-pb[n="1"]')).toHaveClass(/is-current/);
   // 画像の無い頁の目印は、押せる見た目にしない
@@ -60,7 +122,7 @@ test('頁の目印を押すと、その頁の画像に替わる', async ({ page 
   await open(page);
   await page.locator('tei-pb[n="2"] .awase-pb-label').click();
   await expect(label(page)).toHaveText('2 頁');
-  await expect(image(page)).toHaveAttribute('src', `${IIIF}a/0,0,100,150/100,/0/default.jpg`);
+  await shows(page, `${IIIF}manifest.json`, `${IIIF}canvas/1`, '0,0,100,150');
   await expect(page.locator('tei-pb[n="2"]')).toHaveClass(/is-current/);
 });
 
@@ -70,11 +132,21 @@ test('画像ペインで次の頁へ移ると、本文もその頁へ動く（pb
   await next.click();
   await next.click();
   await expect(label(page)).toHaveText('3 頁');
-  await expect(image(page)).toHaveAttribute('src', `${IIIF}c/0,0,50,50/50,/0/default.jpg`);
+  await shows(page, `${IIIF}c/info.json`, `${IIIF}c/canvas/1`, '0,0,50,50');
   // 3 頁の目印が画面の上の方に来ている
   await expect.poll(() => page.locator('tei-pb[n="3"]').evaluate((el) => el.getBoundingClientRect().top)).toBeLessThan(200);
-  // 4 頁は画像が無いので、その先へは進めない
+  // 4 頁は画像が無いので飛ばし、5 頁へ移る。その先は無い
+  await next.click();
+  await expect(label(page)).toHaveText('5 頁');
   await expect(next).toBeDisabled();
+});
+
+test('ビューアの側で次の画像へめくると、その画像の頁へ本文も動く', async ({ page }) => {
+  await open(page);
+  await expect(pane(page).getByText('1 / 2')).toBeVisible({ timeout: 30_000 });
+  await pane(page).getByRole('button').filter({ hasText: '›' }).click();
+  await expect(label(page)).toHaveText('5 頁');
+  await expect(page.locator('tei-pb[n="5"]')).toHaveClass(/is-current/);
 });
 
 test('縦書きで本文を読み進めると、画像も付いてくる', async ({ page }) => {

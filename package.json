@@ -18,15 +18,22 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@nakamura196/iiif-viewer": "https://github.com/nakamura196/iiif-kasane/releases/download/iiif-viewer-v0.1.1/nakamura196-iiif-viewer-0.1.1.tgz",
     "@nakamura196/react-ui": "github:nakamura196/react-ui#v0.5.0",
     "@next/third-parties": "^16.4.0",
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.2",
     "@tailwindcss/postcss": "^4.3.3",
+    "gsap": "^3.15.0",
+    "jotai": "^2.20.3",
     "maplibre-gl": "6.13.0",
     "next": "^16.1.6",
     "next-intl": "^4.14.9",
     "next-themes": "^0.4.6",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "three": "^0.186.1",
+    "three-stdlib": "^2.36.1"
   },
   "devDependencies": {
     "@playwright/test": "1.64.0",
@@ -34,6 +41,7 @@
     "@types/node": "^26.6.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
     "eslint": "^10",
     "eslint-config-next": "^16.1.6",
     "postcss": "^8.5.30",

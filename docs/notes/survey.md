@@ -264,3 +264,16 @@ LICENSE の著作権者は kasane のまま（中村・小川）。awase で変�
   実データ: 校異源氏 w3id 01 を縦 1280px・横 1280px・縦 390px、koui の見本を縦 1280px で。次の頁を 2 回押すと 7 頁になり、
   本文の 7 頁の書き出し「この御方の御いさめをのみぞ猶わづらはしう」が画像の右端の行と一致した
 - まだ: 拡大・移動（kasane の部品）、PTV の config.json の url_map・image_map（行ごとの画像の位置）、並べた列それぞれの画像、見ている頁を URL に残すか
+
+## 2026-10-20 画像ペインを kasane の Viewer（v0.1.1）に差し替えた（ブランチ pb-facs）
+
+- kasane の Release `iiif-viewer-v0.1.1` の tgz を URL で入れた（npm には未公開のまま）。peer の three などは前の版のときに入れたものをそのまま使う
+- 渡し方（`src/components/viewer/ImagePane.tsx`）
+  - 頁にマニフェストがあれば、それを開き、`target` に Canvas と範囲（zone）を渡す。範囲は枠で囲まれる
+  - マニフェストが無く IIIF の画像だけなら、`<base>/info.json` を開く。kasane が画像 1 枚のマニフェストにし、Canvas の id は `<base>/canvas/1` になる（kasane の `imageInfoManifest.ts`）。範囲はこれに当てる
+  - IIIF でない画像の URL だけのときは、前と同じく `<img>` で 1 枚出す
+- 逆向き: ビューアの側でめくると `onSelect` で Canvas が来る。同じマニフェストのその Canvas を指す最初の頁へ本文を動かす。見開き（1 Canvas に 2 頁）で、いまの頁がその Canvas にあれば動かさない
+- three.js を使うので `next/dynamic` の `ssr: false` で読む。静的書き出し（build・basepath・export）は通った
+- 確かめたこと: e2e の画像の 8 件（見本にマニフェストと info.json を足し、5 頁目を 2 枚目の Canvas にした。ビューアの「›」で 5 頁へ本文が動くのを足した）、e2e 全 49 件、vitest 67 件、lint。
+  実データ: 校異源氏 w3id 01 で、5 頁は NDL の canvas/22 の左半分が枠で囲まれる。次の頁で canvas/23 の右半分。ビューアの「›」を 2 回押すと canvas/24 になり、本文は 8 頁へ動く
+- 気になる点: ビューアの右の資料情報の欄が、画像ペインの半分ほどを取る。閉じるボタンがあり、閉じた状態はブラウザに覚えられる。最初から閉じて出す指定は v0.1.1 には無い
