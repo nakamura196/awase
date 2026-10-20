@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { renderElement } from '@/lib/tei/render';
-import { readApparatus, readWitnesses, type ApparatusEntry, type Witness } from '@/lib/tei/apparatus';
+import { foldSigla, readApparatus, readingFor, readWitnesses, type ApparatusEntry, type Witness } from '@/lib/tei/apparatus';
 
 interface Props {
   tei: Document;
@@ -13,6 +13,10 @@ interface Props {
   focusId?: string | null;
   /** 行を押したとき。その箇所の id を渡す */
   onSelect?: (id: string) => void;
+  /** 本文に見せている伝本（?wit= の略号）。null は lem */
+  wit?: string | null;
+  /** 伝本を選び替えたとき。null は lem に戻す */
+  onWitChange?: (wit: string | null) => void;
 }
 
 // 異文の一覧（koui の右の欄）。箇所ごとに、読みとその伝本を並べる。
@@ -27,20 +31,40 @@ function ReadingText({ el, baseUrl }: { el: Element; baseUrl?: string }) {
   return <span ref={ref} />;
 }
 
-function Sigla({ ids, names, muted, title }: { ids: string[]; names: Map<string, string>; muted?: boolean; title?: string }) {
+/** 畳まずに見せる略号の数。koui の見本では lem に 10 本前後の名前が並ぶ */
+const SIGLA_LIMIT = 3;
+
+interface Siglum {
+  id: string;
+  /** lem に名前の無い伝本（lem と同じ読みとみなす） */
+  silent?: boolean;
+}
+
+function Sigla({ sigla, names, expanded }: { sigla: Siglum[]; names: Map<string, string>; expanded: boolean }) {
+  const t = useTranslations('Viewer');
+  const label = (s: Siglum) => {
+    const name = names.get(s.id) ?? s.id;
+    return s.silent ? `${name}（${t('silentWitness')}）` : name;
+  };
+  const { shown, hidden } = expanded ? { shown: sigla, hidden: [] as Siglum[] } : foldSigla(sigla, SIGLA_LIMIT);
   return (
     <>
-      {ids.map((id) => (
+      {shown.map((s) => (
         <span
-          key={id}
-          title={title ? `${names.get(id) ?? id}（${title}）` : (names.get(id) ?? id)}
+          key={s.id}
+          title={label(s)}
           className={`whitespace-nowrap rounded px-1 text-xs ${
-            muted ? 'text-[var(--ds-fg-muted)]' : 'bg-[var(--ds-bg)] text-[var(--ds-fg)]'
+            s.silent ? 'text-[var(--ds-fg-muted)]' : 'bg-[var(--ds-bg)] text-[var(--ds-fg)]'
           }`}
         >
-          {id}
+          {s.id}
         </span>
       ))}
+      {hidden.length > 0 && (
+        <span title={hidden.map(label).join('、')} className="whitespace-nowrap text-xs text-[var(--ds-fg-muted)]">
+          {t('moreWitnesses', { count: hidden.length })}
+        </span>
+      )}
     </>
   );
 }
@@ -51,14 +75,18 @@ function Entry({
   baseUrl,
   selected,
   onSelect,
+  wit,
 }: {
   entry: ApparatusEntry;
   names: Map<string, string>;
   baseUrl?: string;
   selected: boolean;
   onSelect?: (id: string) => void;
+  wit?: string | null;
 }) {
   const t = useTranslations('Viewer');
+  // 本文に見せている読み（伝本を選んだときだけ印を付ける）
+  const chosen = wit ? readingFor(entry.readings, wit) : -1;
   const empty = (el: Element) => !(el.textContent ?? '').trim() && !el.children.length;
   return (
     <li data-awase-entry={entry.id}>
@@ -73,12 +101,22 @@ function Entry({
         <span className="w-8 shrink-0 text-right text-xs tabular-nums text-[var(--ds-fg-muted)]">{entry.n}</span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           {entry.readings.map((r, i) => (
-            <span key={i} className="flex flex-wrap items-baseline gap-1">
+            <span
+              key={i}
+              data-awase-chosen={i === chosen ? '' : undefined}
+              className={`flex flex-wrap items-baseline gap-1 ${i === chosen ? 'border-l-4 border-[#f59e0b] pl-1' : ''}`}
+            >
               <span className={r.kind === 'lem' ? 'font-bold' : ''}>
                 {empty(r.el) ? <span className="text-[var(--ds-fg-muted)]">{t('omitted')}</span> : <ReadingText el={r.el} baseUrl={baseUrl} />}
               </span>
-              <Sigla ids={r.wits} names={names} />
-              {r.kind === 'lem' && <Sigla ids={entry.silent} names={names} muted title={t('silentWitness')} />}
+              <Sigla
+                sigla={[
+                  ...r.wits.map((id) => ({ id })),
+                  ...(r.kind === 'lem' ? entry.silent.map((id) => ({ id, silent: true })) : []),
+                ]}
+                names={names}
+                expanded={selected}
+              />
             </span>
           ))}
         </span>
@@ -87,7 +125,7 @@ function Entry({
   );
 }
 
-export default function ApparatusPane({ tei, baseUrl, focusId, onSelect }: Props) {
+export default function ApparatusPane({ tei, baseUrl, focusId, onSelect, wit, onWitChange }: Props) {
   const t = useTranslations('Viewer');
   const witnesses: Witness[] = useMemo(() => readWitnesses(tei), [tei]);
   const entries = useMemo(() => readApparatus(tei, witnesses), [tei, witnesses]);
@@ -112,6 +150,23 @@ export default function ApparatusPane({ tei, baseUrl, focusId, onSelect }: Props
     >
       <div className="border-b border-[var(--ds-border)] px-3 py-2 text-sm">
         <p className="font-bold text-[var(--ds-fg)]">{t('apparatusCount', { count: entries.length })}</p>
+        {witnesses.length > 0 && onWitChange && (
+          <label className="mt-1 flex items-center gap-2 text-[var(--ds-fg-muted)]">
+            {t('readAs')}
+            <select
+              value={wit ?? ''}
+              onChange={(e) => onWitChange(e.target.value || null)}
+              className="min-w-0 flex-1 rounded border border-[var(--ds-border)] bg-[var(--ds-bg)] px-1 py-0.5 text-[var(--ds-fg)]"
+            >
+              <option value="">{t('readAsLemma')}</option>
+              {witnesses.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.id === w.label ? w.id : `${w.id}（${w.label}）`}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {witnesses.length > 0 && (
           <details className="text-[var(--ds-fg-muted)]">
             <summary className="cursor-pointer">{t('witnesses', { count: witnesses.length })}</summary>
@@ -129,7 +184,7 @@ export default function ApparatusPane({ tei, baseUrl, focusId, onSelect }: Props
       <div ref={list} className="min-h-0 flex-1 overflow-auto p-1" tabIndex={0}>
         <ol className="flex flex-col">
           {entries.map((e) => (
-            <Entry key={e.id} entry={e} names={names} baseUrl={baseUrl} selected={e.id === focusId} onSelect={onSelect} />
+            <Entry key={e.id} entry={e} names={names} baseUrl={baseUrl} selected={e.id === focusId} onSelect={onSelect} wit={wit} />
           ))}
         </ol>
       </div>

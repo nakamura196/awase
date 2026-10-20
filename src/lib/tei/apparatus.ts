@@ -51,6 +51,21 @@ export function silentWitnesses(all: string[], named: string[]): string[] {
   return all.filter((id) => !seen.has(id));
 }
 
+/**
+ * その伝本の読みは何番目か（?wit= で本文を入れ替えるとき）。
+ * @wit に名前があればその読み、どこにも無ければ lem（黙っている伝本は lem と同じとみなす）。lem も無ければ -1
+ */
+export function readingFor(readings: Pick<Reading, 'kind' | 'wits'>[], wit: string): number {
+  const named = readings.findIndex((r) => r.wits.includes(wit));
+  return named >= 0 ? named : readings.findIndex((r) => r.kind === 'lem');
+}
+
+/** 一覧の行で略号を畳む。先頭の limit 個だけ見せ、残りは「ほか N 本」にまとめる */
+export function foldSigla<T>(ids: T[], limit: number): { shown: T[]; hidden: T[] } {
+  if (ids.length <= limit + 1) return { shown: ids, hidden: [] };
+  return { shown: ids.slice(0, limit), hidden: ids.slice(limit) };
+}
+
 /** 伝本の一覧。witness の中身（abbr があればそれを除いた文字）を名前にする */
 export function readWitnesses(tei: Document): Witness[] {
   const out: Witness[] = [];
