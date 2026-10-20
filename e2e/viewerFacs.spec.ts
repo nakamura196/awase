@@ -161,13 +161,18 @@ test('縦書きで本文を読み進めると、画像も付いてくる', async
   await expect(label(page)).toHaveText('2 頁');
 });
 
-test('横書きでページを読み進めると、画像も付いてきて、画面に留まる', async ({ page }) => {
+test('横書きで本文を読み進めると、画像も付いてくる。ページ全体は動かない', async ({ page }) => {
   await open(page);
-  await page.locator('tei-pb[n="2"]').evaluate((el) => window.scrollBy(0, el.getBoundingClientRect().top - 20));
+  const pane = page.getByTestId('text-pane');
+  const imageTop = await page.getByTestId('image-pane').evaluate((el) => el.getBoundingClientRect().top);
+  // 2 頁の目印を、枠の上端（読み始め）に寄せる
+  await pane.evaluate((el) => {
+    const pb = el.querySelector('tei-pb[n="2"]')!;
+    el.scrollTop += pb.getBoundingClientRect().top - el.getBoundingClientRect().top - 10;
+  });
   await expect(label(page)).toHaveText('2 頁');
-  const top = await page.getByTestId('image-pane').evaluate((el) => el.getBoundingClientRect().top);
-  expect(top).toBeGreaterThanOrEqual(0);
-  expect(top).toBeLessThan(100);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  expect(await page.getByTestId('image-pane').evaluate((el) => el.getBoundingClientRect().top)).toBe(imageTop);
 });
 
 test('「画像」を切ると画像ペインを閉じ、URL に残る', async ({ page }) => {

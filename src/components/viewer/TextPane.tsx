@@ -53,8 +53,20 @@ function hasElsewhere(self: Element, id: string): boolean {
 
 // 読んでいる頁。読み始めの端（横書きは上、縦書きは右）から 4 分の 1 の所を、最後に越えた頁の目印。
 // 頁の目印は文書の順に並んでいるので、越えたものは先頭からひと続きになる
-function currentPage(pbs: Element[], frame: { top: number; right: number; width: number; height: number }, vertical: boolean) {
-  const edge = vertical ? frame.right - frame.width / 4 : frame.top + frame.height / 4;
+// 終わりまで動かしきったときは、それ以上進めないので、枠の中に見えている最後の目印にする（最後の頁が短いと、目印が 4 分の 1 の所まで来ない）
+function currentPage(
+  pbs: Element[],
+  frame: { top: number; right: number; width: number; height: number },
+  vertical: boolean,
+  atEnd = false,
+) {
+  const edge = atEnd
+    ? vertical
+      ? frame.right - frame.width
+      : frame.top + frame.height
+    : vertical
+      ? frame.right - frame.width / 4
+      : frame.top + frame.height / 4;
   let cur = 0;
   for (let i = 0; i < pbs.length; i++) {
     const r = pbs[i].getBoundingClientRect();
@@ -62,6 +74,12 @@ function currentPage(pbs: Element[], frame: { top: number; right: number; width:
     else break;
   }
   return cur;
+}
+
+// 枠の中を、読み進める向きの終わりまで動かしきったか（縦書きは左へ進むので scrollLeft が負になる）
+function scrolledToEnd(el: HTMLElement, vertical: boolean) {
+  if (vertical) return el.scrollWidth > el.clientWidth && Math.abs(el.scrollLeft) + el.clientWidth >= el.scrollWidth - 1;
+  return el.scrollHeight > el.clientHeight && el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
 }
 export default function TextPane({
   tei,
@@ -127,7 +145,7 @@ export default function TextPane({
       const frame = inner
         ? el.getBoundingClientRect()
         : { top: 0, right: window.innerWidth, width: window.innerWidth, height: window.innerHeight };
-      const i = currentPage(pbs, frame, vertical);
+      const i = currentPage(pbs, frame, vertical, inner && scrolledToEnd(el, vertical));
       if (i !== last) {
         last = i;
         onPageChange(i);
