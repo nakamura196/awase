@@ -9,10 +9,10 @@ import { SectionHeading, News } from '@nakamura196/react-ui';
 import { NEWS, NEWS_ON_HOME } from '@/lib/news';
 
 const SCREENS = [
-  { key: 'viewer', href: '/viewer' },
-  { key: 'compare', href: '/compare' },
-  { key: 'xsl', href: '/xsl' },
-  { key: 'dts', href: '/dts' },
+  { key: 'viewer', href: '/viewer', ready: true },
+  { key: 'compare', href: '/compare', ready: false },
+  { key: 'xsl', href: '/xsl', ready: false },
+  { key: 'dts', href: '/dts', ready: false },
 ] as const;
 
 export default function HomeContent() {
@@ -55,7 +55,7 @@ export default function HomeContent() {
                 >
                   <h3 className="text-lg font-semibold mb-2 text-[var(--ds-primary)]">{t(`${s.key}Title`)}</h3>
                   <p className="text-[var(--ds-fg-muted)]">{t(`${s.key}Description`)}</p>
-                  <p className="mt-3 text-xs text-[var(--ds-fg-muted)]">{t('comingSoon')}</p>
+                  {!s.ready && <p className="mt-3 text-xs text-[var(--ds-fg-muted)]">{t('comingSoon')}</p>}
                 </Link>
               ))}
             </div>

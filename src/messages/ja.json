@@ -61,8 +61,6 @@
     "param": "パラメータ",
     "value": "いまの値",
     "empty": "（空）",
-    "viewerTitle": "ビューア",
-    "viewerLead": "TEI の本文を、画像や注釈と並べて読む画面です。",
     "compareTitle": "比較",
     "compareLead": "二つの資料や諸本を並べて見比べる画面です。",
     "xslTitle": "XSL",
@@ -110,5 +108,33 @@
       "seeAlso": "関連情報",
       "subjectOf": "言及文献"
     }
+  },
+  "Viewer": {
+    "title": "ビューア",
+    "lead": "TEI の URL を入れると、本文を読める形で表示します。縦書き・横書きを切り替えられます。",
+    "urlLabel": "TEI の URL",
+    "open": "開く",
+    "samples": "見本",
+    "sampleKoui": "校異源氏物語 桐壺（縦書き）",
+    "sampleYosano": "与謝野晶子訳 源氏物語 桐壺（横書き）",
+    "loading": "読み込んでいます…",
+    "display": "表示",
+    "vertical": "縦書き",
+    "lineBreaks": "改行",
+    "pageBreaks": "頁",
+    "untitled": "（題名なし）",
+    "headerDetails": "書誌の詳細",
+    "altTitle": "別名",
+    "resp": "担当",
+    "publisher": "公開者",
+    "date": "日付",
+    "availability": "利用条件",
+    "source": "底本",
+    "teiUrl": "TEI の URL",
+    "errorFetch": "TEI を取りに行けませんでした。URL が正しいか、配信元が他のサイトからの読み込み（CORS）を許しているかを確かめてください。",
+    "errorStatus": "TEI を取りに行けませんでした（{status}）。",
+    "errorParse": "XML として読めませんでした。",
+    "errorNotTei": "TEI ではないようです（いちばん外側の要素が {root}）。",
+    "errorConfig": "config.json（本文と訳を束ねる設定）は、まだ読めません。対訳の表示を作るときに対応します。"
   }
 }

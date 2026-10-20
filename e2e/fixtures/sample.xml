@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title>見本の本文</title>
+        <title type="alt">Sample text</title>
+        <author>作者不詳</author>
+      </titleStmt>
+      <publicationStmt>
+        <publisher>Awase</publisher>
+        <availability><p><ref target="https://creativecommons.org/publicdomain/zero/1.0/">CC0</ref></p></availability>
+      </publicationStmt>
+      <sourceDesc><p>テスト用に作った本文。</p></sourceDesc>
+    </fileDesc>
+  </teiHeader>
+  <facsimile><surface xml:id="f1"><graphic url="https://example.org/1.jpg"/></surface></facsimile>
+  <text>
+    <body>
+      <p>
+        <pb n="1"/>
+        <lb/><seg xml:id="s1">一行目の本文。</seg>
+        <lb/><seg xml:id="s2" onclick="alert(1)" style="color:red">二行目に<lg type="waka"><l>かきりとて</l><l>わかるゝ道の</l></lg>と歌がある。</seg>
+        <lb/><seg xml:id="s3"><choice><sic>誤</sic><corr>正</corr></choice>と<app><lem wit="#A">甲</lem><rdg wit="#B">乙</rdg></app>。</seg>
+        <lb/><ref target="javascript:alert(1)">悪いリンク</ref><ref target="#s1">一行目へ</ref>
+      </p>
+    </body>
+  </text>
+</TEI>

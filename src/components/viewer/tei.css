@@ -1,0 +1,222 @@
+/* 本文ペインの見た目。TEI の要素名がそのまま部品の名前（tei-*）になっている（src/lib/tei/render.ts）。
+   既定は「中身を流す」で、塊として見せたい要素だけをここに足す。 */
+
+.awase-text {
+  font-family: var(--ds-font-serif);
+  line-height: 2;
+  color: var(--ds-fg);
+}
+
+.awase-text.is-vertical {
+  writing-mode: vertical-rl;
+  /* 縦書きは横に流れる。ペインの高さと幅に収め、横にスクロールさせる。
+     幅を決めないと、中身の長さまで広がってスクロールしない */
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  line-height: 2.1;
+}
+
+.awase-text:not(.is-vertical) {
+  max-width: 48rem;
+  margin-inline: auto;
+}
+
+/* 塊 */
+.awase-text :is(tei-text, tei-body, tei-front, tei-back, tei-div, tei-p, tei-ab, tei-lg, tei-sp,
+  tei-list, tei-item, tei-head, tei-figure, tei-table, tei-row, tei-quote[rend~='block'],
+  tei-closer, tei-opener, tei-salute, tei-signed, tei-dateline, tei-castlist, tei-stage) {
+  display: block;
+}
+.awase-text :is(tei-p, tei-ab, tei-lg, tei-sp, tei-list, tei-figure) {
+  margin-block-end: 1em;
+}
+.awase-text tei-head {
+  font-weight: 700;
+  font-size: 1.15em;
+  margin-block: 0.5em;
+}
+.awase-text tei-l {
+  display: block;
+}
+.awase-text tei-item {
+  margin-inline-start: 1.5em;
+}
+.awase-text tei-table {
+  display: table;
+  border-collapse: collapse;
+}
+.awase-text tei-row {
+  display: table-row;
+}
+.awase-text tei-cell {
+  display: table-cell;
+  padding: 0.25em 0.5em;
+  border: 1px solid var(--ds-border);
+}
+.awase-text tei-speaker {
+  font-weight: 700;
+  margin-inline-end: 0.5em;
+}
+.awase-text tei-stage {
+  font-style: italic;
+  color: var(--ds-fg-muted);
+}
+
+/* 行の中に置かれた和歌（校異源氏の seg の中の lg など）は、改行せずに句を空けて流す */
+.awase-text :is(tei-seg, tei-s, tei-l, tei-hi) tei-lg {
+  display: inline;
+  margin: 0;
+}
+.awase-text :is(tei-seg, tei-s, tei-l, tei-hi) tei-lg tei-l {
+  display: inline;
+}
+.awase-text :is(tei-seg, tei-s, tei-l, tei-hi) tei-lg tei-l + tei-l {
+  margin-inline-start: 0.5em;
+}
+.awase-text tei-lg[type='waka'] {
+  color: var(--ds-primary);
+}
+
+/* 改行。行の区切りを見せないときは <br> を消す */
+.awase-text:not(.show-lb) tei-lb > br {
+  display: none;
+}
+
+/* 頁の目印 */
+.awase-text tei-pb {
+  display: inline;
+}
+.awase-text .awase-pb-label {
+  display: inline-block;
+  margin-inline: 0.4em;
+  padding: 0 0.35em;
+  font-family: var(--ds-font-sans);
+  font-size: 0.7em;
+  line-height: 1.6;
+  color: var(--ds-fg-muted);
+  border: 1px solid var(--ds-border);
+  border-radius: 0.25em;
+  text-combine-upright: all;
+}
+.awase-text tei-pb:not([n]) .awase-pb-label::before {
+  content: '¶';
+}
+.awase-text:not(.show-pb) tei-pb {
+  display: none;
+}
+
+/* 文字の扱い */
+.awase-text tei-hi:is([rend~='bold'], [rend~='b']) {
+  font-weight: 700;
+}
+.awase-text tei-hi:is([rend~='italic'], [rend~='i']) {
+  font-style: italic;
+}
+.awase-text tei-hi[rend~='sup'] {
+  vertical-align: super;
+  font-size: 0.75em;
+}
+.awase-text tei-hi[rend~='sub'] {
+  vertical-align: sub;
+  font-size: 0.75em;
+}
+.awase-text tei-hi[rend~='underline'] {
+  text-decoration: underline;
+}
+.awase-text :is(tei-title[level='m'], tei-title[level='j'], tei-foreign, tei-term) {
+  font-style: italic;
+}
+.awase-text.is-vertical :is(tei-title, tei-foreign, tei-term) {
+  font-style: normal;
+}
+.awase-text tei-del {
+  text-decoration: line-through;
+  color: var(--ds-fg-muted);
+}
+.awase-text tei-add {
+  color: var(--ds-primary);
+}
+.awase-text tei-unclear {
+  text-decoration: underline dotted;
+}
+.awase-text tei-gap::before {
+  content: '〓';
+  color: var(--ds-fg-muted);
+}
+.awase-text tei-supplied::before {
+  content: '[';
+}
+.awase-text tei-supplied::after {
+  content: ']';
+}
+
+/* 選択: 直した方・正規化した方・展開した方を見せる */
+.awase-text tei-choice > :is(tei-sic, tei-orig, tei-abbr) {
+  display: none;
+}
+.awase-text tei-choice > tei-sic:only-child,
+.awase-text tei-choice > tei-orig:only-child,
+.awase-text tei-choice > tei-abbr:only-child {
+  display: inline;
+}
+.awase-text tei-choice[title] {
+  text-decoration: underline dotted var(--ds-fg-muted);
+  cursor: help;
+}
+
+/* 異文: 本文には lem だけ。諸本の読みは指を置くと出る */
+.awase-text tei-app > tei-rdg,
+.awase-text tei-app > tei-rdggrp,
+.awase-text tei-app > tei-note,
+.awase-text tei-app > tei-wit {
+  display: none;
+}
+.awase-text tei-app[title] {
+  background: color-mix(in srgb, var(--ds-primary) 12%, transparent);
+  cursor: help;
+}
+
+/* 注。行の中に小さく括弧で */
+.awase-text tei-note {
+  font-size: 0.8em;
+  color: var(--ds-fg-muted);
+}
+.awase-text tei-note::before {
+  content: '〔';
+}
+.awase-text tei-note::after {
+  content: '〕';
+}
+
+/* 人名・地名など（entities ペインと結ぶ） */
+.awase-text :is(tei-persname, tei-placename, tei-orgname, tei-rs, tei-name, tei-date) {
+  text-decoration: underline 1px color-mix(in srgb, var(--ds-primary) 50%, transparent);
+  text-underline-offset: 0.25em;
+}
+
+.awase-text a {
+  color: var(--ds-primary);
+  text-decoration: underline;
+}
+.awase-text img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 指を置いた行・選んだ要素 */
+.awase-text :is(tei-seg, tei-s, tei-l)[corresp]:hover,
+.awase-text :is(tei-seg, tei-s, tei-l)[id]:hover {
+  background: color-mix(in srgb, var(--ds-primary) 8%, transparent);
+}
+.awase-text .is-selected {
+  background: color-mix(in srgb, var(--ds-primary) 20%, transparent);
+  outline: 1px solid var(--ds-primary);
+  border-radius: 2px;
+}
+
+/* 本文ペインに出さないもの（念のため。render.ts でも外している） */
+.awase-text :is(tei-teiheader, tei-facsimile, tei-standoff) {
+  display: none;
+}

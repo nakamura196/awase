@@ -61,8 +61,6 @@
     "param": "Parameter",
     "value": "Current value",
     "empty": "(empty)",
-    "viewerTitle": "Viewer",
-    "viewerLead": "Read TEI text side by side with images and annotations.",
     "compareTitle": "Compare",
     "compareLead": "Put two sources or witnesses next to each other.",
     "xslTitle": "XSL",
@@ -110,5 +108,33 @@
       "seeAlso": "See also",
       "subjectOf": "Mentioned in"
     }
+  },
+  "Viewer": {
+    "title": "Viewer",
+    "lead": "Enter the URL of a TEI file to read its text. You can switch between vertical and horizontal writing.",
+    "urlLabel": "TEI URL",
+    "open": "Open",
+    "samples": "Samples",
+    "sampleKoui": "Kōi Genji monogatari, Kiritsubo (vertical)",
+    "sampleYosano": "Yosano Akiko's translation of Genji, Kiritsubo (horizontal)",
+    "loading": "Loading…",
+    "display": "Display",
+    "vertical": "Vertical",
+    "lineBreaks": "Line breaks",
+    "pageBreaks": "Pages",
+    "untitled": "(Untitled)",
+    "headerDetails": "Bibliographic details",
+    "altTitle": "Other titles",
+    "resp": "Responsibility",
+    "publisher": "Publisher",
+    "date": "Date",
+    "availability": "Availability",
+    "source": "Source",
+    "teiUrl": "TEI URL",
+    "errorFetch": "Could not fetch the TEI. Check the URL, and that the server allows cross-origin requests (CORS).",
+    "errorStatus": "Could not fetch the TEI ({status}).",
+    "errorParse": "Could not parse the file as XML.",
+    "errorNotTei": "This does not look like TEI (the root element is {root}).",
+    "errorConfig": "config.json files (which bundle a text with its translation) are not supported yet. They will be with the parallel-text pane."
   }
 }

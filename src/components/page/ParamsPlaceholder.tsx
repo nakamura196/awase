@@ -7,8 +7,8 @@ import CommonLayout from '@/components/layout/Common';
 import PageContainer from '@/components/layout/PageContainer';
 
 interface Props {
-  /** messages の Placeholder.<screen> の名前（viewer / compare / xsl / dts） */
-  screen: 'viewer' | 'compare' | 'xsl' | 'dts';
+  /** messages の Placeholder.<screen> の名前（compare / xsl / dts） */
+  screen: 'compare' | 'xsl' | 'dts';
   /** この画面が受け取る予定の URL パラメータ */
   params: readonly string[];
 }
