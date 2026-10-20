@@ -40,3 +40,14 @@
 - 影印つきの TEI（ocr・vellum・urenja）を、実際の IIIF 画像で見ての確認はしていない。
 - 外の SEF の URL を `xsl` に渡す場合、配信元の CORS が要る。
 - tei-tools の XSL が更新されたときの取り込みは手作業。
+
+## 2026-10-20 訂正と追記: OCR ビューの影印が黒い件
+
+Vercel のプレビューで、OCR ビューの右側（影印）が黒いままだと報告があった。手元では再現できなかった。
+
+- 同じ TEI（`https://tei-tools.toyobunko-lab.jp/xml/ocr-sample/tei.xml`）を、next dev と書き出した静的ファイル（`out/`）の両方で開いた。どちらも影印の画像とゾーンの枠が出た。
+- iframe の中では、OpenSeadragon（CDN）の読み込みも画像（f1.png）の取得も 200 で通った。canvas は 639×527 で描かれた。
+- 頁送り（`tei-pager.js`）も動いた。srcdoc の中では `location` が `about:srcdoc` になり、`?page=1` が付く（`replaceState` が通る）。`allow-same-origin` は要らなかった。
+- 手元で外れていた候補は、sandbox、`graphic@url` の書き換え、CORS、`<base>` の四つ。ブラウザは Chromium だけで確かめた（Firefox・WebKit は手元の Playwright で起動できなかった）。
+- 原因は特定できていない。プレビュー側だけの要因（古いデプロイ、ブラウザの違い、画像の取得先が github.io のリダイレクト経由だった時期）が残る。
+- 再発を捕まえるため、e2e に OCR ビューの確認を足した（`e2e/xsl.spec.ts`、画像は `page.route` で返す）。画像が描かれることと、次へで 2 頁目の画像が出ることを見る。OpenSeadragon は CDN から読むので、この確認にはネットワークが要る。

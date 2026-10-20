@@ -60,3 +60,35 @@ test('u が無いときは見本を出す', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'XSL' })).toBeVisible();
   await expect(page.getByRole('link', { name: /校異源氏物語/ })).toBeVisible();
 });
+
+// OCR の翻刻ビュー。影印の画像を OpenSeadragon（CDN）で出す。iframe の srcdoc の中で動くかを見る。
+// 画像は TEI の置き場所を基準に解決される（images/f1.png → https://example.org/tei/images/f1.png）
+test('OCR ビューは影印の画像を出し、頁送りで次の画像に替わる', async ({ page }) => {
+  const OCR_URL = 'https://example.org/tei/ocr.xml';
+  const asked: string[] = [];
+  await page.route(OCR_URL, (route) =>
+    route.fulfill({
+      body: readFileSync(path.join(__dirname, 'fixtures/ocr.xml'), 'utf-8'),
+      contentType: 'application/xml',
+      headers: { 'access-control-allow-origin': '*' },
+    }),
+  );
+  for (const n of [1, 2]) {
+    await page.route(`https://example.org/tei/images/f${n}.png`, (route) => {
+      asked.push(`f${n}`);
+      return route.fulfill({
+        body: readFileSync(path.join(__dirname, `fixtures/ocr-f${n}.png`)),
+        contentType: 'image/png',
+        headers: { 'access-control-allow-origin': '*' },
+      });
+    });
+  }
+  await page.goto(`/ja/xsl/?u=${encodeURIComponent(OCR_URL)}`);
+  const frame = page.frameLocator('[data-testid="xsl-frame"]');
+  // xsl を書かなくても、影印つきなので ocr になる。画像が描かれると canvas ができる
+  await expect(frame.locator('.facsimile canvas').first()).toBeVisible();
+  expect(asked).toContain('f1');
+  await frame.getByRole('button', { name: /次へ/ }).click();
+  await expect(frame.locator('.tei-page-active .facsimile canvas')).toBeVisible();
+  expect(asked).toContain('f2');
+});
