@@ -190,9 +190,15 @@
 .awase-text tei-app > tei-wit {
   display: none;
 }
+/* 地の色を全部の箇所に塗ると本文が読みにくいので、点線の傍線だけにする（縦書きでは右の傍線） */
 .awase-text tei-app[title] {
-  background: color-mix(in srgb, var(--ds-primary) 12%, transparent);
+  text-decoration: underline dotted color-mix(in srgb, var(--ds-primary) 70%, transparent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.3em;
   cursor: help;
+}
+.awase-text tei-app[title]:hover {
+  background: color-mix(in srgb, var(--ds-primary) 10%, transparent);
 }
 
 /* 注。行の中に小さく括弧で */

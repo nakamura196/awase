@@ -61,17 +61,24 @@ function useCanvasIds(manifest: string | undefined): string[] | null {
   return manifest && state?.manifest === manifest ? state.ids : null;
 }
 
-/** ビューアに渡すもの。マニフェストがあればそれを、無ければ IIIF の画像 1 枚（info.json）を開く */
-function viewerOf(page: FacsTarget | null, canvasIds: string[] | null = null): { content: string; target?: ViewerTarget } | null {
+/**
+ * ビューアに渡すもの。マニフェストがあればそれを、無ければ IIIF の画像 1 枚（info.json）を開く。
+ * highlight: 範囲に枠を描くか。頁の画像では切る（頁全体の範囲に枠を描くと、外側が暗く塗られて灰色の帯に見える）
+ */
+function viewerOf(
+  page: FacsTarget | null,
+  canvasIds: string[] | null = null,
+  highlight = true,
+): { content: string; target?: ViewerTarget } | null {
   if (!page) return null;
   const xywh = page.region;
   if (page.manifest) {
     const canvasId = page.canvas && ((canvasIds && matchCanvas(canvasIds, page.canvas)) ?? page.canvas);
-    return { content: page.manifest, target: canvasId ? { canvasId, xywh } : undefined };
+    return { content: page.manifest, target: canvasId ? { canvasId, xywh, highlight } : undefined };
   }
   if (page.service) {
     // info.json から作られるマニフェストの Canvas は「<base>/canvas/1」（kasane の imageInfoManifest.ts）
-    return { content: `${page.service}/info.json`, target: { canvasId: `${page.service}/canvas/1`, xywh } };
+    return { content: `${page.service}/info.json`, target: { canvasId: `${page.service}/canvas/1`, xywh, highlight } };
   }
   return null;
 }
@@ -103,7 +110,11 @@ export default function ImagePane({ pages, labels, index, onGo, place }: Props) 
   const canvasIds = useCanvasIds(shown?.manifest);
   // マニフェストの Canvas を引き終えてからビューアを開く（書かれた Canvas が見つからず、1 枚目を開いてしまわないように）
   const waiting = Boolean(shown?.manifest && shown.canvas && !canvasIds);
-  const view = useMemo(() => (waiting ? null : viewerOf(shown, canvasIds)), [shown, canvasIds, waiting]);
+  // 枠を描くのは異文の箇所の範囲だけ
+  const view = useMemo(
+    () => (waiting ? null : viewerOf(shown, canvasIds, Boolean(placeTarget))),
+    [shown, canvasIds, waiting, placeTarget],
+  );
 
   const go = (i: number) => {
     // 頁を送ったら、異文の箇所の画像は閉じる
