@@ -1,0 +1,99 @@
+# Build and deploy the Next.js static export to GitHub Pages.
+# Vercel build is kept independent (vercel.json handles redirect).
+name: Deploy Next.js site to Pages
+
+# PR ではビルドと検査だけ (配布は main への push のみ)。
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+  workflow_dispatch:
+
+# Allow only one concurrent Pages deployment.
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          # 新しい lockfile / 依存に追従しやすいよう Node 24 (npm 11) を使う。
+          # Node 20 だと "Missing: <pkg> from lock file" で npm ci が失敗する
+          # ケースに遭遇するため (dts-viewer の ci.yml と同じ理由)。
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Runtime dependencies only: the dev-only advisories (braces via eslint-config-next)
+      # have no fixed release yet and never reach the deployed site.
+      - name: Audit dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      # The remaining warnings are React Compiler rules (see eslint.config.mjs).
+      # The cap keeps the count from growing; lower it as they are fixed.
+      - name: Lint
+        run: npm run lint -- --max-warnings=29
+
+      - name: Run unit tests
+        run: npm test
+
+      # サブパス (basePath) 付きのビルドでも参照が壊れないことを先に確かめる。
+      # kasane.ldas.jp はホスト直下なので本番では使わないが、basePath の付け忘れは
+      # ホスト直下では隠れるため、フォーク先の github.io 配信などに備えて検査を残す。
+      - name: Verify subpath build (basePath)
+        env:
+          GITHUB_PAGES: 'true'
+        run: |
+          npm run build
+          ./scripts/check-basepath.sh
+          NEXT_PUBLIC_BASE_PATH=/iiif-kasane npm run test:export
+          rm -rf out .next
+
+      # 本番 (kasane.ldas.jp) はホスト直下で配る。独自ドメインは Pages の設定 (gh api) で指定済み。
+      - name: Build static export
+        env:
+          # GA4 Measurement ID (公開値). Repo Variables に NEXT_PUBLIC_GA_ID を
+          # 設定したデプロイ者だけが計測を有効化する。フォーク先で意図せず
+          # オーナーの GA に送信しないため、fallback は持たない。未設定なら
+          # ビルドは成功するが GoogleAnalytics は描画されない。
+          NEXT_PUBLIC_GA_ID: ${{ vars.NEXT_PUBLIC_GA_ID }}
+        run: npm run build
+
+      - name: Verify export (links, assets, robots/sitemap, no old hosts)
+        run: npm run test:export
+
+      - name: Add .nojekyll
+        # Prevents GitHub Pages from running Jekyll, which would strip files
+        # whose names start with underscore (e.g. Next.js's _next/ directory).
+        run: touch out/.nojekyll
+
+      - name: Upload artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: ./out
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
