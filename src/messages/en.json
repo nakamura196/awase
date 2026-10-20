@@ -68,6 +68,33 @@
     "dtsTitle": "DTS",
     "dtsLead": "Browse and open DTS documents."
   },
+  "Compare": {
+    "title": "Compare",
+    "lead": "Place the images of two sources side by side and see the differences in their text, character by character. Enter two IIIF manifest URLs.",
+    "left": "Left",
+    "right": "Right",
+    "manifestLabel": "{side} manifest URL",
+    "nameLabel": "{side} name",
+    "namePlaceholder": "Name (defaults to the manifest title)",
+    "compare": "Compare",
+    "samples": "Samples",
+    "sampleKoui": "Koui Genji Monogatari and a manuscript from the National Diet Library (Kiritsubo)",
+    "loading": "Loading…",
+    "errorFetch": "Could not load the manifest. Check the URL and that it allows access from other sites.",
+    "errorStatus": "Could not load the manifest (response {status}).",
+    "errorNotManifest": "This could not be read as an IIIF manifest.",
+    "views": "View",
+    "tabImage": "Images",
+    "tabDiff": "Text diff",
+    "pager": "{side} canvas pager",
+    "prev": "Previous canvas",
+    "next": "Next canvas",
+    "noText": "This canvas has no text (annotations).",
+    "distance": "Edit distance {distance}",
+    "similarity": "Similarity {rate}%",
+    "result": "Differences",
+    "networkNote": "The edit-distance network graph (mode=2) is not built yet. Showing the text diff instead."
+  },
   "Help": {
     "title": "Help"
   },
