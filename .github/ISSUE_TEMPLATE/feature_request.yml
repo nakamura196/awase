@@ -22,4 +22,4 @@ body:
     id: examples
     attributes:
       label: Example manifests or references
-      description: Manifest URLs, IIIF specifications or Cookbook recipes, or other viewers that do this
+      description: TEI files, specifications, or other viewers that do this

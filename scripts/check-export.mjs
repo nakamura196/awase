@@ -3,13 +3,13 @@
  * 静的書き出し (out/) の中のリンクと資産の参照が、すべて実在するファイルを指しているか確かめる。
  *
  * 使い方: npm run build のあとに npm run test:export
- *   basePath 付き (GITHUB_PAGES=true) でビルドしたときは NEXT_PUBLIC_BASE_PATH=/iiif-kasane を付けて実行する。
+ *   basePath 付き (GITHUB_PAGES=true) でビルドしたときは NEXT_PUBLIC_BASE_PATH=/awase を付けて実行する。
  *
  * 見ること:
  *   1. HTML の href / src / srcset / content と CSS の url() のうち、サイト内を指すもの
  *      (/ で始まる参照・相対参照・サイトの絶対 URL) が out/ のファイルに解決できる
  *   2. / で始まる参照が basePath から始まっている (basePath の付け忘れ・二重付け)
- *   3. 旧ホスト (github.io/iiif-3d-viewer, 3d-iiif-viewer.vercel.app, 3d.ldas.jp) を指す文字列が残っていない
+ *   3. 土台にしたサイト (IIIF Kasane) のホスト・名前を指す文字列が残っていない
  *   4. robots.txt の Sitemap と sitemap.xml の各 URL が実在するページを指す
  *   5. トップ (index.html) と 404.html がある
  */
@@ -18,9 +18,10 @@ import { join, relative, posix } from 'node:path';
 
 const OUT = new URL('../out/', import.meta.url).pathname;
 const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/\/+$/, '');
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kasane.ldas.jp').replace(/\/+$/, '');
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nakamura196.github.io/awase').replace(/\/+$/, '');
 
-const FORBIDDEN = ['nakamura196.github.io/iiif-3d-viewer', '3d-iiif-viewer.vercel.app', '//3d.ldas.jp'];
+// 土台にしたサイト(IIIF Kasane)の名前やホストが残っていないこと
+const FORBIDDEN = ['kasane.ldas.jp', 'iiif-kasane', 'IIIF Kasane'];
 
 const errors = [];
 const fail = (msg) => errors.push(msg);
@@ -99,7 +100,7 @@ for (const file of files) {
   const text = readFileSync(file, 'utf8');
 
   for (const bad of FORBIDDEN) {
-    if (text.includes(bad)) fail(`${where}: 旧ホストへの参照が残っている: ${bad}`);
+    if (text.includes(bad)) fail(`${where}: 土台サイトの名前・ホストが残っている: ${bad}`);
   }
 
   if (file.endsWith('.html')) {

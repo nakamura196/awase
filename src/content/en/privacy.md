@@ -1,12 +1,12 @@
 # Privacy Policy
 
-IIIF Kasane ("the Service") respects the privacy of its users and handles information obtained through the provision of the Service as described below.
+Awase ("the Service") respects the privacy of its users and handles information obtained through the provision of the Service as described below.
 
 Last updated: October 17, 2026
 
 ## 1. Operator
 
-The Service is operated by Satoru Nakamura and Jun Ogawa (The University of Tokyo) for research and educational purposes.
+The Service is operated by Satoru Nakamura (The University of Tokyo) for research and educational purposes.
 
 ## 2. Information We Collect
 
@@ -25,15 +25,15 @@ The Service uses Google Analytics 4, provided by Google LLC, to analyze usage. G
 
 If you do not wish to allow the use of cookies, you can refuse data collection by disabling cookies in your browser settings or by using the opt-out add-on linked above.
 
-Please note that if you specify a manifest URL or similar value as a query parameter, the page address including that URL may be recorded by analytics. Please refrain from entering confidential URLs.
+Please note that if you specify a TEI URL or similar value as a query parameter, the page address including that URL may be recorded by analytics. Please refrain from entering confidential URLs.
 
 ## 4. Third-Party Services
 
 The Service uses the following third-party services, and information may be obtained by each provider when you access them. Please review each service's privacy policy for details on how they handle data.
 
-- **IIIF manifest servers**: Requests are sent directly from your browser to the server hosting the manifest URL you enter or select. The operator of that server may obtain access information (such as your IP address).
+- **Servers hosting TEI and images**: Requests are sent directly from your browser to the server hosting the URL you enter or select. The operator of that server may obtain access information (such as your IP address).
 - **YouTube (video embeds)**: The Service embeds videos from YouTube (youtube.com). When you play a video, Google / YouTube may obtain information and set cookies.
-- **Hosting (Vercel)**: The Service is delivered on infrastructure provided by Vercel Inc., and server access logs (IP address, user agent, etc.) may be recorded.
+- **Hosting (GitHub Pages)**: The Service is delivered on infrastructure provided by GitHub, Inc., and server access logs (IP address, user agent, etc.) may be recorded.
 
 ## 5. Purpose of Use
 
@@ -54,4 +54,4 @@ The contents of this policy may be changed without notice as necessary. Any chan
 
 ## 8. Contact
 
-For inquiries regarding the Service or this policy, please use [GitHub Issues](https://github.com/nakamura196/iiif-kasane/issues).
+For inquiries regarding the Service or this policy, please use [GitHub Issues](https://github.com/nakamura196/awase/issues).

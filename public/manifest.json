@@ -1,7 +1,7 @@
 {
-  "name": "IIIF Kasane",
-  "short_name": "Kasane",
-  "description": "IIIF viewer for 3D models, images, audio and video",
+  "name": "Awase",
+  "short_name": "Awase",
+  "description": "Integrated TEI viewer",
   "theme_color": "#3b82f6",
   "background_color": "#ffffff",
   "display": "standalone",

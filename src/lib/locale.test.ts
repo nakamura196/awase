@@ -32,7 +32,7 @@ describe('localizedUrl', () => {
   });
 
   it('クエリと # を落とさずに言語パスを付ける', () => {
-    const search = '?iiif-content=https%3A%2F%2Fexample.org%2Fmanifest.json';
+    const search = '?u=https%3A%2F%2Fexample.org%2Ftei.xml';
     expect(localizedUrl('en', '/viewer/', search, '#a')).toBe(`/en/viewer/${search}#a`);
   });
 
@@ -41,7 +41,7 @@ describe('localizedUrl', () => {
   });
 
   it('GH Pages (basePath あり) では basePath を前置する', () => {
-    process.env.NEXT_PUBLIC_BASE_PATH = '/iiif-kasane';
-    expect(localizedUrl('en', '/viewer/', '?x=1')).toBe('/iiif-kasane/en/viewer/?x=1');
+    process.env.NEXT_PUBLIC_BASE_PATH = '/awase';
+    expect(localizedUrl('en', '/viewer/', '?x=1')).toBe('/awase/en/viewer/?x=1');
   });
 });

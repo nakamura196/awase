@@ -10,8 +10,8 @@ body:
     id: url
     attributes:
       label: URL
-      description: The Kasane URL you opened, including `manifest=` or other parameters
-      placeholder: https://kasane.ldas.jp/en/viewer?manifest=...
+      description: The Awase URL you opened, including `u=` or other parameters
+      placeholder: https://nakamura196.github.io/awase/en/viewer/?u=...
     validations:
       required: true
   - type: textarea

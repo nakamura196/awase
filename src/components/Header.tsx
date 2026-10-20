@@ -1,23 +1,25 @@
 'use client';
 
-import { useAtom } from 'jotai';
-import { manifestUrlAtom } from '@nakamura196/iiif-viewer';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
 import { Link } from '@/i18n/routing';
-import { ThemeToggle, LanguageSwitcher, buttonClass } from '@nakamura196/react-ui';
+import { ThemeToggle, LanguageSwitcher } from '@nakamura196/react-ui';
+
+const NAV = [
+  { href: '/viewer', key: 'viewer' },
+  { href: '/compare', key: 'compare' },
+  { href: '/xsl', key: 'xsl' },
+  { href: '/dts', key: 'dts' },
+  { href: '/help', key: 'help' },
+  { href: '/news', key: 'news' },
+] as const;
 
 // compact: ビューアのように表示領域を広く取りたいページでは、帯を細くする
 const Header = ({ compact = false }: { compact?: boolean }) => {
-  const [manifestUrl, setManifestUrl] = useAtom(manifestUrlAtom);
   const router = useRouter();
   const pathname = usePathname();
   const locale = useLocale();
   const t = useTranslations('Header');
-
-  const handleHomeClick = () => {
-    setManifestUrl(null);
-  };
 
   const changeLanguage = (newLocale: string) => {
     // 現在のパスから言語部分を除去
@@ -39,7 +41,6 @@ const Header = ({ compact = false }: { compact?: boolean }) => {
       <div className="flex items-center space-x-2 sm:space-x-4 min-w-0">
         <Link
           href="/"
-          onClick={handleHomeClick}
           className="hover:opacity-80 transition-opacity shrink-0 flex items-center"
         >
           <h1
@@ -49,10 +50,17 @@ const Header = ({ compact = false }: { compact?: boolean }) => {
             {t('title')}
           </h1>
         </Link>
+        <nav aria-label={t('nav')} className="hidden md:flex items-center gap-4 text-sm">
+          {NAV.map((n) => (
+            <Link key={n.href} href={n.href} className="text-[var(--ds-fg-muted)] hover:text-[var(--ds-fg)] transition-colors">
+              {t(n.key)}
+            </Link>
+          ))}
+        </nav>
       </div>
       <div className="flex items-center space-x-2 sm:space-x-3 ml-2 shrink-0">
         <a
-          href="https://github.com/nakamura196/iiif-kasane"
+          href="https://github.com/nakamura196/awase"
           target="_blank"
           rel="noopener noreferrer"
           aria-label={t('source')}
@@ -74,20 +82,6 @@ const Header = ({ compact = false }: { compact?: boolean }) => {
           ]}
         />
 
-        {manifestUrl && (
-          // The manifest URL is a static asset / external URL already carrying
-          // the basePath, not an in-app route. Use a plain <a> so next/link
-          // does not prepend basePath a second time (which 404s on GH Pages).
-          <a
-            href={manifestUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonClass('primary', 'sm', 'whitespace-nowrap')}
-          >
-            <span className="hidden sm:inline">{t('download')}</span>
-            <span className="sm:hidden">{t('downloadShort')}</span>
-          </a>
-        )}
       </div>
     </header>
   );

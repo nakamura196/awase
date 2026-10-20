@@ -7,8 +7,7 @@ export default defineConfig([
   ...nextVitals,
   ...nextTs,
   {
-    // React Compiler rules (eslint-plugin-react-hooks 7). three.js code moves the
-    // camera and controls in place and syncs state from the URL / localStorage in
+    // React Compiler rules (eslint-plugin-react-hooks 7). Code that syncs state from the URL / localStorage in
     // effects, which these rules report. Kept visible as warnings, not errors.
     rules: {
       'react-hooks/set-state-in-effect': 'warn',
@@ -17,13 +16,11 @@ export default defineConfig([
     },
   },
   {
-    // Tests build loose IIIF JSON by hand and read deep into it.
+    // Tests build loose JSON by hand and read deep into it.
     files: ['**/*.test.{ts,tsx}'],
     rules: { '@typescript-eslint/no-explicit-any': 'off' },
   },
-  globalIgnores(['.next/**', 'out/**', 'packages/*/dist/**', 'build/**', 'vercel-static/**', 'next-env.d.ts',
+  globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts',
     // Copied from node_modules at build time (scripts/copy-maplibre-worker.mjs)
-    'public/maplibre/**',
-    // IIIF VR Gallery の描画部分。元リポジトリ(nakamura196/iiif-vr-gallery)の素の JavaScript をそのまま移したもの
-    'src/components/gallery/engine/**']),
+    'public/maplibre/**']),
 ]);

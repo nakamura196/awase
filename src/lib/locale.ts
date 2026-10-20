@@ -16,7 +16,7 @@ export function pickLocale(languages: readonly string[]): Locale {
   return FALLBACK_LOCALE;
 }
 
-// 言語パスを付けた行き先を組み立てる。?iiif-content=... と #... はそのまま引き継ぐ。
+// 言語パスを付けた行き先を組み立てる。?u=... と #... はそのまま引き継ぐ。
 export function localizedUrl(locale: Locale, path: string, search = '', hash = ''): string {
   const p = path.startsWith('/') ? path : `/${path}`;
   return `${withBasePath(`/${locale}${p}`)}${search}${hash}`;

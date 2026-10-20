@@ -1,6 +1,6 @@
 // お知らせを書き足したときに、書き漏れ（片方の言語・重複した id・存在しないユースケース）を見つけるテスト。
 import { describe, expect, it } from 'vitest';
-import { NEWS, actionHrefOf, relatedUseCasesOf } from './news';
+import { NEWS, actionHrefOf } from './news';
 
 describe('NEWS', () => {
   it('id は重複せず、URL に使える形', () => {
@@ -19,10 +19,6 @@ describe('NEWS', () => {
     for (const n of NEWS) {
       for (const s of [n.title.ja, n.title.en, n.body.ja, n.body.en]) expect(s.trim(), n.id).not.toBe('');
     }
-  });
-
-  it('関連するユースケースは実在する', () => {
-    for (const n of NEWS) expect(relatedUseCasesOf(n)).toHaveLength(n.usecases?.length ?? 0);
   });
 
   it('「試す」はサイト内のパスか、外部なら https', () => {
@@ -44,18 +40,17 @@ describe('NEWS', () => {
 });
 
 describe('content/news/<id>.md の読み込み', () => {
-  it('front matter の . は入れ子に、usecases はカンマで分け、note は捨てる', async () => {
+  it('front matter の . は入れ子に、note は捨てる', async () => {
     const { parseNewsFile } = await import('../../scripts/build-news.mjs');
-    const n = parseNewsFile('x', '---\ndate: 2026-10-18\norder: 2\ntitle.ja: 題\ntitle.en: Title\naction.viewer: https://example.org/m.json\naction.params: tab=views\nusecases: a, b\nnote: 覚え書き\n---\n\n## ja\n\n本文。\n\n## en\n\nBody.\n');
+    const n = parseNewsFile('x', '---\ndate: 2026-10-18\norder: 2\ntitle.ja: 題\ntitle.en: Title\naction.viewer: https://example.org/m.json\naction.params: dir=rtl\nnote: 覚え書き\n---\n\n## ja\n\n本文。\n\n## en\n\nBody.\n');
     expect(n).toEqual({
       id: 'x', date: '2026-10-18', order: 2, title: { ja: '題', en: 'Title' },
-      action: { viewer: 'https://example.org/m.json', params: 'tab=views' },
-      usecases: ['a', 'b'], body: { ja: '本文。', en: 'Body.' },
+      action: { viewer: 'https://example.org/m.json', params: 'dir=rtl' },
+      body: { ja: '本文。', en: 'Body.' },
     });
   });
 
-  it('「試す」の行き先を組み立てる', () => {
-    const m = NEWS.find((n) => n.id === 'scene-search');
-    expect(m?.action?.href).toBe(`/viewer/?iiif-content=${encodeURIComponent('https://nakamura196.github.io/hongo-campus-iiif/ueno.json')}&tab=contentSearch`);
+  it('公開時のお知らせがある', () => {
+    expect(NEWS.find((n) => n.id === '2026-10-19-launch')?.action?.href).toBe('/viewer');
   });
 });

@@ -1,5 +1,4 @@
 # Build and deploy the Next.js static export to GitHub Pages.
-# Vercel build is kept independent (vercel.json handles redirect).
 name: Deploy Next.js site to Pages
 
 # PR ではビルドと検査だけ (配布は main への push のみ)。
@@ -42,26 +41,16 @@ jobs:
       # The remaining warnings are React Compiler rules (see eslint.config.mjs).
       # The cap keeps the count from growing; lower it as they are fixed.
       - name: Lint
-        run: npm run lint -- --max-warnings=29
+        run: npm run lint -- --max-warnings=13
 
       - name: Run unit tests
         run: npm test
 
-      # サブパス (basePath) 付きのビルドでも参照が壊れないことを先に確かめる。
-      # kasane.ldas.jp はホスト直下なので本番では使わないが、basePath の付け忘れは
-      # ホスト直下では隠れるため、フォーク先の github.io 配信などに備えて検査を残す。
-      - name: Verify subpath build (basePath)
-        env:
-          GITHUB_PAGES: 'true'
-        run: |
-          npm run build
-          ./scripts/check-basepath.sh
-          NEXT_PUBLIC_BASE_PATH=/iiif-kasane npm run test:export
-          rm -rf out .next
-
-      # 本番 (kasane.ldas.jp) はホスト直下で配る。独自ドメインは Pages の設定 (gh api) で指定済み。
+      # GitHub Pages のプロジェクトページ (nakamura196.github.io/awase/) で配るので、
+      # basePath (/awase) 付きでビルドする。
       - name: Build static export
         env:
+          GITHUB_PAGES: 'true'
           # GA4 Measurement ID (公開値). Repo Variables に NEXT_PUBLIC_GA_ID を
           # 設定したデプロイ者だけが計測を有効化する。フォーク先で意図せず
           # オーナーの GA に送信しないため、fallback は持たない。未設定なら
@@ -69,7 +58,12 @@ jobs:
           NEXT_PUBLIC_GA_ID: ${{ vars.NEXT_PUBLIC_GA_ID }}
         run: npm run build
 
-      - name: Verify export (links, assets, robots/sitemap, no old hosts)
+      - name: Verify basePath in the export
+        run: ./scripts/check-basepath.sh
+
+      - name: Verify export (links, assets, robots/sitemap)
+        env:
+          NEXT_PUBLIC_BASE_PATH: /awase
         run: npm run test:export
 
       - name: Add .nojekyll
