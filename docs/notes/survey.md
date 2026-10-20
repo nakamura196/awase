@@ -144,3 +144,10 @@ GitHub Pages（nakamura196.github.io/awase）。kasane の deploy-pages.yml を�
   `https://tei-eaj.github.io/parallel_text_viewer/data/yosano.xml`（与謝野訳）。どちらも CORS あり（`*`）
 - `genji-api.ldas.jp/data/…` は CORS の応答ヘッダーが無い（`pt/map.json`、`vol/01/curation.json` で確認）。
   awase から直接読むなら genji-api 側（Cloudflare）で付ける必要がある
+
+## 2026-10-19 決定（本人）
+
+- GitHub に nakamura196/awase を **private** で作った（push 済み）
+- 画像の部品は、kasane の `packages/iiif-viewer` を **npm に公開して使う**（案 A）。公開はまだ
+- 注意: 無料プランでは private リポジトリから GitHub Pages を出せない。配るときは public にするか、
+  Cloudflare Pages など別の無料枠に出す
