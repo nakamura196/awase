@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { renderElement } from '@/lib/tei/render';
-import { foldSigla, readApparatus, readingFor, readWitnesses, type ApparatusEntry, type Witness } from '@/lib/tei/apparatus';
+import { foldSigla, readApparatus, readingFor, readWitnesses, witnessDistances, type ApparatusEntry, type Witness } from '@/lib/tei/apparatus';
 
 interface Props {
   tei: Document;
@@ -130,6 +130,8 @@ export default function ApparatusPane({ tei, baseUrl, focusId, onSelect, wit, on
   const witnesses: Witness[] = useMemo(() => readWitnesses(tei), [tei]);
   const entries = useMemo(() => readApparatus(tei, witnesses), [tei, witnesses]);
   const names = useMemo(() => new Map(witnesses.map((w) => [w.id, w.label])), [witnesses]);
+  const distances = useMemo(() => witnessDistances(entries, witnesses.map((w) => w.id)), [entries, witnesses]);
+  const maxDistance = Math.max(1, ...Array.from(distances.values(), (d) => d.distance));
   const list = useRef<HTMLDivElement>(null);
 
   // 選んだ箇所の行を、一覧の中ほどへ動かす。ページ全体は動かさない（scrollIntoView を使わない）
@@ -168,16 +170,44 @@ export default function ApparatusPane({ tei, baseUrl, focusId, onSelect, wit, on
           </label>
         )}
         {witnesses.length > 0 && (
-          <details className="text-[var(--ds-fg-muted)]">
+          <details className="text-[var(--ds-fg-muted)]" data-testid="witness-distances">
             <summary className="cursor-pointer">{t('witnesses', { count: witnesses.length })}</summary>
-            <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
-              {witnesses.map((w) => (
-                <div key={w.id} className="contents">
-                  <dt className="text-[var(--ds-fg)]">{w.id}</dt>
-                  <dd>{w.label}</dd>
-                </div>
-              ))}
-            </dl>
+            {/* koui の Chart.vue（伝本ごとの編集距離の棒グラフ）を、グラフの部品を入れずに CSS の横棒で出す */}
+            <p className="mt-1 text-xs">{t('witnessDistanceNote')}</p>
+            <ul className="mt-1 flex flex-col">
+              {witnesses.map((w) => {
+                const d = distances.get(w.id) ?? { distance: 0, places: 0 };
+                const chosen = w.id === wit;
+                return (
+                  <li key={w.id}>
+                    <button
+                      type="button"
+                      aria-pressed={chosen}
+                      disabled={!onWitChange}
+                      onClick={() => onWitChange?.(chosen ? null : w.id)}
+                      title={w.label}
+                      className={`grid w-full grid-cols-[minmax(3rem,auto)_1fr_auto] items-center gap-x-2 rounded px-1 py-0.5 text-left text-xs ${
+                        chosen ? 'outline outline-1 outline-[#f59e0b]' : 'hover:bg-[var(--ds-bg)]'
+                      }`}
+                    >
+                      <span className="truncate text-[var(--ds-fg)]">
+                        {w.id}
+                        {w.id !== w.label && <span className="ml-1 text-[var(--ds-fg-muted)]">{w.label}</span>}
+                      </span>
+                      <span className="h-2 rounded bg-[var(--ds-bg)]" aria-hidden>
+                        <span
+                          className="block h-full rounded bg-[#f59e0b]"
+                          style={{ width: `${(d.distance / maxDistance) * 100}%` }}
+                        />
+                      </span>
+                      <span className="whitespace-nowrap tabular-nums" data-awase-distance={d.distance}>
+                        {t('witnessDistance', { distance: d.distance, places: d.places })}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           </details>
         )}
       </div>

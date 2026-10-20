@@ -47,7 +47,7 @@ test('listWit と app があれば、異文の一覧を本文の横に出す', a
   await expect(rows.nth(1)).toContainText('（なし）');
   // 伝本の一覧
   await pane.getByText('伝本（4）').click();
-  await expect(pane.locator('dd', { hasText: '乙本' })).toBeVisible();
+  await expect(pane.getByTestId('witness-distances').getByText('乙本')).toBeVisible();
 });
 
 test('一覧の行を押すと本文のその箇所に印が付き、本文の箇所を押すと一覧の行が選ばれる', async ({ page }) => {
@@ -148,4 +148,49 @@ test('伝本を選ぶと、本文の異文の箇所がその伝本の読みに�
   // 底本に戻すと、URL から wit が消える
   await pane.getByRole('combobox').selectOption('');
   await expect(page).not.toHaveURL(/wit=/);
+});
+
+test('伝本ごとに lem との違い（編集距離の合計）を横棒で出し、押すとその伝本の読みになる', async ({ page }) => {
+  await open(page);
+  const box = page.getByTestId('witness-distances');
+  await box.locator('summary').click();
+  const row = (id: string) => box.getByRole('button', { name: new RegExp(`^${id}`) });
+  // 乙: 給ける→たまふ（3）＋ ありけり→空（4）。甲: ありけり→おはしけり（3、del の字も数える）。丙は名前が無いので 0
+  await expect(row('底').locator('[data-awase-distance]')).toHaveAttribute('data-awase-distance', '0');
+  await expect(row('甲').locator('[data-awase-distance]')).toHaveText('3 字・1 箇所');
+  await expect(row('乙').locator('[data-awase-distance]')).toHaveText('7 字・2 箇所');
+  await expect(row('丙').locator('[data-awase-distance]')).toHaveAttribute('data-awase-distance', '0');
+
+  await row('乙').click();
+  await expect(page).toHaveURL(/wit=%E4%B9%99/);
+  await expect(page.getByTestId('apparatus-pane').getByRole('combobox')).toHaveValue('乙');
+  await expect(row('乙')).toHaveAttribute('aria-pressed', 'true');
+  // もう一度押すと底本に戻る
+  await row('乙').click();
+  await expect(page).not.toHaveURL(/wit=/);
+});
+
+test('読みの中に入れ子の異文があれば、その伝本の読みだけを数える', async ({ page }) => {
+  // koui の見本と同じ形（lem の中に app）。外の lem を数えるとき、中の rdg の字を混ぜない
+  const nested = 'https://example.org/koui/nested.xml';
+  await page.route(nested, (route) =>
+    route.fulfill({
+      contentType: 'application/xml',
+      headers: { 'access-control-allow-origin': '*' },
+      body: `<TEI xmlns="http://www.tei-c.org/ns/1.0"><teiHeader><fileDesc><titleStmt><title>入れ子</title></titleStmt><publicationStmt><p/></publicationStmt>
+        <sourceDesc><listWit><witness xml:id="底">底本</witness><witness xml:id="甲">甲本</witness><witness xml:id="乙">乙本</witness></listWit></sourceDesc></fileDesc></teiHeader>
+        <text><body><p><app>
+          <lem wit="#底 #乙">のたまふに<app><lem wit="#底 #甲">日に</lem><rdg wit="#乙">日にそへて</rdg></app>給て</lem>
+          <rdg wit="#甲">のたまはせて</rdg>
+        </app></p></body></text></TEI>`,
+    }),
+  );
+  await page.goto(`/ja/viewer/?u=${encodeURIComponent(nested)}`);
+  const box = page.getByTestId('witness-distances');
+  await box.locator('summary').click();
+  const distance = (id: string) => box.getByRole('button', { name: new RegExp(`^${id}`) }).locator('[data-awase-distance]');
+  // 甲: のたまふに日に給て → のたまはせて（5）。中の「日にそへて」を混ぜると 10 になる
+  await expect(distance('甲')).toHaveText('5 字・1 箇所');
+  // 乙: 外は lem、中の app で 日に → 日にそへて（3）
+  await expect(distance('乙')).toHaveText('3 字・1 箇所');
 });
