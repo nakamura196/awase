@@ -96,3 +96,39 @@ test('入口から見本を開ける', async ({ page }) => {
   await page.getByRole('button', { name: '開く' }).click();
   await expect(page.getByRole('heading', { level: 1, name: '見本の本文' })).toBeVisible();
 });
+
+test('u を複数渡すと本文を横に並べ、閉じたり足したりできる', async ({ page }) => {
+  const second = 'https://example.org/tei/second.xml';
+  await page.route(second, (route) =>
+    route.fulfill({
+      body: FIXTURE.replace('見本の本文', '二つめの本文'),
+      contentType: 'application/xml',
+      headers: { 'access-control-allow-origin': '*' },
+    }),
+  );
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${open('')}&tei=${encodeURIComponent(second)}&id=s1`);
+  const columns = page.getByTestId('text-column');
+  await expect(columns).toHaveCount(2);
+  await expect(columns.nth(0).getByRole('heading', { level: 2, name: '見本の本文' })).toBeVisible();
+  await expect(columns.nth(1).getByRole('heading', { level: 2, name: '二つめの本文' })).toBeVisible();
+  // 横に並ぶ（2 列目が 1 列目の右にある）
+  const [a, b] = [await columns.nth(0).boundingBox(), await columns.nth(1).boundingBox()];
+  expect(b!.x).toBeGreaterThan(a!.x + a!.width - 1);
+  // 表示の切り替えと id は両方の列に効く
+  await expect(page.getByTestId('text-pane').locator('tei-seg#s1.is-selected')).toHaveCount(2);
+  await page.getByRole('button', { name: '縦書き' }).click();
+  await expect(page.getByTestId('text-pane').and(page.locator('.is-vertical'))).toHaveCount(2);
+
+  // 閉じると URL から外れ、1 つのときの見出しに戻る
+  await columns.nth(0).getByRole('button', { name: 'この本文を閉じる' }).click();
+  await expect(columns).toHaveCount(1);
+  await expect(page.getByRole('heading', { level: 1, name: '二つめの本文' })).toBeVisible();
+  expect(new URL(page.url()).searchParams.getAll('u')).toEqual([second]);
+
+  // 欄から足す
+  await page.getByLabel('並べる TEI の URL').fill(TEI_URL);
+  await page.getByRole('button', { name: '並べる' }).click();
+  await expect(columns).toHaveCount(2);
+  expect(new URL(page.url()).searchParams.getAll('u')).toEqual([second, TEI_URL]);
+});

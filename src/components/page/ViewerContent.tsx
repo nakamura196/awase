@@ -9,14 +9,18 @@ import TextPane from '@/components/viewer/TextPane';
 import HeaderPanel from '@/components/viewer/HeaderPanel';
 import { loadTei, TeiLoadError, type LoadError } from '@/lib/tei/load';
 import { summarizeHeader } from '@/lib/tei/header';
+import { getSources } from '@/lib/viewerParams';
 
 // URL で受け取るパラメータ（docs/notes/survey.md「viewer の URL」）。
-// いま使っているのは u / tei / dir / id / embed と、表示の切り替えの lb / pb。ほかはペインを足すときに使う
+// いま使っているのは u / tei（どちらも繰り返し可）/ dir / id / embed と、表示の切り替えの lb / pb。ほかはペインを足すときに使う
 export const VIEWER_PARAMS = ['u', 'tei', 'config', 'manifest', 'curation', 'panes', 'dir', 'wit', 'xsl', 'id', 'embed'] as const;
 
+const KOUI = 'https://w3id.org/kouigenjimonogatari/tei/01.xml';
+const YOSANO = 'https://tei-eaj.github.io/parallel_text_viewer/data/yosano.xml';
 const SAMPLES = [
-  { key: 'sampleKoui', url: 'https://w3id.org/kouigenjimonogatari/tei/01.xml', dir: 'v' },
-  { key: 'sampleYosano', url: 'https://tei-eaj.github.io/parallel_text_viewer/data/yosano.xml', dir: 'h' },
+  { key: 'sampleKoui', urls: [KOUI], dir: 'v' },
+  { key: 'sampleYosano', urls: [YOSANO], dir: 'h' },
+  { key: 'sampleParallel', urls: [KOUI, YOSANO], dir: 'h' },
 ] as const;
 
 // URL の引数を書き換える。履歴を増やさない（表示の切り替え）か、増やす（別の TEI を開く）かを選ぶ
@@ -29,6 +33,15 @@ function updateParams(changes: Record<string, string | null>, push = false) {
   const url = `${window.location.pathname}?${params.toString()}`;
   if (push) window.history.pushState(null, '', url);
   else window.history.replaceState(null, '', url);
+}
+
+// 読む TEI の一覧を書き換える。並べ方が変わるので履歴に残す。書くときは u にそろえる
+function setSources(sources: string[]) {
+  const params = new URLSearchParams(window.location.search);
+  params.delete('u');
+  params.delete('tei');
+  for (const s of sources) params.append('u', s);
+  window.history.pushState(null, '', `${window.location.pathname}?${params.toString()}`);
 }
 
 type State =
@@ -100,10 +113,11 @@ function Entry() {
           {SAMPLES.map((s) => (
             <li key={s.key}>
               <a
-                href={`?u=${encodeURIComponent(s.url)}&dir=${s.dir}`}
+                href={`?${s.urls.map((u) => `u=${encodeURIComponent(u)}`).join('&')}&dir=${s.dir}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  updateParams({ u: s.url, dir: s.dir }, true);
+                  updateParams({ dir: s.dir });
+                  setSources([...s.urls]);
                 }}
                 className="underline text-[var(--ds-primary)]"
               >
@@ -134,14 +148,25 @@ function Toggle({ pressed, onClick, children }: { pressed: boolean; onClick: () 
   );
 }
 
-function Reader({ src }: { src: string }) {
+// 本文を 1 つ読み、書誌と本文を出す列。複数の TEI を並べるときは、この列を横に並べる
+function Column({
+  src,
+  index,
+  count,
+  vertical,
+  showLb,
+  showPb,
+  focusId,
+}: {
+  src: string;
+  index: number;
+  count: number;
+  vertical: boolean;
+  showLb: boolean;
+  showPb: boolean;
+  focusId: string | null;
+}) {
   const t = useTranslations('Viewer');
-  const search = useSearchParams();
-  const vertical = search.get('dir') === 'v';
-  // 改行と頁の目印は既定で見せる。消したときだけ URL に残す
-  const showLb = search.get('lb') !== '0';
-  const showPb = search.get('pb') !== '0';
-  const focusId = search.get('id');
   const [state, setState] = useState<State>({ status: 'loading' });
 
   useEffect(() => {
@@ -158,55 +183,139 @@ function Reader({ src }: { src: string }) {
   const header = useMemo(() => (state.status === 'ready' ? summarizeHeader(state.tei) : null), [state]);
 
   return (
-    <div className="flex flex-col gap-4 px-4 py-6 sm:px-8 bg-[var(--ds-bg)]">
-      {state.status === 'ready' && header ? (
-        <HeaderPanel header={header} sourceUrl={src} />
-      ) : (
-        <h1 className="text-xl font-bold text-[var(--ds-fg)]">{t('title')}</h1>
-      )}
+    <section className="flex min-w-0 flex-col gap-4" data-testid="text-column" aria-label={header?.title || src}>
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          {state.status === 'ready' && header ? (
+            <HeaderPanel header={header} sourceUrl={src} headingLevel={count > 1 ? 2 : 1} />
+          ) : (
+            <p className="break-all text-sm text-[var(--ds-fg-muted)]">{src}</p>
+          )}
+        </div>
+        {count > 1 && (
+          <button
+            type="button"
+            onClick={() => setSources(getSources(new URLSearchParams(window.location.search)).filter((_, i) => i !== index))}
+            aria-label={t('closeText')}
+            title={t('closeText')}
+            className="shrink-0 rounded border border-[var(--ds-border)] px-2 text-[var(--ds-fg-muted)] hover:text-[var(--ds-fg)]"
+          >
+            ×
+          </button>
+        )}
+      </div>
       {state.status === 'loading' && <p className="text-[var(--ds-fg-muted)]">{t('loading')}</p>}
       {state.status === 'error' && <ErrorMessage error={state.error} />}
       {state.status === 'ready' && (
-        <>
-          <div className="flex flex-wrap gap-2" role="toolbar" aria-label={t('display')}>
-            <Toggle pressed={vertical} onClick={() => updateParams({ dir: vertical ? 'h' : 'v' })}>
-              {t('vertical')}
-            </Toggle>
-            <Toggle pressed={showLb} onClick={() => updateParams({ lb: showLb ? '0' : null })}>
-              {t('lineBreaks')}
-            </Toggle>
-            <Toggle pressed={showPb} onClick={() => updateParams({ pb: showPb ? '0' : null })}>
-              {t('pageBreaks')}
-            </Toggle>
-          </div>
-          <div
-            className={`rounded border border-[var(--ds-border)] bg-[var(--ds-surface)] p-4 sm:p-6 ${
-              vertical ? 'h-[min(80vh,48rem)]' : ''
-            }`}
-          >
-            <TextPane
-              tei={state.tei}
-              baseUrl={src}
-              vertical={vertical}
-              showLineBreaks={showLb}
-              showPageBreaks={showPb}
-              focusId={focusId}
-              onSelect={(id) => updateParams({ id })}
-            />
-          </div>
-        </>
+        <div
+          className={`rounded border border-[var(--ds-border)] bg-[var(--ds-surface)] p-4 sm:p-6 ${
+            vertical ? 'h-[min(80vh,48rem)]' : ''
+          }`}
+        >
+          <TextPane
+            tei={state.tei}
+            baseUrl={src}
+            vertical={vertical}
+            showLineBreaks={showLb}
+            showPageBreaks={showPb}
+            focusId={focusId}
+            onSelect={(id) => updateParams({ id })}
+          />
+        </div>
       )}
+    </section>
+  );
+}
+
+// 本文を足す欄。並べて読むときに使う
+function AddText() {
+  const t = useTranslations('Viewer');
+  const [url, setUrl] = useState('');
+  return (
+    <form
+      className="flex min-w-0 flex-1 gap-2 sm:max-w-md"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const u = url.trim();
+        if (!u) return;
+        setSources([...getSources(new URLSearchParams(window.location.search)), u]);
+        setUrl('');
+      }}
+    >
+      <label className="sr-only" htmlFor="tei-add-url">
+        {t('addLabel')}
+      </label>
+      <input
+        id="tei-add-url"
+        type="url"
+        required
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        placeholder={t('addPlaceholder')}
+        className="min-w-0 flex-1 rounded border border-[var(--ds-border)] bg-[var(--ds-bg)] px-2 py-1 text-sm text-[var(--ds-fg)]"
+      />
+      <button type="submit" className="rounded border border-[var(--ds-border)] px-3 py-1 text-sm text-[var(--ds-fg)]">
+        {t('add')}
+      </button>
+    </form>
+  );
+}
+
+function Reader({ sources }: { sources: string[] }) {
+  const t = useTranslations('Viewer');
+  const search = useSearchParams();
+  const vertical = search.get('dir') === 'v';
+  // 改行と頁の目印は既定で見せる。消したときだけ URL に残す
+  const showLb = search.get('lb') !== '0';
+  const showPb = search.get('pb') !== '0';
+  // id は列ごとに探す。同じ id を持つ列が複数あれば、どれにも印が付く
+  const focusId = search.get('id');
+  const many = sources.length > 1;
+
+  return (
+    <div className="flex flex-col gap-4 px-4 py-6 sm:px-8 bg-[var(--ds-bg)]">
+      {/* 1 つのときは本文の題名が見出しになる。並べるときは列ごとの題名を h2 にし、ページの見出しを別に置く */}
+      {many && <h1 className="sr-only">{t('parallelTitle', { count: sources.length })}</h1>}
+      <div className="flex flex-wrap items-center gap-2" role="toolbar" aria-label={t('display')}>
+        <Toggle pressed={vertical} onClick={() => updateParams({ dir: vertical ? 'h' : 'v' })}>
+          {t('vertical')}
+        </Toggle>
+        <Toggle pressed={showLb} onClick={() => updateParams({ lb: showLb ? '0' : null })}>
+          {t('lineBreaks')}
+        </Toggle>
+        <Toggle pressed={showPb} onClick={() => updateParams({ pb: showPb ? '0' : null })}>
+          {t('pageBreaks')}
+        </Toggle>
+        <AddText />
+      </div>
+      {/* 並べるときは、狭い画面では縦に積み、広い画面では横に並べる */}
+      <div
+        className={many ? 'grid gap-6 lg:grid-cols-[repeat(var(--awase-cols),minmax(0,1fr))]' : ''}
+        style={many ? ({ '--awase-cols': sources.length } as React.CSSProperties) : undefined}
+      >
+        {sources.map((src, i) => (
+          // 同じ URL を 2 度並べてもよいように、順番も鍵に含める
+          <Column
+            key={`${i}:${src}`}
+            src={src}
+            index={i}
+            count={sources.length}
+            vertical={vertical}
+            showLb={showLb}
+            showPb={showPb}
+            focusId={focusId}
+          />
+        ))}
+      </div>
     </div>
   );
 }
 
 function Viewer() {
   const search = useSearchParams();
-  // 複数の TEI（書簡の横断）はペインを足すときに受ける。いまは最初の 1 つ
-  const src = search.get('tei') ?? search.get('u');
+  const sources = getSources(search);
   const embed = search.get('embed') === '1';
-  // src が変わったら Reader を作り直し、読み込み中の表示から始める
-  const body = src ? <Reader key={src} src={src} /> : <Entry />;
+  const body = sources.length ? <Reader sources={sources} /> : <Entry />;
   return embed ? body : <CommonLayout>{body}</CommonLayout>;
 }
 

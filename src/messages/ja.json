@@ -111,12 +111,13 @@
   },
   "Viewer": {
     "title": "ビューア",
-    "lead": "TEI の URL を入れると、本文を読める形で表示します。縦書き・横書きを切り替えられます。",
+    "lead": "TEI の URL を入れると、本文を読める形で表示します。縦書き・横書きを切り替えられます。複数の本文を横に並べて読むこともできます。",
     "urlLabel": "TEI の URL",
     "open": "開く",
     "samples": "見本",
     "sampleKoui": "校異源氏物語 桐壺（縦書き）",
     "sampleYosano": "与謝野晶子訳 源氏物語 桐壺（横書き）",
+    "sampleParallel": "校異源氏と与謝野訳を並べる（桐壺）",
     "loading": "読み込んでいます…",
     "display": "表示",
     "vertical": "縦書き",
@@ -135,6 +136,11 @@
     "errorStatus": "TEI を取りに行けませんでした（{status}）。",
     "errorParse": "XML として読めませんでした。",
     "errorNotTei": "TEI ではないようです（いちばん外側の要素が {root}）。",
-    "errorConfig": "config.json（本文と訳を束ねる設定）は、まだ読めません。対訳の表示を作るときに対応します。"
+    "errorConfig": "config.json（本文と訳を束ねる設定）は、まだ読めません。対訳の表示を作るときに対応します。",
+    "closeText": "この本文を閉じる",
+    "addLabel": "並べる TEI の URL",
+    "addPlaceholder": "並べる TEI の URL",
+    "add": "並べる",
+    "parallelTitle": "{count} つの本文を並べて表示"
   }
 }

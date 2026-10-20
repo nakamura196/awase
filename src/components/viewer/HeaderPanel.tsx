@@ -5,7 +5,17 @@ import { safeUrl } from '@/lib/tei/attrs';
 import type { TeiHeaderSummary } from '@/lib/tei/header';
 
 // 本文の上に出す書誌の欄。題名と著者は常に見せ、残りは開いたときだけ見せる
-export default function HeaderPanel({ header, sourceUrl }: { header: TeiHeaderSummary; sourceUrl: string }) {
+export default function HeaderPanel({
+  header,
+  sourceUrl,
+  headingLevel = 1,
+}: {
+  header: TeiHeaderSummary;
+  sourceUrl: string;
+  /** 本文を並べるときは、ページの見出しの下に置くので h2 にする */
+  headingLevel?: 1 | 2;
+}) {
+  const Heading = headingLevel === 1 ? 'h1' : 'h2';
   const t = useTranslations('Viewer');
   const license = header.licenseUrl ? safeUrl(header.licenseUrl) : null;
   const rows: [string, React.ReactNode][] = [];
@@ -34,9 +44,9 @@ export default function HeaderPanel({ header, sourceUrl }: { header: TeiHeaderSu
 
   return (
     <div className="space-y-1">
-      <h1 className="text-xl font-bold text-[var(--ds-fg)]" style={{ fontFamily: 'var(--ds-font-serif)' }}>
+      <Heading className="text-xl font-bold text-[var(--ds-fg)]" style={{ fontFamily: 'var(--ds-font-serif)' }}>
         {header.title || t('untitled')}
-      </h1>
+      </Heading>
       {header.authors.length > 0 && <p className="text-sm text-[var(--ds-fg-muted)]">{header.authors.join(', ')}</p>}
       <details className="text-sm">
         <summary className="cursor-pointer text-[var(--ds-fg-muted)]">{t('headerDetails')}</summary>

@@ -111,12 +111,13 @@
   },
   "Viewer": {
     "title": "Viewer",
-    "lead": "Enter the URL of a TEI file to read its text. You can switch between vertical and horizontal writing.",
+    "lead": "Enter the URL of a TEI file to read its text. You can switch between vertical and horizontal writing, and read several texts side by side.",
     "urlLabel": "TEI URL",
     "open": "Open",
     "samples": "Samples",
     "sampleKoui": "Kōi Genji monogatari, Kiritsubo (vertical)",
     "sampleYosano": "Yosano Akiko's translation of Genji, Kiritsubo (horizontal)",
+    "sampleParallel": "Kōi Genji and Yosano's translation side by side (Kiritsubo)",
     "loading": "Loading…",
     "display": "Display",
     "vertical": "Vertical",
@@ -135,6 +136,11 @@
     "errorStatus": "Could not fetch the TEI ({status}).",
     "errorParse": "Could not parse the file as XML.",
     "errorNotTei": "This does not look like TEI (the root element is {root}).",
-    "errorConfig": "config.json files (which bundle a text with its translation) are not supported yet. They will be with the parallel-text pane."
+    "errorConfig": "config.json files (which bundle a text with its translation) are not supported yet. They will be with the parallel-text pane.",
+    "closeText": "Close this text",
+    "addLabel": "URL of a TEI file to add",
+    "addPlaceholder": "Add a TEI URL",
+    "add": "Add",
+    "parallelTitle": "{count} texts side by side"
   }
 }
