@@ -48,3 +48,4 @@ next-env.d.ts
 
 # content/news/*.md から scripts/build-news.mjs が作る
 /src/lib/news.generated.json
+.vercel

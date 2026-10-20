@@ -19,6 +19,9 @@ updates:
     ignore:
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
+      # kasane's iiif-viewer has a peer dependency on jotai ^2 (#8)
+      - dependency-name: "jotai"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
