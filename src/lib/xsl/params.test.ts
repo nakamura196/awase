@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultXslId, getTeiUrl, injectBase, parseXslChoice, sefLocation, toSefUrl } from './params';
+import { defaultXslId, getTeiUrl, injectBase, parseXslChoice, sefLocation, setDarkClass, toSefUrl } from './params';
 import { XSL_CATALOG, xslTitle } from './catalog';
 
 const q = (s: string) => new URLSearchParams(s);
@@ -31,8 +31,15 @@ describe('parseXslChoice', () => {
 });
 
 describe('既定の XSL', () => {
-  it('影印の画像があれば ocr', () => {
-    expect(defaultXslId('<TEI><facsimile><surface><graphic url="a"/></surface></facsimile></TEI>')).toBe('ocr');
+  it('影印の画像があり、頁が surface を指していれば ocr', () => {
+    expect(
+      defaultXslId('<TEI><facsimile><surface><graphic url="a"/></surface></facsimile><text><pb n="1" facs="#f1"/></text></TEI>'),
+    ).toBe('ocr');
+  });
+  it('頁の facs が画像の URL（校異源氏の形）なら reading', () => {
+    expect(
+      defaultXslId('<TEI><facsimile><surface><graphic url="a"/></surface></facsimile><text><pb facs="https://x/1.jpg"/></text></TEI>'),
+    ).toBe('reading');
   });
   it('なければ reading', () => {
     expect(defaultXslId('<TEI><text/></TEI>')).toBe('reading');
@@ -61,5 +68,15 @@ describe('目録', () => {
     const manchu = XSL_CATALOG.find((x) => x.id === 'manchu')!;
     expect(xslTitle(manchu, 'ja')).toBe('清語老乞大 縦書きビュー');
     expect(xslTitle(manchu, 'en')).toMatch(/^Cing/);
+  });
+});
+
+describe('ダークの受け渡し', () => {
+  it('html に dark を付ける・外す', () => {
+    expect(setDarkClass('<html lang="ja"><body/></html>', true)).toBe('<html lang="ja" class="dark"><body/></html>');
+    expect(setDarkClass('<html class="a"><body/></html>', true)).toBe('<html class="a dark"><body/></html>');
+    expect(setDarkClass('<html class="a dark"><body/></html>', false)).toBe('<html class="a"><body/></html>');
+    expect(setDarkClass('<html class="dark">', false)).toBe('<html>');
+    expect(setDarkClass('<p/>', true)).toBe('<p/>');
   });
 });

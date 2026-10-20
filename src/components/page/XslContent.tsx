@@ -3,13 +3,14 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import { useTheme } from 'next-themes';
 import { Link, usePathname, useRouter } from '@/i18n/routing';
 import CommonLayout from '@/components/layout/Common';
 import PageContainer from '@/components/layout/PageContainer';
 import { withBasePath } from '@/lib/basePath';
 import { XSL_CATALOG, xslTitle } from '@/lib/xsl/catalog';
 import { absolutizeGraphics, transformTei } from '@/lib/xsl/engine';
-import { getTeiUrl, injectBase, parseXslChoice, sefLocation, type XslChoice } from '@/lib/xsl/params';
+import { getTeiUrl, injectBase, parseXslChoice, sefLocation, setDarkClass, type XslChoice } from '@/lib/xsl/params';
 
 // URL で受け取るパラメータ。TEI は u（url・tei も受ける）、変換は xsl、embed=1 で帯と枠を隠す
 export const XSL_PARAMS = ['u', 'url', 'tei', 'xsl', 'embed'] as const;
@@ -47,6 +48,8 @@ let cache: { url: string; text: string; doc: Document } | null = null;
 
 function Frame({ teiUrl, choice }: { teiUrl: string; choice: XslChoice }) {
   const t = useTranslations('Xsl');
+  // 枠の中は別の文書なので、awase のダークを html の class で渡す
+  const { resolvedTheme } = useTheme();
   const [state, setState] = useState<State>({ status: 'loading' });
   const choiceKey = JSON.stringify(choice);
 
@@ -107,8 +110,8 @@ function Frame({ teiUrl, choice }: { teiUrl: string; choice: XslChoice }) {
           data-testid="xsl-frame"
           title={t('frameTitle')}
           sandbox="allow-scripts allow-popups"
-          srcDoc={state.html}
-          className="h-full w-full border-0 bg-white"
+          srcDoc={setDarkClass(state.html, resolvedTheme === 'dark')}
+          className="h-full w-full border-0 bg-[var(--ds-bg)]"
         />
       )}
     </div>

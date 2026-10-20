@@ -29,9 +29,15 @@ export function parseXslChoice(value: string | null): XslChoice {
   return { kind: 'auto' };
 }
 
-/** xsl を指定しないとき。影印の画像と座標つきなら OCR の翻刻ビュー、そうでなければ本文ビュー */
+/**
+ * xsl を指定しないとき。影印の画像があり、頁（pb@facs="#…"）が surface を指していれば OCR の翻刻ビュー、
+ * そうでなければ本文ビュー。OCR ビューは pb@facs で頁と画像を結ぶので、
+ * 校異源氏のように pb@facs が画像の URL の TEI では行が空になる
+ */
 export function defaultXslId(xmlText: string): 'ocr' | 'reading' {
-  return /<facsimile[\s>]/.test(xmlText) && /<graphic[\s>]/.test(xmlText) ? 'ocr' : 'reading';
+  return /<facsimile[\s>]/.test(xmlText) && /<graphic[\s>]/.test(xmlText) && /<pb\s[^>]*facs="#/.test(xmlText)
+    ? 'ocr'
+    : 'reading';
 }
 
 /** 変換に使う SEF の URL（basePath つきのサイト内パスか、外の URL） */
@@ -48,4 +54,19 @@ export function injectBase(html: string, baseHref: string): string {
   const head = /<head(\s[^>]*)?>/i.exec(html);
   if (head) return html.slice(0, head.index + head[0].length) + tag + html.slice(head.index + head[0].length);
   return tag + html;
+}
+
+/** 出力の <html> に dark を付ける（または外す）。awase のダークに合わせて theme.css の .dark を効かせる */
+export function setDarkClass(html: string, dark: boolean): string {
+  const m = /<html(\s[^>]*)?>/i.exec(html);
+  if (!m) return html;
+  let attrs = (m[1] ?? '').replace(/\sclass="([^"]*)"/i, (_, c: string) => {
+    const rest = c.split(/\s+/).filter((x) => x && x !== 'dark');
+    return rest.length ? ` class="${rest.join(' ')}"` : '';
+  });
+  if (dark) {
+    const had = /\sclass="/i.test(m[1] ?? '') && /\sclass="[^"]*"/i.test(attrs);
+    attrs = had ? attrs.replace(/\sclass="([^"]*)"/i, ' class="$1 dark"') : `${attrs} class="dark"`;
+  }
+  return html.slice(0, m.index) + `<html${attrs}>` + html.slice(m.index + m[0].length);
 }

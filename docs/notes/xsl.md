@@ -60,3 +60,23 @@ Vercel のプレビューで、OCR ビューの右側（影印）が黒いまま
 - そのため `xsl-assets/` の JS と CSS が 302 で Vercel のログインへ回され、枠の中のスクリプトが 1 つも動いていなかった（頁送りも出ず、2 頁目の本文まで並んでいた）。`curl` で 302 と `location: https://vercel.com/sso-api…` を確かめた。
 - 本番（awase-kappa.vercel.app）は保護が無く 200 を返すので、起きない見込み。マージ後に本番で目視する。
 - 同じ Chrome で tei-tools 本家の view.html は画像も頁送りも出た。
+
+## 2026-10-20 自動の選び方の訂正と、見た目を awase に合わせた
+
+### 校異源氏の DTS の頁が「空行」だらけになった
+
+- 本人の報告。`u` に `https://dts.ldas.jp/api/v2/dts/document?resource=urn:kouigenjimonogatari.1&ref=5` を渡すと、OCR ビューが選ばれ、15 行がすべて「(空行 / empty)」、影印は「画像なし」になった。
+- 原因は自動の選び方。`facsimile` と `graphic` があれば OCR ビューにしていた。
+- OCR ビューは `pb@facs="#f1"`（頁 → surface の id）で頁と画像を結び、`lb@corresp="#…"` の後ろの文字を行として読む。
+- 校異源氏の TEI は `pb@facs` が画像の URL で、行は `<lb/><seg>…</seg>`。だから頁も行も結べなかった。
+- 規則を「`facsimile`・`graphic` があり、かつ `pb@facs` が `#` で始まるものがある」に改めた。校異源氏は本文ビューになり、本文が出る。
+- 本文ビューでは行替えが無く、影印も出ない。校異源氏を画像と並べて見るのは viewer の役目とする。
+
+### 見た目を awase に合わせた（本人の指示）
+
+- tei-tools の theme.css は東洋文庫の臙脂の配色だった。変数の名前はそのまま残し、値を awase のデザイントークン（`@nakamura196/react-ui` の tokens.css、UTokyo Blue）に置き換えた。XSL の出力が `--enji-*` を直に読むので、名前に enji が残っている。
+- 上の帯は白地に細い罫（awase のヘッダーと同じ）。「TEI Tools」のトップへの戻り口は消した。
+- 頁送りの帯（tei-pager.js）と影印の地（OCR・urenja・vellum の XSL）は色を直に書いているので、theme.css で `!important` を付けて上書きした。写した JS と SEF には手を入れていない。
+- ダーク: 枠の中は別の文書なので、awase がダークのときは出力の `<html>` に `class="dark"` を付けて渡す。切り替えると枠が読み直される。
+- 書体は Noto を先頭に書いたが、枠の中には読み込んでいない（awase は next/font で自前で配っていて、枠からは使えない）。OS の書体で出る。
+- 確かめたこと: OCR の見本（明・暗）と校異源氏の DTS の頁を画面で見た。e2e 81 件、vitest 153 件が通った。urenja・manchu・vellum の見た目は確かめていない。
