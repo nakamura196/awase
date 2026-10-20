@@ -1,0 +1,71 @@
+{
+ "@context": "https://dtsapi.org/context/v1.0.json",
+ "dtsVersion": "1.0",
+ "@type": "Navigation",
+ "@id": "/api/v2/dts/navigation?resource=urn:kouigenjimonogatari.1&down=1",
+ "resource": {
+  "@id": "urn:kouigenjimonogatari.1",
+  "@type": "Resource",
+  "document": "/api/v2/dts/document?resource=urn:kouigenjimonogatari.1{&ref,start,end,tree,mediaType}",
+  "collection": "/api/v2/dts/collection?id=urn:kouigenjimonogatari.1{&page,nav}",
+  "navigation": "/api/v2/dts/navigation?resource=urn:kouigenjimonogatari.1{&ref,start,end,down,tree,page}",
+  "citationTrees": [
+   {
+    "@type": "CitationTree",
+    "description": "ページ・行による引用構造",
+    "citeStructure": [
+     {
+      "@type": "CiteStructure",
+      "citeType": "page",
+      "citeStructure": [
+       {
+        "@type": "CiteStructure",
+        "citeType": "line"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "@type": "CitationTree",
+    "identifier": "waka",
+    "description": "和歌（短歌）による引用構造",
+    "citeStructure": [
+     {
+      "@type": "CiteStructure",
+      "citeType": "waka",
+      "citeStructure": [
+       {
+        "@type": "CiteStructure",
+        "citeType": "ku"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "member": [
+  {
+   "identifier": "5",
+   "@type": "CitableUnit",
+   "level": 1,
+   "parent": null,
+   "citeType": "page"
+  },
+  {
+   "identifier": "6",
+   "@type": "CitableUnit",
+   "level": 1,
+   "parent": null,
+   "citeType": "page"
+  },
+  {
+   "identifier": "7",
+   "@type": "CitableUnit",
+   "level": 1,
+   "parent": null,
+   "citeType": "page"
+  }
+ ]
+}
