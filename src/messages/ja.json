@@ -95,6 +95,25 @@
     "result": "差分",
     "networkNote": "編集距離のネットワーク図（mode=2）はまだ作っていません。文字の差分を出しています。"
   },
+  "Xsl": {
+    "title": "XSL",
+    "lead": "TEI の URL を入れると、XSLT で変換した表示を見られます。変換のしかたを選び直して、見え方を比べられます。",
+    "urlLabel": "TEI の URL",
+    "open": "開く",
+    "xslLabel": "変換",
+    "auto": "自動（TEI から選ぶ）",
+    "openInViewer": "viewer で開く",
+    "samples": "見本",
+    "sampleKoui": "校異源氏物語 桐壺（本文ビュー）",
+    "sampleGuide": "TEI/XML エンコーディング入門（タグ統計）",
+    "sampleOcr": "OCR 翻刻サンプル（影印つき）",
+    "loading": "変換しています…",
+    "frameTitle": "XSLT で変換した TEI",
+    "errorFetch": "TEI を取得できませんでした。URL を確かめてください。外の URL は、配信元が許可していないと読めないことがあります。",
+    "errorStatus": "TEI を取得できませんでした（HTTP {status}）。",
+    "errorParse": "XML として読めませんでした。",
+    "errorTransform": "変換に失敗しました。選んだ XSL がこの TEI に合っているか、確かめてください。"
+  },
   "Help": {
     "title": "ヘルプ"
   },
