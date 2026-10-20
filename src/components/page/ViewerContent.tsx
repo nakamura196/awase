@@ -7,14 +7,14 @@ import CommonLayout from '@/components/layout/Common';
 import PageContainer from '@/components/layout/PageContainer';
 import TextPane from '@/components/viewer/TextPane';
 import HeaderPanel from '@/components/viewer/HeaderPanel';
-import ImagePane from '@/components/viewer/ImagePane';
+import ImagePane, { type PlaceImages } from '@/components/viewer/ImagePane';
 import ApparatusPane from '@/components/viewer/ApparatusPane';
 import { useScrollSync } from '@/components/viewer/useScrollSync';
 import { loadSource, TeiLoadError, type LoadError, type ParallelConfig } from '@/lib/tei/load';
 import { summarizeHeader } from '@/lib/tei/header';
-import { pageBreaks, pageTarget, readFacsimile } from '@/lib/tei/facs';
+import { facsTargets, pageBreaks, pageTarget, readFacsimile } from '@/lib/tei/facs';
 import { getSources, paneShown, togglePane } from '@/lib/viewerParams';
-import { textApps } from '@/lib/tei/apparatus';
+import { readApparatus } from '@/lib/tei/apparatus';
 
 // URL で受け取るパラメータ（docs/notes/survey.md「viewer の URL」）。
 // いま使っているのは u / tei / config（どれも繰り返し可）/ dir / id / embed / panes（image と apparatus を出すか）と、
@@ -277,19 +277,28 @@ function Column({
 
   const header = useMemo(() => (state.status === 'ready' ? summarizeHeader(state.tei) : null), [state]);
 
-  // 頁の目印（pb）ごとの画像。facs・corresp から facsimile を引く（src/lib/tei/facs.ts）。1 つも引けなければ null
+  // 異文の箇所（app）。番号と、本文・一覧と結ぶ id は一覧（ApparatusPane）と同じ
+  const apps = useMemo(() => (state.status === 'ready' ? readApparatus(state.tei, []) : []), [state]);
+  // 頁の目印（pb）ごとの画像と、異文の箇所（app@facs）ごとの画像。facs・corresp から facsimile を引く（src/lib/tei/facs.ts）。
+  // どちらも 1 つも引けなければ null
   const facs = useMemo(() => {
     if (state.status !== 'ready') return null;
     const map = readFacsimile(state.tei, src);
     const pbs = pageBreaks(state.tei);
     const pages = pbs.map((pb) => pageTarget({ facs: pb.getAttribute('facs'), corresp: pb.getAttribute('corresp') }, map, src));
-    if (!pages.some(Boolean)) return null;
-    return { pages, labels: pbs.map((pb) => pb.getAttribute('n')), hasImage: pages.map(Boolean) };
-  }, [state, src]);
+    const places = new Map<string, PlaceImages>();
+    for (const e of apps) {
+      const targets = facsTargets(e.facs, map);
+      if (targets.length) places.set(e.id, { n: e.n, targets });
+    }
+    if (!pages.some(Boolean) && !places.size) return null;
+    return { pages, labels: pbs.map((pb) => pb.getAttribute('n')), hasImage: pages.map(Boolean), places };
+  }, [state, src, apps]);
   useEffect(() => onHasImages(index, Boolean(facs)), [facs, index, onHasImages]);
   const imaged = showImages && facs !== null;
+  const placeIds = useMemo(() => new Set(facs?.places.keys()), [facs]);
   // 異文（app）。1 つでもあれば、異文の一覧を本文の横に出せる
-  const hasApparatus = useMemo(() => state.status === 'ready' && textApps(state.tei).length > 0, [state]);
+  const hasApparatus = apps.length > 0;
   useEffect(() => onHasApparatus(index, hasApparatus), [hasApparatus, index, onHasApparatus]);
   const withApparatus = showApparatus && hasApparatus;
   // 出すペイン。1 列のときは広い画面で横に並べる。狭い画面と、本文を並べて読むときは、タブで 1 つずつ出す
@@ -339,6 +348,7 @@ function Column({
               pages={facs.pages}
               labels={facs.labels}
               index={page}
+              place={focusId ? facs.places.get(focusId) : null}
               onGo={(i) => {
                 setPage(i);
                 setPageRequest((r) => ({ index: i, seq: (r?.seq ?? 0) + 1 }));
@@ -372,6 +382,7 @@ function Column({
               onSelect={(id) => updateParams({ id })}
               wit={wit}
               onWitChange={(w) => updateParams({ wit: w })}
+              imaged={imaged ? placeIds : undefined}
             />
           </div>
         )}

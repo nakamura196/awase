@@ -29,6 +29,8 @@ export interface ApparatusEntry {
   readings: Reading[];
   /** どの読みにも名前の無い伝本。lem と同じ読みとみなす */
   silent: string[];
+  /** その箇所の画像の範囲（app@facs の値。koui の見本は 3 つの資料の zone を並べる） */
+  facs: string | null;
 }
 
 /** xml:id の無い app に付ける id */
@@ -114,6 +116,7 @@ export function readApparatus(tei: Document, witnesses: Witness[]): ApparatusEnt
       id: xmlId(app) ?? appId(n),
       readings,
       silent: hasLem ? silentWitnesses(all, readings.flatMap((r) => r.wits)) : [],
+      facs: app.getAttribute('facs'),
     };
   });
 }
