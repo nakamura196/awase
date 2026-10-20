@@ -87,8 +87,8 @@ test('OCR ビューは影印の画像を出し、頁送りで次の画像に替�
   const frame = page.frameLocator('[data-testid="xsl-frame"]');
   // xsl を書かなくても、影印つきなので ocr になる。画像が描かれると canvas ができる
   await expect(frame.locator('.facsimile canvas').first()).toBeVisible();
-  expect(asked).toContain('f1');
+  await expect.poll(() => asked).toContain('f1');
   await frame.getByRole('button', { name: /次へ/ }).click();
   await expect(frame.locator('.tei-page-active .facsimile canvas')).toBeVisible();
-  expect(asked).toContain('f2');
+  await expect.poll(() => asked).toContain('f2');
 });
