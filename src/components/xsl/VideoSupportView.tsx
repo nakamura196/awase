@@ -28,17 +28,18 @@ export default function VideoSupportView({ tei, baseUrl, focusId = null, onSelec
   const activeCaptionRef = useRef<HTMLDivElement>(null);
 
   const [currentTime, setCurrentTime] = useState<number>(0);
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(focusId);
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [vizOpen, setVizOpen] = useState(false);
   const [termSort, setTermSort] = useState<'frequency' | 'name'>('frequency');
 
   const termMap = useMemo(() => new Map(data.terms.map((item) => [item.key, item])), [data.terms]);
+  const targetBlockId = selectedBlockId ?? focusId;
 
   // 再生位置または選択された字幕ブロックを特定
   const activeBlock: SupportBlock | null = useMemo(() => {
-    if (selectedBlockId) {
+    if (targetBlockId) {
       const byId = data.blocks.find(
-        (b) => b.id === selectedBlockId || b.terms.some((tr) => tr.id === selectedBlockId),
+        (b) => b.id === targetBlockId || b.terms.some((tr) => tr.id === targetBlockId),
       );
       if (byId) return byId;
     }
@@ -47,11 +48,7 @@ export default function VideoSupportView({ tei, baseUrl, focusId = null, onSelec
     );
     if (byTime) return byTime;
     return data.blocks.find((b) => b.terms.length > 0) ?? data.blocks[0] ?? null;
-  }, [data.blocks, selectedBlockId, currentTime]);
-
-  useEffect(() => {
-    if (focusId) setSelectedBlockId(focusId);
-  }, [focusId]);
+  }, [data.blocks, targetBlockId, currentTime]);
 
   useEffect(() => {
     activeCaptionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
