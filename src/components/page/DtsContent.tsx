@@ -18,6 +18,34 @@ import DtsMetadata from '@/components/dts/DtsMetadata';
 // URL で受け取るパラメータ（docs/notes/dts.md）。base は入口、url は開くコレクションか資料
 export const DTS_PARAMS = ['base', 'url'] as const;
 
+export const DTS_EXAMPLES = [
+  {
+    key: 'exampleKoui',
+    descKey: 'exampleKouiDesc',
+    url: DEFAULT_BASE,
+  },
+  {
+    key: 'exampleDracor',
+    descKey: 'exampleDracorDesc',
+    url: 'https://dracor.org/api/v1/dts',
+  },
+  {
+    key: 'exampleAlpheios',
+    descKey: 'exampleAlpheiosDesc',
+    url: 'https://texts.alpheios.net/api/dts',
+  },
+  {
+    key: 'examplePerseids',
+    descKey: 'examplePerseidsDesc',
+    url: 'https://dts.perseids.org/',
+  },
+  {
+    key: 'exampleEdh',
+    descKey: 'exampleEdhDesc',
+    url: 'https://edh.ub.uni-heidelberg.de/api/dts/',
+  },
+] as const;
+
 type Failure = 'entry' | 'collection' | 'notDts';
 type State =
   | { status: 'loading' }
@@ -346,11 +374,53 @@ function DtsBody({ base, target }: { base: string; target: string | null }) {
   return (
     <CommonLayout>
       <PageContainer width="text" className="space-y-6">
-        <header className="space-y-2">
-          <h1 className="text-2xl font-bold text-[var(--ds-fg)]">{t('title')}</h1>
-          <p className="text-[var(--ds-fg-muted)]">{t('lead')}</p>
+        <header className="space-y-3">
+          <h1 className="text-2xl font-bold text-[var(--ds-fg)]" style={{ fontFamily: 'var(--ds-font-serif)' }}>{t('title')}</h1>
+          <p className="text-sm sm:text-base text-[var(--ds-fg-muted)]">{t('lead')}</p>
           <BaseForm key={base} base={base} />
         </header>
+
+        {!target && (
+          <section data-testid="dts-examples" className="space-y-2.5">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--ds-fg-muted)]">
+              {t('examples')}
+            </h2>
+            <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {DTS_EXAMPLES.map((item) => {
+                const isActive = base.replace(/\/+$/, '') === item.url.replace(/\/+$/, '');
+                return (
+                  <li key={item.key}>
+                    <Link
+                      href={dtsHref(item.url, null)}
+                      data-testid="dts-example-link"
+                      aria-current={isActive ? 'true' : undefined}
+                      className={`block h-full rounded-lg border p-3 transition-colors ${
+                        isActive
+                          ? 'border-[var(--ds-primary)] bg-[var(--ds-primary)]/10'
+                          : 'border-[var(--ds-border)] bg-[var(--ds-surface)] hover:border-[var(--ds-primary)]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold text-[var(--ds-primary)]">
+                          {t(item.key)}
+                        </span>
+                        <span aria-hidden="true" className="text-xs text-[var(--ds-fg-muted)]">
+                          {isActive ? '✓' : '→'}
+                        </span>
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[var(--ds-fg-muted)]">
+                        {t(item.descKey)}
+                      </p>
+                      <p className="mt-1 truncate font-mono text-[11px] text-[var(--ds-fg-muted)]/80">
+                        {item.url}
+                      </p>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
         {state.status === 'loading' && <p className="text-sm text-[var(--ds-fg-muted)]">{t('loading')}</p>}
         {state.status === 'error' && <ErrorMessage kind={state.kind} code={state.code} />}
         {state.status === 'ready' && (

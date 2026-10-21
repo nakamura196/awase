@@ -57,8 +57,9 @@ test('embed=1 は帯と選択欄を出さない', async ({ page }) => {
 
 test('u が無いときは見本を出す', async ({ page }) => {
   await page.goto('/ja/xsl/');
-  await expect(page.getByRole('heading', { level: 1, name: 'XSL' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /表示スタイル|XSL/ })).toBeVisible();
   await expect(page.getByRole('link', { name: /校異源氏物語/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /三つの宝/ })).toBeVisible();
 });
 
 // OCR の翻刻ビュー。影印の画像を OpenSeadragon（CDN）で出す。iframe の srcdoc の中で動くかを見る。
@@ -91,4 +92,69 @@ test('OCR ビューは影印の画像を出し、頁送りで次の画像に替�
   await frame.getByRole('button', { name: /次へ/ }).click();
   await expect(frame.locator('.tei-page-active .facsimile canvas')).toBeVisible();
   await expect.poll(() => asked).toContain('f2');
+});
+
+test('LINE風 対話ビュー（xsl=line）を選択でき、東洋文庫固有の XSL（urenja / vellum / manchu）は選択肢に出ない', async ({ page }) => {
+  await page.goto(open('&xsl=line'));
+  const select = page.getByLabel('変換');
+  await expect(select).toHaveValue('line');
+  const optionValues = await select.locator('option').evaluateAll((opts) => opts.map((o) => (o as HTMLOptionElement).value));
+  expect(optionValues).toContain('line');
+  expect(optionValues).not.toContain('urenja');
+  expect(optionValues).not.toContain('vellum');
+  expect(optionValues).not.toContain('manchu');
+  await expect(page.locator('[data-testid="xsl-line-view"]')).toBeVisible();
+  await expect(page.locator('[data-testid="xsl-line-view"]')).toContainText('一行目の本文。');
+});
+
+test('固有表現・地図のサイドパネルを XSL 画面で切り替えられる', async ({ page }) => {
+  const MAP_TEI_URL = 'https://example.org/tei/wakozukan-like.xml';
+  const mapTeiXml = `<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc><titleStmt><title>蒋洲咨文</title></titleStmt><publicationStmt><p>p</p></publicationStmt><sourceDesc><p>s</p></sourceDesc></fileDesc>
+    <profileDesc>
+      <particDesc>
+        <listPerson>
+          <person xml:id="徳陽">
+            <persName>徳陽</persName>
+            <note type="schema:description">日本僧</note>
+          </person>
+        </listPerson>
+      </particDesc>
+      <settingDesc>
+        <listPlace>
+          <place xml:id="五島">
+            <placeName>五島</placeName>
+            <location><geo>32.695 128.84</geo></location>
+            <note type="schema:description">五島列島</note>
+          </place>
+        </listPlace>
+      </settingDesc>
+    </profileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <div type="釈文">
+        <p><persName corresp="徳陽">徳陽</persName>が<placeName corresp="#五島">五島</placeName>に至る。</p>
+      </div>
+    </body>
+  </text>
+</TEI>`;
+  await page.route(MAP_TEI_URL, (route) =>
+    route.fulfill({ body: mapTeiXml, contentType: 'application/xml', headers: { 'access-control-allow-origin': '*' } }),
+  );
+  await page.goto(`/ja/xsl/?u=${encodeURIComponent(MAP_TEI_URL)}&xsl=reading`);
+  await expect(page.locator('[data-testid="xsl-side-panes"]')).toBeVisible();
+  await expect(page.locator('[data-testid="map-pane"]')).toBeVisible();
+  await expect(page.locator('[data-testid="entities-pane"]')).toBeVisible();
+  await expect(page.locator('[data-testid="entities-pane"]')).toContainText('日本僧');
+  // 縦書き切り替えボタンがあり、初期状態で有効（日本語テキスト）になっている
+  const vBtn = page.getByRole('button', { name: '縦書き' });
+  await expect(vBtn).toHaveAttribute('aria-pressed', 'true');
+  const frame = page.frameLocator('[data-testid="xsl-frame"]');
+  await expect(frame.locator('html')).toHaveClass(/is-vertical/);
+  await vBtn.click();
+  await expect(vBtn).toHaveAttribute('aria-pressed', 'false');
+  await expect(frame.locator('html')).not.toHaveClass(/is-vertical/);
 });

@@ -84,7 +84,7 @@ test('読めないときは理由を言い分ける', async ({ page }) => {
   await expect(page.getByTestId('load-error')).toContainText('404');
 
   await page.route('https://example.org/config.json', (route) =>
-    route.fulfill({ body: '{"urlMain":"x"}', contentType: 'application/json', headers: { 'access-control-allow-origin': '*' } }),
+    route.fulfill({ body: '{"label_main":"x"}', contentType: 'application/json', headers: { 'access-control-allow-origin': '*' } }),
   );
   await page.goto(`/ja/viewer/?u=${encodeURIComponent('https://example.org/config.json')}`);
   await expect(page.getByTestId('load-error')).toContainText('config.json');

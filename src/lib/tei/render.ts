@@ -5,6 +5,8 @@
 // innerHTML は使わず、要素を 1 つずつ作る。外から読んだ TEI にスクリプトが紛れていても動かないように。
 import { htmlAttrName, htmlTagName, isIndentation, safeUrl } from './attrs';
 import { appId, textApps } from './apparatus';
+import { entityId, textEntities } from './entities';
+import { speechId, textSpeeches } from './speech';
 
 export interface RenderContext {
   /** 部品を作る先の文書（ブラウザの document） */
@@ -13,6 +15,10 @@ export interface RenderContext {
   baseUrl?: string;
   /** 本文の app の番号（1 から）。apparatus ペインの行と結ぶ id を付けるのに使う */
   appNumbers?: Map<Element, number>;
+  /** 本文の固有表現要素の番号（1 から）。entities ペインの行と結ぶ id を付けるのに使う */
+  entityNumbers?: Map<Element, number>;
+  /** 本文の発話要素（sp・said）の番号（1 から）。speech ペインの行と結ぶ id を付けるのに使う */
+  speechNumbers?: Map<Element, number>;
 }
 
 /** 部品を作ったあとに手を足す処理。戻り値 false なら子を写さない */
@@ -26,6 +32,8 @@ const BEHAVIORS: Record<string, Behavior> = {
   // 改行。<br> を中に置き、表示するかどうかは CSS で切り替える
   lb(src, el, { doc }) {
     if (src.getAttribute('break') === 'no') return;
+    const rawStyle = src.getAttribute('style') ?? '';
+    if (/display\s*:\s*none/i.test(rawStyle)) return;
     el.appendChild(doc.createElement('br'));
   },
   // 頁。@n を目印として見せる
@@ -96,6 +104,25 @@ const BEHAVIORS: Record<string, Behavior> = {
 
 function copyAttributes(src: Element, el: HTMLElement) {
   for (const attr of Array.from(src.attributes)) {
+    if (attr.name === 'style') {
+      const safeParts: string[] = [];
+      for (const decl of attr.value.split(';')) {
+        const idx = decl.indexOf(':');
+        if (idx < 0) continue;
+        const prop = decl.slice(0, idx).trim().toLowerCase();
+        const val = decl.slice(idx + 1).trim();
+        if (
+          (prop === 'margin-top' || prop === 'text-indent' || prop === 'margin-bottom') &&
+          /^-?\d+(\.\d+)?(rem|em|px|ch)$/.test(val)
+        ) {
+          safeParts.push(`${prop}: ${val}`);
+        }
+      }
+      if (safeParts.length > 0) {
+        el.setAttribute('style', safeParts.join('; '));
+      }
+      continue;
+    }
     const name = htmlAttrName(attr.name);
     if (!name) continue;
     try {
@@ -133,6 +160,16 @@ export function renderElement(src: Element, ctx: RenderContext): HTMLElement {
   const el = ctx.doc.createElement(htmlTagName(src.localName));
   el.setAttribute('data-origname', src.localName);
   copyAttributes(src, el);
+  const entN = ctx.entityNumbers?.get(src);
+  if (entN) {
+    if (!el.id) el.id = entityId(entN);
+    el.setAttribute('data-awase-entity', String(entN));
+  }
+  const spN = ctx.speechNumbers?.get(src);
+  if (spN) {
+    if (!el.id) el.id = speechId(spN);
+    el.setAttribute('data-awase-speech', String(spN));
+  }
   const behavior = BEHAVIORS[src.localName];
   if (behavior?.(src, el, ctx) === false) return el;
   renderChildren(src, el, ctx);
@@ -144,7 +181,14 @@ export function renderElement(src: Element, ctx: RenderContext): HTMLElement {
  * teiHeader と facsimile・standOff は本文ペインには出さない（ヘッダーの欄・画像ペインが受け持つ）。
  */
 export function renderTeiText(tei: Document, ctx: RenderContext): DocumentFragment {
-  if (!ctx.appNumbers) ctx = { ...ctx, appNumbers: new Map(textApps(tei).map((app, i) => [app, i + 1])) };
+  if (!ctx.appNumbers || !ctx.entityNumbers || !ctx.speechNumbers) {
+    ctx = {
+      ...ctx,
+      appNumbers: ctx.appNumbers ?? new Map(textApps(tei).map((app, i) => [app, i + 1])),
+      entityNumbers: ctx.entityNumbers ?? new Map(textEntities(tei).map((ent, i) => [ent, i + 1])),
+      speechNumbers: ctx.speechNumbers ?? new Map(textSpeeches(tei).map((sp, i) => [sp, i + 1])),
+    };
+  }
   const frag = ctx.doc.createDocumentFragment();
   const root = tei.documentElement;
   const texts = Array.from(root.getElementsByTagNameNS('*', 'text')).filter(

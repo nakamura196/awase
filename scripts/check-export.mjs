@@ -18,7 +18,7 @@ import { join, relative, posix } from 'node:path';
 
 const OUT = new URL('../out/', import.meta.url).pathname;
 const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/\/+$/, '');
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://nakamura196.github.io/awase').replace(/\/+$/, '');
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://awase.ldas.jp').replace(/\/+$/, '');
 
 // 土台にしたサイト(IIIF Kasane)の名前やホストが残っていないこと
 const FORBIDDEN = ['kasane.ldas.jp', 'iiif-kasane', 'IIIF Kasane'];

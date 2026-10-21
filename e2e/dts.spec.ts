@@ -36,6 +36,15 @@ test('根のコレクションが子を並べ、たどると url= が変わる',
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(open());
+  // トップには移行元（dts-viewer）と同様に見本エンドポイント（Examples）が並ぶ
+  const examples = page.getByTestId('dts-examples');
+  await expect(examples).toBeVisible();
+  await expect(examples.getByRole('link', { name: /校異源氏物語テキストDB/ })).toBeVisible();
+  await expect(examples.getByRole('link', { name: /DraCor/ })).toBeVisible();
+  await expect(examples.getByRole('link', { name: /Alpheios/ })).toBeVisible();
+  await expect(examples.getByRole('link', { name: /Perseids/ })).toBeVisible();
+  await expect(examples.getByRole('link', { name: /Epigraphische Datenbank Heidelberg/ })).toBeVisible();
+
   await expect(page.getByRole('heading', { level: 2, name: '校異源氏物語テキストDB' })).toBeVisible();
   await expect(page.getByRole('link', { name: /桐壺/ })).toBeVisible();
   await expect(page.getByRole('link', { name: /帚木/ })).toBeVisible();

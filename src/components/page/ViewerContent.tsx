@@ -2,35 +2,62 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import CommonLayout from '@/components/layout/Common';
 import PageContainer from '@/components/layout/PageContainer';
 import TextPane from '@/components/viewer/TextPane';
+import XslViewPane from '@/components/viewer/XslViewPane';
 import HeaderPanel from '@/components/viewer/HeaderPanel';
 import ImagePane, { type PlaceImages } from '@/components/viewer/ImagePane';
 import ApparatusPane from '@/components/viewer/ApparatusPane';
+import EntitiesPane from '@/components/viewer/EntitiesPane';
+import SpeechPane from '@/components/viewer/SpeechPane';
+import MapPane from '@/components/viewer/MapPane';
+import TimelinePane from '@/components/viewer/TimelinePane';
+import LineView from '@/components/xsl/LineView';
+import ReadingSupportView from '@/components/xsl/ReadingSupportView';
+import VideoSupportView from '@/components/xsl/VideoSupportView';
 import { useScrollSync } from '@/components/viewer/useScrollSync';
+import { withBasePath } from '@/lib/basePath';
 import { loadSource, TeiLoadError, type LoadError, type ParallelConfig } from '@/lib/tei/load';
 import { summarizeHeader } from '@/lib/tei/header';
 import { facsTargets, pageBreaks, pageTarget, readFacsimile } from '@/lib/tei/facs';
-import { getSources, paneShown, togglePane } from '@/lib/viewerParams';
+import { getSources, isVertical, paneShown, togglePane } from '@/lib/viewerParams';
 import { readApparatus } from '@/lib/tei/apparatus';
+import { entityId, hasEntitiesData, textEntities } from '@/lib/tei/entities';
+import { textSpeeches } from '@/lib/tei/speech';
+import { hasMapData, hasTimelineData } from '@/lib/tei/corresp';
+import { XSL_CATALOG, xslTitle } from '@/lib/xsl/catalog';
+import { parseXslChoice } from '@/lib/xsl/params';
 
-// URL で受け取るパラメータ（docs/notes/survey.md「viewer の URL」）。
-// いま使っているのは u / tei / config（どれも繰り返し可）/ dir / id / embed / panes（image と apparatus を出すか）と、
+// URL で受け取るパラメータ（docs/notes/survey.md「viewer の URL」「旧 URL の受け方」）。
+// いま使っているのは u / tei / config / url（どれも繰り返し可）/ dir / textDirection / id / embed / panes（image と apparatus を出すか）と、
 // 表示の切り替えの lb / pb / sync。ほかはペインを足すときに使う
-export const VIEWER_PARAMS = ['u', 'tei', 'config', 'manifest', 'curation', 'panes', 'dir', 'wit', 'xsl', 'id', 'embed'] as const;
+export const VIEWER_PARAMS = ['u', 'tei', 'config', 'url', 'manifest', 'curation', 'panes', 'dir', 'textDirection', 'wit', 'xsl', 'id', 'embed'] as const;
 
 const KOUI = 'https://w3id.org/kouigenjimonogatari/tei/01.xml';
 const YOSANO = 'https://tei-eaj.github.io/parallel_text_viewer/data/yosano.xml';
 // 絵入源氏 桐壺と与謝野訳を束ねた PTV の config.json。絵入源氏の anchor@corresp が与謝野訳の文を指す
 const EIRI_CONFIG = 'https://tei-eaj.github.io/parallel_text_viewer/data/pt/config.json';
-const SAMPLES = [
+const ANNAN = withBasePath('/samples/annan-kokusho.xml');
+const TAKARA = 'https://raw.githubusercontent.com/TEI-EAJ/aozora_tei/master/data/complete/tei_lib_lv3/1126_tei.xml';
+const MEROS = 'https://raw.githubusercontent.com/TEI-EAJ/aozora_tei/master/data/complete/tei_lib_lv4/1567_tei.xml';
+const GUIDE = 'https://tei-tools.toyobunko-lab.jp/xml/tei-guide/tei.xml';
+const VIDEO_NEWS = 'https://video-support.vercel.app/data/sdcommons_npl-02FT0102974177/sdcommons_npl-02FT0102974177.xml';
+const SAMPLES: readonly { key: string; urls: readonly string[]; dir: 'v' | 'h'; xsl?: string }[] = [
   { key: 'sampleKoui', urls: [KOUI], dir: 'v' },
   { key: 'sampleYosano', urls: [YOSANO], dir: 'h' },
   { key: 'sampleParallel', urls: [KOUI, YOSANO], dir: 'h' },
   { key: 'sampleLinked', urls: [EIRI_CONFIG], dir: 'v' },
-] as const;
+  { key: 'sampleAnnan', urls: [ANNAN], dir: 'v' },
+  { key: 'sampleTakara', urls: [TAKARA], dir: 'v' },
+  { key: 'sampleTakaraLine', urls: [TAKARA], dir: 'v', xsl: 'line' },
+  { key: 'sampleMeros', urls: [MEROS], dir: 'v' },
+  { key: 'sampleMerosLine', urls: [MEROS], dir: 'v', xsl: 'line' },
+  { key: 'sampleReadingSupport', urls: [VIDEO_NEWS], dir: 'h', xsl: 'reading-support' },
+  { key: 'sampleVideoSupport', urls: [VIDEO_NEWS], dir: 'h', xsl: 'video' },
+  { key: 'sampleGuide', urls: [GUIDE], dir: 'h', xsl: 'analysis' },
+];
 
 // URL の引数を書き換える。履歴を増やさない（表示の切り替え）か、増やす（別の TEI を開く）かを選ぶ
 function updateParams(changes: Record<string, string | null>, push = false) {
@@ -50,6 +77,11 @@ function setSources(sources: string[], push = true) {
   params.delete('u');
   params.delete('tei');
   params.delete('config');
+  params.delete('url');
+  if (sources.length === 0) {
+    params.delete('xsl');
+    params.delete('id');
+  }
   for (const s of sources) params.append('u', s);
   const url = `${window.location.pathname}?${params.toString()}`;
   if (push) window.history.pushState(null, '', url);
@@ -99,13 +131,13 @@ function Entry() {
   const t = useTranslations('Viewer');
   const [url, setUrl] = useState('');
   return (
-    <PageContainer width="text" className="space-y-6">
+    <PageContainer width="text" className="space-y-8 py-6">
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold text-[var(--ds-fg)]">{t('title')}</h1>
-        <p className="text-[var(--ds-fg-muted)]">{t('lead')}</p>
+        <h1 className="text-2xl font-bold text-[var(--ds-fg)]" style={{ fontFamily: 'var(--ds-font-serif)' }}>{t('title')}</h1>
+        <p className="text-sm sm:text-base leading-relaxed text-[var(--ds-fg-muted)]">{t('lead')}</p>
       </header>
       <form
-        className="flex flex-col sm:flex-row gap-2"
+        className="flex flex-col sm:flex-row gap-2.5 rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] p-4 sm:p-5 shadow-xs"
         onSubmit={(e) => {
           e.preventDefault();
           if (url.trim()) updateParams({ u: url.trim() }, true);
@@ -121,27 +153,28 @@ function Entry() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://…/tei.xml"
-          className="flex-1 min-w-0 rounded border border-[var(--ds-border)] bg-[var(--ds-bg)] px-3 py-2 text-[var(--ds-fg)]"
+          className="flex-1 min-w-0 rounded-lg border border-[var(--ds-border)] bg-[var(--ds-bg)] px-3.5 py-2 text-sm text-[var(--ds-fg)] focus:border-[var(--ds-primary)] focus:outline-none"
         />
-        <button type="submit" className="rounded bg-[var(--ds-primary)] px-4 py-2 text-white">
+        <button type="submit" className="rounded-lg bg-[var(--ds-primary)] px-5 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity">
           {t('open')}
         </button>
       </form>
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold text-[var(--ds-fg)]">{t('samples')}</h2>
-        <ul className="space-y-1">
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold text-[var(--ds-fg)]">{t('samples')}</h2>
+        <ul className="space-y-2">
           {SAMPLES.map((s) => (
             <li key={s.key}>
               <a
-                href={`?${s.urls.map((u) => `u=${encodeURIComponent(u)}`).join('&')}&dir=${s.dir}`}
+                href={`?${s.urls.map((u) => `u=${encodeURIComponent(u)}`).join('&')}&dir=${s.dir}${s.xsl ? `&xsl=${encodeURIComponent(s.xsl)}` : ''}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  updateParams({ dir: s.dir });
+                  updateParams({ dir: s.dir, xsl: s.xsl ?? null });
                   setSources([...s.urls]);
                 }}
-                className="underline text-[var(--ds-primary)]"
+                className="flex items-center justify-between gap-3 rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 py-3 text-sm font-medium text-[var(--ds-primary)] hover:border-[var(--ds-primary)] transition-colors"
               >
-                {t(s.key)}
+                <span>{t(s.key)}</span>
+                <span aria-hidden="true" className="text-[var(--ds-fg-muted)]">→</span>
               </a>
             </li>
           ))}
@@ -172,10 +205,7 @@ function Toggle({ pressed, onClick, children }: { pressed: boolean; onClick: () 
   );
 }
 
-// 本文の横のペインの並べ方（Tailwind が拾えるよう、クラス名を書き切る）
-const LG_COLS: Record<number, string> = { 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3' };
-
-type PaneKey = 'image' | 'text' | 'apparatus';
+type PaneKey = 'image' | 'text' | 'apparatus' | 'entities' | 'speech' | 'map' | 'timeline';
 
 // ペインを横に並べられないとき（狭い画面と、本文を並べて読むとき）に、1 つずつ切り替えるタブ
 function PaneTabs({
@@ -190,7 +220,15 @@ function PaneTabs({
   className: string;
 }) {
   const t = useTranslations('Viewer');
-  const label: Record<PaneKey, string> = { image: t('images'), text: t('textPane'), apparatus: t('apparatus') };
+  const label: Record<PaneKey, string> = {
+    image: t('images'),
+    text: t('textPane'),
+    apparatus: t('apparatus'),
+    entities: t('entities'),
+    speech: t('speech'),
+    map: t('map'),
+    timeline: t('timeline'),
+  };
   return (
     <div role="tablist" aria-label={t('panes')} className={`flex shrink-0 gap-1 border-b border-[var(--ds-border)] ${className}`}>
       {panes.map((p) => (
@@ -241,7 +279,16 @@ function Column({
   onHasImages,
   showApparatus,
   onHasApparatus,
+  showEntities,
+  onHasEntities,
+  showSpeech,
+  onHasSpeech,
+  showMap,
+  onHasMap,
+  showTimeline,
+  onHasTimeline,
   wit,
+  xslParam,
 }: {
   src: string;
   index: number;
@@ -256,8 +303,22 @@ function Column({
   showApparatus: boolean;
   /** この列に異文（app）があるか（ツールバーの「異文」を出すかどうか） */
   onHasApparatus: (index: number, has: boolean) => void;
+  showEntities: boolean;
+  /** この列に固有表現（persName・placeName・orgName・date・rs・name）があるか */
+  onHasEntities: (index: number, has: boolean) => void;
+  showSpeech: boolean;
+  /** この列に発話（sp・said）があるか */
+  onHasSpeech: (index: number, has: boolean) => void;
+  showMap: boolean;
+  /** この列に地図に出せる地点・書簡（listPlace の geo や correspDesc）があるか */
+  onHasMap: (index: number, has: boolean) => void;
+  showTimeline: boolean;
+  /** この列に年表に出せる日時（correspDesc・event・日付属性つきの date）があるか */
+  onHasTimeline: (index: number, has: boolean) => void;
   /** 異文の箇所で見せる伝本（?wit=） */
   wit: string | null;
+  /** 表示スタイルの切り替え（?xsl=line / reading / notes / ocr / analysis 等） */
+  xslParam: string | null;
 }) {
   const t = useTranslations('Viewer');
   const [state, setState] = useState<State>({ status: 'loading' });
@@ -295,6 +356,31 @@ function Column({
       const targets = facsTargets(e.facs, map);
       if (targets.length) places.set(e.id, { n: e.n, targets });
     }
+    for (const [id, entry] of map.entries()) {
+      if (!entry.region) continue;
+      const m = /^z-0*(\d+)$/.exec(id);
+      if (m) {
+        const n = Number(m[1]);
+        const pad = id.slice(2);
+        const place: PlaceImages = { n, targets: [entry] };
+        places.set(`o-${pad}`, place);
+        places.set(`y-${pad}`, place);
+        places.set(`ja-${pad}`, place);
+        places.set(id, place);
+      }
+    }
+    if (places.size > 0) {
+      textEntities(state.tei).forEach((el, i) => {
+        const entId = el.getAttribute('xml:id') ?? el.getAttribute('id') ?? entityId(i + 1);
+        for (let p: Element | null = el.parentElement; p; p = p.parentElement) {
+          const pid = p.getAttribute('xml:id') ?? p.getAttribute('id');
+          if (pid && places.has(pid)) {
+            if (!places.has(entId)) places.set(entId, places.get(pid)!);
+            break;
+          }
+        }
+      });
+    }
     if (!pages.some(Boolean) && !places.size) return null;
     return { pages, labels: pbs.map((pb) => pb.getAttribute('n')), hasImage: pages.map(Boolean), places };
   }, [state, src, apps]);
@@ -305,13 +391,53 @@ function Column({
   const hasApparatus = apps.length > 0;
   useEffect(() => onHasApparatus(index, hasApparatus), [hasApparatus, index, onHasApparatus]);
   const withApparatus = showApparatus && hasApparatus;
-  // 出すペイン。1 列のときは広い画面で横に並べる。狭い画面と、本文を並べて読むときは、タブで 1 つずつ出す
-  const panes: PaneKey[] = [...(imaged ? (['image'] as const) : []), 'text', ...(withApparatus ? (['apparatus'] as const) : [])];
+  // 固有表現（persName・placeName・orgName・date・rs・name）。1 つでもあれば一覧を出せる
+  const hasEntities = useMemo(() => (state.status === 'ready' ? hasEntitiesData(state.tei) : false), [state]);
+  useEffect(() => onHasEntities(index, hasEntities), [hasEntities, index, onHasEntities]);
+  const withEntities = showEntities && hasEntities;
+  // 発話（sp・said）。1 つでもあれば一覧を出せる
+  const hasSpeech = useMemo(() => (state.status === 'ready' ? textSpeeches(state.tei).length > 0 : false), [state]);
+  useEffect(() => onHasSpeech(index, hasSpeech), [hasSpeech, index, onHasSpeech]);
+  const withSpeech = showSpeech && hasSpeech;
+  // 地図（listPlace の geo や correspDesc）
+  const hasMap = useMemo(() => (state.status === 'ready' ? hasMapData(state.tei) : false), [state]);
+  useEffect(() => onHasMap(index, hasMap), [hasMap, index, onHasMap]);
+  const withMap = showMap && hasMap;
+  // 年表（correspDesc・event・日付属性つきの date）
+  const hasTimeline = useMemo(() => (state.status === 'ready' ? hasTimelineData(state.tei) : false), [state]);
+  useEffect(() => onHasTimeline(index, hasTimeline), [hasTimeline, index, onHasTimeline]);
+  const withTimeline = showTimeline && hasTimeline;
+  // 出すペイン。1 列のときは広い画面で横に並べる（補助ペインは右カラムにまとめて積み、本文の表示領域を広く保つ）。
+  // 狭い画面と、本文を並べて読むときは、タブで 1 つずつ出す
+  const analysisPanes: PaneKey[] = [
+    ...(withApparatus ? (['apparatus'] as const) : []),
+    ...(withEntities ? (['entities'] as const) : []),
+    ...(withSpeech ? (['speech'] as const) : []),
+    ...(withMap ? (['map'] as const) : []),
+    ...(withTimeline ? (['timeline'] as const) : []),
+  ];
+  const panes: PaneKey[] = [
+    ...(imaged ? (['image'] as const) : []),
+    'text',
+    ...analysisPanes,
+  ];
   const [tab, setTab] = useState<PaneKey>('text');
   const active = panes.includes(tab) ? tab : 'text';
   const tabbed = panes.length > 1;
   // タブで隠すペイン。1 列のときは、広い画面では隠さない
   const paneClass = (p: PaneKey) => `h-full min-h-0 ${p === active ? '' : count === 1 ? 'hidden lg:block' : 'hidden'}`;
+  const analysisPaneClass = (p: PaneKey) =>
+    `min-h-0 flex-1 overflow-hidden ${p === active ? 'h-full' : count === 1 ? 'hidden lg:block' : 'hidden'}`;
+  const desktopLayout =
+    count !== 1
+      ? undefined
+      : imaged && analysisPanes.length > 0
+        ? 'image-text-analysis'
+        : imaged
+          ? 'image-text'
+          : analysisPanes.length > 0
+            ? 'text-analysis'
+            : 'text-only';
 
   return (
     <section
@@ -345,7 +471,10 @@ function Column({
         <>
         {tabbed && <PaneTabs panes={panes} active={active} onChange={setTab} className={count === 1 ? 'lg:hidden' : ''} />}
         {/* grid-cols-1 で列の幅を枠に収める（縦書きの本文が、中身の長さまで列を広げないように） */}
-        <div className={`grid min-h-0 flex-1 grid-cols-1 grid-rows-1 gap-4 ${count === 1 ? (LG_COLS[panes.length] ?? '') : ''}`}>
+        <div
+          className="awase-viewer-grid grid min-h-0 flex-1 grid-cols-1 grid-rows-1 gap-4"
+          data-layout={desktopLayout}
+        >
         {imaged && facs && (
           <div className={paneClass('image')}>
             <ImagePane
@@ -360,34 +489,126 @@ function Column({
             />
           </div>
         )}
-        <div className={`${paneClass('text')} rounded border border-[var(--ds-border)] bg-[var(--ds-surface)] p-4 sm:p-6`}>
-          <TextPane
-            tei={state.tei}
-            baseUrl={src}
-            vertical={vertical}
-            showLineBreaks={showLb}
-            showPageBreaks={showPb}
-            scroll
-            focusId={focusId}
-            onSelect={(id) => updateParams({ id })}
-            pageImages={imaged ? facs?.hasImage : undefined}
-            page={page}
-            onPageChange={imaged ? setPage : undefined}
-            pageRequest={pageRequest}
-            wit={wit}
-          />
-        </div>
-        {withApparatus && (
-          <div className={paneClass('apparatus')}>
-            <ApparatusPane
+        {xslParam === 'line' ? (
+          <div className={`${paneClass('text')} overflow-hidden rounded border border-[var(--ds-border)] bg-[var(--ds-surface)]`} data-testid="text-pane">
+            <LineView
+              tei={state.tei}
+              focusId={focusId}
+              onSelect={(id) => updateParams({ id })}
+            />
+          </div>
+        ) : xslParam === 'reading-support' ? (
+          <div className={paneClass('text')} data-testid="text-pane">
+            <ReadingSupportView
               tei={state.tei}
               baseUrl={src}
               focusId={focusId}
               onSelect={(id) => updateParams({ id })}
-              wit={wit}
-              onWitChange={(w) => updateParams({ wit: w })}
-              imaged={imaged ? placeIds : undefined}
             />
+          </div>
+        ) : xslParam === 'video' ? (
+          <div className={paneClass('text')} data-testid="text-pane">
+            <VideoSupportView
+              tei={state.tei}
+              baseUrl={src}
+              focusId={focusId}
+              onSelect={(id) => updateParams({ id })}
+            />
+          </div>
+        ) : xslParam ? (
+          <div className={paneClass('text')}>
+            <XslViewPane
+              key={`${src}:${xslParam}`}
+              tei={state.tei}
+              baseUrl={src}
+              choice={parseXslChoice(xslParam)}
+              vertical={vertical}
+              focusId={focusId}
+              onSelect={(id) => updateParams({ id })}
+              onDirectionChange={(dir) => updateParams({ dir })}
+            />
+          </div>
+        ) : (
+          <div className={`${paneClass('text')} rounded border border-[var(--ds-border)] bg-[var(--ds-surface)] p-4 sm:p-6`}>
+            <TextPane
+              tei={state.tei}
+              baseUrl={src}
+              vertical={vertical}
+              showLineBreaks={showLb}
+              showPageBreaks={showPb}
+              scroll
+              focusId={focusId}
+              onSelect={(id) => updateParams({ id })}
+              pageImages={imaged ? facs?.hasImage : undefined}
+              page={page}
+              onPageChange={imaged ? setPage : undefined}
+              pageRequest={pageRequest}
+              wit={wit}
+            />
+          </div>
+        )}
+        {analysisPanes.length > 0 && (
+          <div
+            data-testid="viewer-analysis-sidebar"
+            data-single-column={count === 1 ? 'true' : undefined}
+            className={`awase-analysis-sidebar h-full min-h-0 min-w-0 flex-col gap-3 ${
+              analysisPanes.includes(active)
+                ? 'flex'
+                : count === 1
+                  ? 'hidden lg:block'
+                  : 'hidden'
+            }`}
+          >
+            {withApparatus && (
+              <div className={analysisPaneClass('apparatus')}>
+                <ApparatusPane
+                  tei={state.tei}
+                  baseUrl={src}
+                  focusId={focusId}
+                  onSelect={(id) => updateParams({ id })}
+                  wit={wit}
+                  onWitChange={(w) => updateParams({ wit: w })}
+                  imaged={imaged ? placeIds : undefined}
+                />
+              </div>
+            )}
+            {withEntities && (
+              <div className={analysisPaneClass('entities')}>
+                <EntitiesPane
+                  tei={state.tei}
+                  focusId={focusId}
+                  onSelect={(id) => updateParams({ id })}
+                />
+              </div>
+            )}
+            {withSpeech && (
+              <div className={analysisPaneClass('speech')}>
+                <SpeechPane
+                  tei={state.tei}
+                  focusId={focusId}
+                  onSelect={(id) => updateParams({ id })}
+                />
+              </div>
+            )}
+            {withMap && (
+              <div className={analysisPaneClass('map')}>
+                <MapPane
+                  tei={state.tei}
+                  baseUrl={src}
+                  focusId={focusId}
+                  onSelect={(id) => updateParams({ id })}
+                />
+              </div>
+            )}
+            {withTimeline && (
+              <div className={analysisPaneClass('timeline')}>
+                <TimelinePane
+                  tei={state.tei}
+                  focusId={focusId}
+                  onSelect={(id) => updateParams({ id })}
+                />
+              </div>
+            )}
           </div>
         )}
         </div>
@@ -433,8 +654,9 @@ function AddText() {
 
 function Reader({ sources }: { sources: string[] }) {
   const t = useTranslations('Viewer');
+  const locale = useLocale();
   const search = useSearchParams();
-  const vertical = search.get('dir') === 'v';
+  const vertical = isVertical(search);
   // 改行と頁の目印は既定で見せる。消したときだけ URL に残す
   const showLb = search.get('lb') !== '0';
   const showPb = search.get('pb') !== '0';
@@ -442,33 +664,70 @@ function Reader({ sources }: { sources: string[] }) {
   const focusId = search.get('id');
   // 異文の箇所で見せる伝本（koui の ?wit=）。書かなければ lem
   const wit = search.get('wit');
+  const xslParam = search.get('xsl')?.trim() || null;
+  const xslChoice = parseXslChoice(xslParam);
   const many = sources.length > 1;
   // 並べた列のスクロール連動。既定で入れ、切ったときだけ URL に残す
   const sync = search.get('sync') !== '0';
   const columns = useRef<HTMLDivElement>(null);
   useScrollSync(columns, many && sync);
-  // 頁の画像（pb@facs）と異文の一覧。panes を書いたときは、含むものだけ出す
+  // 頁の画像（pb@facs）・異文の一覧・固有表現の一覧・発話・地図・年表。panes を書いたときは、含むものだけ出す
+  // 電子読書支援ビュー / 動画閲覧支援ビューは独自に左右の用語カード列を持つため、panes 未指定時は entities を自動展開しない
   const panes = search.get('panes');
+  const isSupportStyle = xslParam === 'reading-support' || xslParam === 'video';
   const showImages = paneShown(panes, 'image');
   const showApparatus = paneShown(panes, 'apparatus');
-  // 画像の引ける列・異文のある列があるときだけ、ツールバーにそのボタンを出す
+  const showEntities = isSupportStyle && panes === null ? false : paneShown(panes, 'entities');
+  const showSpeech = paneShown(panes, 'speech');
+  const showMap = paneShown(panes, 'map');
+  const showTimeline = paneShown(panes, 'timeline');
+  // 各ペインに出せる中身がある列があるときだけ、ツールバーにそのボタンを出す
   const [imageColumns, onHasImages] = useColumnFlags();
   const [apparatusColumns, onHasApparatus] = useColumnFlags();
+  const [entityColumns, onHasEntities] = useColumnFlags();
+  const [speechColumns, onHasSpeech] = useColumnFlags();
+  const [mapColumns, onHasMap] = useColumnFlags();
+  const [timelineColumns, onHasTimeline] = useColumnFlags();
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 bg-[var(--ds-bg)] px-4 py-3 sm:px-6">
       {/* 1 つのときは本文の題名が見出しになる。並べるときは列ごとの題名を h2 にし、ページの見出しを別に置く */}
       {many && <h1 className="sr-only">{t('parallelTitle', { count: sources.length })}</h1>}
-      <div className="flex shrink-0 flex-wrap items-center gap-2" role="toolbar" aria-label={t('display')}>
+      <div
+        className="flex shrink-0 flex-wrap items-center gap-2 rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-2"
+        role="toolbar"
+        aria-label={t('display')}
+      >
+        <label className="flex items-center gap-1.5 text-sm">
+          <span className="font-medium text-[var(--ds-fg-muted)]">{t('styleLabel')}</span>
+          <select
+            data-testid="viewer-style-select"
+            value={xslChoice.kind === 'catalog' ? xslChoice.id : xslChoice.kind === 'sef' ? '__custom' : ''}
+            onChange={(e) => updateParams({ xsl: e.target.value || null })}
+            className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-bg)] px-2.5 py-1 text-sm text-[var(--ds-fg)]"
+          >
+            <option value="">{t('styleStandard')}</option>
+            {xslChoice.kind === 'sef' && <option value="__custom">{xslChoice.url.split('/').pop()}</option>}
+            {XSL_CATALOG.map((x) => (
+              <option key={x.id} value={x.id}>
+                {xslTitle(x, locale)}
+              </option>
+            ))}
+          </select>
+        </label>
         <Toggle pressed={vertical} onClick={() => updateParams({ dir: vertical ? 'h' : 'v' })}>
           {t('vertical')}
         </Toggle>
-        <Toggle pressed={showLb} onClick={() => updateParams({ lb: showLb ? '0' : null })}>
-          {t('lineBreaks')}
-        </Toggle>
-        <Toggle pressed={showPb} onClick={() => updateParams({ pb: showPb ? '0' : null })}>
-          {t('pageBreaks')}
-        </Toggle>
+        {!xslParam && (
+          <>
+            <Toggle pressed={showLb} onClick={() => updateParams({ lb: showLb ? '0' : null })}>
+              {t('lineBreaks')}
+            </Toggle>
+            <Toggle pressed={showPb} onClick={() => updateParams({ pb: showPb ? '0' : null })}>
+              {t('pageBreaks')}
+            </Toggle>
+          </>
+        )}
         {imageColumns.size > 0 && (
           <Toggle pressed={showImages} onClick={() => updateParams({ panes: togglePane(panes, 'image') })}>
             {t('images')}
@@ -479,12 +738,39 @@ function Reader({ sources }: { sources: string[] }) {
             {t('apparatus')}
           </Toggle>
         )}
+        {entityColumns.size > 0 && (
+          <Toggle pressed={showEntities} onClick={() => updateParams({ panes: togglePane(panes, 'entities') })}>
+            {t('entities')}
+          </Toggle>
+        )}
+        {speechColumns.size > 0 && (
+          <Toggle pressed={showSpeech} onClick={() => updateParams({ panes: togglePane(panes, 'speech') })}>
+            {t('speech')}
+          </Toggle>
+        )}
+        {mapColumns.size > 0 && (
+          <Toggle pressed={showMap} onClick={() => updateParams({ panes: togglePane(panes, 'map') })}>
+            {t('map')}
+          </Toggle>
+        )}
+        {timelineColumns.size > 0 && (
+          <Toggle pressed={showTimeline} onClick={() => updateParams({ panes: togglePane(panes, 'timeline') })}>
+            {t('timeline')}
+          </Toggle>
+        )}
         {many && (
           <Toggle pressed={sync} onClick={() => updateParams({ sync: sync ? '0' : null })}>
             {t('scrollSync')}
           </Toggle>
         )}
         <AddText />
+        <button
+          type="button"
+          onClick={() => setSources([], true)}
+          className="ml-auto shrink-0 rounded-full border border-[var(--ds-border)] bg-[var(--ds-bg)] px-3 py-1 text-xs font-medium text-[var(--ds-fg-muted)] hover:border-[var(--ds-primary)] hover:text-[var(--ds-fg)] transition-colors"
+        >
+          ← {t('changeSource')}
+        </button>
       </div>
       {/* 画面の残りの高さに収める。並べるときは、狭い画面では縦に積んでこの枠をスクロールし、広い画面では横に並べる */}
       <div
@@ -509,7 +795,16 @@ function Reader({ sources }: { sources: string[] }) {
             onHasImages={onHasImages}
             showApparatus={showApparatus}
             onHasApparatus={onHasApparatus}
+            showEntities={showEntities}
+            onHasEntities={onHasEntities}
+            showSpeech={showSpeech}
+            onHasSpeech={onHasSpeech}
+            showMap={showMap}
+            onHasMap={onHasMap}
+            showTimeline={showTimeline}
+            onHasTimeline={onHasTimeline}
             wit={wit}
+            xslParam={xslParam}
           />
         ))}
       </div>

@@ -43,6 +43,33 @@ test('書誌の詳細を開いても、本文の枠の高さは変わらない',
   expect(await pageScroll(page)).toBe(0);
 });
 
+test('ビューア内で表示スタイル（標準・LINE風対話・XSL変換）を切り替えられる', async ({ page }) => {
+  await open(page);
+  const styleSelect = page.getByTestId('viewer-style-select');
+  await expect(styleSelect).toHaveValue('');
+
+  await styleSelect.selectOption('line');
+  await expect(page).toHaveURL(/xsl=line/);
+  await expect(page.getByTestId('xsl-line-view')).toBeVisible();
+  await expect(page.getByTestId('apparatus-pane')).toBeVisible();
+
+  await styleSelect.selectOption('reading-support');
+  await expect(page).toHaveURL(/xsl=reading-support/);
+  await expect(page.getByTestId('reading-support-view')).toBeVisible();
+
+  await styleSelect.selectOption('video');
+  await expect(page).toHaveURL(/xsl=video/);
+  await expect(page.getByTestId('video-support-view')).toBeVisible();
+
+  await styleSelect.selectOption('analysis');
+  await expect(page).toHaveURL(/xsl=analysis/);
+  await expect(page.frameLocator('[data-testid="xsl-frame"]').locator('body')).toContainText('app');
+
+  await styleSelect.selectOption('');
+  await expect(page).not.toHaveURL(/xsl=/);
+  await expect(page.getByTestId('text-pane')).toContainText('はじめ');
+});
+
 test.describe('狭い画面', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 

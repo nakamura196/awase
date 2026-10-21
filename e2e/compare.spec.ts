@@ -160,4 +160,7 @@ test('入口の欄に入れて「比べる」と、引数が URL に入って開
   await expect(page.getByTestId('diff-result')).toBeVisible();
   await expect.poll(() => urlParam(page, 'manifest1')).toBe(`${A}manifest.json`);
   await expect.poll(() => urlParam(page, 'label1')).toBe('左の名前');
+  // 比較結果から入口フォームに戻れる
+  await page.getByTestId('compare-reset').click();
+  await expect(page.locator('#manifest-0')).toBeVisible();
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import CommonLayout from '@/components/layout/Common';
@@ -71,7 +71,7 @@ function useUpdateParams() {
 }
 
 const field =
-  'w-full min-w-0 rounded border border-[var(--ds-border)] bg-[var(--ds-bg)] px-3 py-2 text-[var(--ds-fg)]';
+  'w-full min-w-0 rounded-lg border border-[var(--ds-border)] bg-[var(--ds-bg)] px-3 py-2 text-sm text-[var(--ds-fg)] focus:border-[var(--ds-primary)] focus:outline-none';
 
 // 引数なしで開いたときの入口: 2 つのマニフェストの URL を入れる欄と見本
 function Entry() {
@@ -90,52 +90,56 @@ function Entry() {
     });
   const open = (s: readonly [Side, Side]) => router.push(`${pathname}?${buildParams([s[0], s[1]]).toString()}`);
   return (
-    <PageContainer width="text" className="space-y-6">
+    <PageContainer width="text" className="space-y-8 py-6">
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold text-[var(--ds-fg)]">{t('title')}</h1>
-        <p className="text-[var(--ds-fg-muted)]">{t('lead')}</p>
+        <h1 className="text-2xl font-bold text-[var(--ds-fg)]" style={{ fontFamily: 'var(--ds-font-serif)' }}>{t('title')}</h1>
+        <p className="text-sm sm:text-base leading-relaxed text-[var(--ds-fg-muted)]">{t('lead')}</p>
       </header>
       <form
-        className="space-y-4"
+        className="space-y-4 rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] p-5 sm:p-6 shadow-xs"
         onSubmit={(e) => {
           e.preventDefault();
           open(sides);
         }}
       >
-        {([0, 1] as const).map((i) => (
-          <fieldset key={i} className="space-y-2">
-            <legend className="font-semibold text-[var(--ds-fg)]">{t(i === 0 ? 'left' : 'right')}</legend>
-            <label className="sr-only" htmlFor={`manifest-${i}`}>
-              {t('manifestLabel', { side: t(i === 0 ? 'left' : 'right') })}
-            </label>
-            <input
-              id={`manifest-${i}`}
-              type="url"
-              required
-              value={sides[i].manifest}
-              onChange={(e) => set(i, 'manifest', e.target.value)}
-              placeholder="https://…/manifest.json"
-              className={field}
-            />
-            <label className="sr-only" htmlFor={`label-${i}`}>
-              {t('nameLabel', { side: t(i === 0 ? 'left' : 'right') })}
-            </label>
-            <input
-              id={`label-${i}`}
-              value={sides[i].label}
-              onChange={(e) => set(i, 'label', e.target.value)}
-              placeholder={t('namePlaceholder')}
-              className={field}
-            />
-          </fieldset>
-        ))}
-        <button type="submit" className="rounded bg-[var(--ds-primary)] px-4 py-2 text-white">
-          {t('compare')}
-        </button>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {([0, 1] as const).map((i) => (
+            <fieldset key={i} className="space-y-2.5 rounded-lg border border-[var(--ds-border)] bg-[var(--ds-bg)]/50 p-3.5">
+              <legend className="px-1 text-sm font-semibold text-[var(--ds-fg)]">{t(i === 0 ? 'left' : 'right')}</legend>
+              <label className="sr-only" htmlFor={`manifest-${i}`}>
+                {t('manifestLabel', { side: t(i === 0 ? 'left' : 'right') })}
+              </label>
+              <input
+                id={`manifest-${i}`}
+                type="url"
+                required
+                value={sides[i].manifest}
+                onChange={(e) => set(i, 'manifest', e.target.value)}
+                placeholder="https://…/manifest.json"
+                className={field}
+              />
+              <label className="sr-only" htmlFor={`label-${i}`}>
+                {t('nameLabel', { side: t(i === 0 ? 'left' : 'right') })}
+              </label>
+              <input
+                id={`label-${i}`}
+                value={sides[i].label}
+                onChange={(e) => set(i, 'label', e.target.value)}
+                placeholder={t('namePlaceholder')}
+                className={field}
+              />
+            </fieldset>
+          ))}
+        </div>
+        <div className="flex justify-end">
+          <button type="submit" className="rounded-lg bg-[var(--ds-primary)] px-5 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity">
+            {t('compare')}
+          </button>
+        </div>
       </form>
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold text-[var(--ds-fg)]">{t('samples')}</h2>
-        <ul className="space-y-1">
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold text-[var(--ds-fg)]">{t('samples')}</h2>
+        <ul className="space-y-2">
           {SAMPLES.map((s) => (
             <li key={s.key}>
               <a
@@ -144,9 +148,10 @@ function Entry() {
                   e.preventDefault();
                   open(s.sides);
                 }}
-                className="underline text-[var(--ds-primary)]"
+                className="flex items-center justify-between gap-3 rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 py-3 text-sm font-medium text-[var(--ds-primary)] hover:border-[var(--ds-primary)] transition-colors"
               >
-                {t(s.key)}
+                <span>{t(s.key)}</span>
+                <span aria-hidden="true" className="text-[var(--ds-fg-muted)]">→</span>
               </a>
             </li>
           ))}
@@ -166,56 +171,22 @@ function ErrorMessage({ side, error }: { side: string; error: LoadError }) {
   );
 }
 
-const button = 'rounded border border-[var(--ds-border)] px-2 py-0.5 text-[var(--ds-fg)] disabled:opacity-40';
+const button = 'rounded border border-[var(--ds-border)] bg-[var(--ds-bg)] px-2 py-0.5 text-xs text-[var(--ds-fg)] hover:border-[var(--ds-primary)] disabled:opacity-40';
 
 // 画面の左右それぞれで、見ている Canvas を替える小さな送り
 function Pager({ side, index, total, label, onGo }: { side: 'left' | 'right'; index: number; total: number; label: string; onGo: (i: number) => void }) {
   const t = useTranslations('Compare');
   return (
-    <div className="flex items-center justify-center gap-2 text-sm" role="group" aria-label={t('pager', { side: t(side) })} data-testid={`pager-${side}`}>
+    <div className="flex shrink-0 items-center gap-1.5 text-xs" role="group" aria-label={t('pager', { side: t(side) })} data-testid={`pager-${side}`}>
       <button type="button" disabled={index <= 0} onClick={() => onGo(index - 1)} className={button} aria-label={t('prev')}>
         ‹
       </button>
-      <span className="tabular-nums text-[var(--ds-fg)]" aria-live="polite" data-testid={`canvas-${side}`}>
+      <span className="tabular-nums text-[var(--ds-fg-muted)]" aria-live="polite" data-testid={`canvas-${side}`}>
         {label} ({index + 1} / {total})
       </span>
       <button type="button" disabled={index >= total - 1} onClick={() => onGo(index + 1)} className={button} aria-label={t('next')}>
         ›
       </button>
-    </div>
-  );
-}
-
-const box = 'rounded border border-[var(--ds-border)] bg-[var(--ds-bg)] p-3 text-sm leading-relaxed whitespace-pre-wrap text-[var(--ds-fg)]';
-
-// 2 つの Canvas の文字の差分。左だけにある字は取り消し線、右だけにある字は下線
-function DiffView({ texts }: { texts: [string, string] }) {
-  const t = useTranslations('Compare');
-  const [a, b] = texts;
-  const ops = useMemo(() => diffChars(a, b), [a, b]);
-  const distance = useMemo(() => levenshtein(a, b), [a, b]);
-  const rate = similarity(distance, a, b);
-  if (!a && !b) return <p className="p-4 text-sm text-[var(--ds-fg-muted)]" data-testid="no-text">{t('noText')}</p>;
-  return (
-    <div className="space-y-3 p-3">
-      <p className="text-sm text-[var(--ds-fg)]" data-testid="similarity">
-        {t('distance', { distance })} / {t('similarity', { rate: (rate * 100).toFixed(1) })}
-      </p>
-      <div className="grid gap-3 lg:grid-cols-3">
-        <div className={box} data-testid="text-left">{a}</div>
-        <div className={box} data-testid="diff-result" aria-label={t('result')}>
-          {ops.map((op, i) =>
-            op.type === 'delete' ? (
-              <del key={i} className="bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200">{op.text}</del>
-            ) : op.type === 'insert' ? (
-              <ins key={i} className="bg-green-100 text-green-800 no-underline dark:bg-green-950 dark:text-green-200">{op.text}</ins>
-            ) : (
-              <span key={i}>{op.text}</span>
-            ),
-          )}
-        </div>
-        <div className={box} data-testid="text-right">{b}</div>
-      </div>
     </div>
   );
 }
@@ -227,13 +198,28 @@ const TABS: { mode: CompareMode; key: 'tabImage' | 'tabDiff' }[] = [
 
 function Comparison({ sides, mode, networkAsked }: { sides: [Side, Side]; mode: CompareMode; networkAsked: boolean }) {
   const t = useTranslations('Compare');
+  const router = useRouter();
+  const pathname = usePathname();
   const update = useUpdateParams();
   const loaded = useManifests([sides[0].manifest, sides[1].manifest]);
   const names = [t('left'), t('right')];
 
   if (!loaded) return <p className="p-4 text-sm text-[var(--ds-fg-muted)]">{t('loading')}</p>;
   const errors = loaded.flatMap((l, i) => ('error' in l ? [<ErrorMessage key={i} side={names[i]} error={l.error} />] : []));
-  if (errors.length) return <div className="space-y-2 p-4">{errors}</div>;
+  if (errors.length) {
+    return (
+      <div className="space-y-3 p-4">
+        {errors}
+        <button
+          type="button"
+          onClick={() => router.push(pathname)}
+          className="rounded border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-1.5 text-xs font-medium text-[var(--ds-fg)] hover:border-[var(--ds-primary)]"
+        >
+          ← {t('changeSources')}
+        </button>
+      </div>
+    );
+  }
   const ms = loaded.map((l) => (l as { manifest: CompareManifest }).manifest);
 
   // 書かれた Canvas を、マニフェストの Canvas に突き合わせる。無ければ 1 つ目
@@ -243,64 +229,140 @@ function Comparison({ sides, mode, networkAsked }: { sides: [Side, Side]; mode: 
   });
   const go = (i: 0 | 1, to: number) => update({ [`canvas${i + 1}`]: ms[i].canvases[to].id });
   const labelOf = (i: number) => sides[i].label || ms[i].label;
-  const texts: [string, string] = [ms[0].canvases[indexes[0]].text, ms[1].canvases[indexes[1]].text];
+  const [a, b] = [ms[0].canvases[indexes[0]].text, ms[1].canvases[indexes[1]].text];
+  const ops = diffChars(a, b);
+  const distance = levenshtein(a, b);
+  const rate = similarity(distance, a, b);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div role="tablist" aria-label={t('views')} className="flex shrink-0 justify-center gap-1 border-b border-[var(--ds-border)]">
-        {TABS.map((tab) => (
-          <button
-            key={tab.mode}
-            type="button"
-            role="tab"
-            aria-selected={tab.mode === mode}
-            onClick={() => update({ mode: tab.mode === 'image' ? '0' : '1' })}
-            className={`-mb-px border-b-2 px-4 py-1 text-sm ${
-              tab.mode === mode ? 'border-[var(--ds-primary)] font-bold text-[var(--ds-fg)]' : 'border-transparent text-[var(--ds-fg-muted)] hover:text-[var(--ds-fg)]'
-            }`}
-          >
-            {t(tab.key)}
-          </button>
-        ))}
+    <div className="flex min-h-0 flex-1 flex-col bg-[var(--ds-bg)]">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[var(--ds-border)] bg-[var(--ds-surface)] px-4">
+        <div role="tablist" aria-label={t('views')} className="flex gap-1">
+          {TABS.map((tab) => (
+            <button
+              key={tab.mode}
+              type="button"
+              role="tab"
+              aria-selected={tab.mode === mode}
+              onClick={() => update({ mode: tab.mode === 'image' ? '0' : '1' })}
+              className={`-mb-px border-b-2 px-4 py-2 text-sm transition-colors ${
+                tab.mode === mode
+                  ? 'border-[var(--ds-primary)] font-bold text-[var(--ds-fg)]'
+                  : 'border-transparent text-[var(--ds-fg-muted)] hover:text-[var(--ds-fg)]'
+              }`}
+            >
+              {t(tab.key)}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => router.push(pathname)}
+          data-testid="compare-reset"
+          className="my-1.5 rounded-full border border-[var(--ds-border)] bg-[var(--ds-bg)] px-3 py-1 text-xs font-medium text-[var(--ds-fg-muted)] hover:border-[var(--ds-primary)] hover:text-[var(--ds-fg)] transition-colors"
+        >
+          ← {t('changeSources')}
+        </button>
       </div>
       {networkAsked && (
-        <p className="shrink-0 px-3 pt-2 text-sm text-[var(--ds-fg-muted)]" data-testid="network-note">
+        <p className="shrink-0 px-4 pt-2 text-xs text-[var(--ds-fg-muted)]" data-testid="network-note">
           {t('networkNote')}
         </p>
       )}
       {mode === 'image' ? (
         <div className="grid min-h-0 flex-1 grid-rows-2 gap-3 p-3 md:grid-cols-2 md:grid-rows-1">
           {([0, 1] as const).map((i) => (
-            <div key={i} className="flex min-h-0 flex-col gap-1">
-              <p className="truncate text-center text-sm font-bold text-[var(--ds-fg)]">{labelOf(i)}</p>
-              <div className="min-h-0 flex-1">
-                <ImagePane
-                  pages={ms[i].canvases.map((c) => ({ manifest: sides[i].manifest, canvas: c.id }))}
-                  labels={ms[i].canvases.map((c) => c.label)}
-                  index={indexes[i]}
-                  onGo={(to) => go(i, to)}
-                />
-              </div>
+            <div key={i} className="min-h-0 h-full">
+              <ImagePane
+                title={labelOf(i)}
+                pages={ms[i].canvases.map((c) => ({ manifest: sides[i].manifest, canvas: c.id }))}
+                labels={ms[i].canvases.map((c) => c.label)}
+                index={indexes[i]}
+                onGo={(to) => go(i, to)}
+              />
             </div>
           ))}
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="grid gap-2 p-3 pb-0 md:grid-cols-2">
-            {([0, 1] as const).map((i) => (
-              <div key={i} className="space-y-1">
-                <p className="truncate text-center text-sm font-bold text-[var(--ds-fg)]">{labelOf(i)}</p>
-                <Pager
-                  side={i === 0 ? 'left' : 'right'}
-                  index={indexes[i]}
-                  total={ms[i].canvases.length}
-                  label={ms[i].canvases[indexes[i]].label}
-                  onGo={(to) => go(i, to)}
-                />
-              </div>
-            ))}
-          </div>
-          <DiffView texts={texts} />
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-3 sm:p-4 lg:overflow-hidden">
+          {!a && !b ? (
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] p-3">
+              {([0, 1] as const).map((i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-[var(--ds-fg)]">{labelOf(i)}</span>
+                  <Pager
+                    side={i === 0 ? 'left' : 'right'}
+                    index={indexes[i]}
+                    total={ms[i].canvases.length}
+                    label={ms[i].canvases[indexes[i]].label}
+                    onGo={(to) => go(i, to)}
+                  />
+                </div>
+              ))}
+              <p className="w-full text-sm text-[var(--ds-fg-muted)]" data-testid="no-text">{t('noText')}</p>
+            </div>
+          ) : (
+            <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-3">
+              {/* 左の資料カード */}
+              <section className="flex min-h-0 flex-col rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)]">
+                <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[var(--ds-border)] px-3 py-2">
+                  <p className="truncate text-sm font-bold text-[var(--ds-fg)]">{labelOf(0)}</p>
+                  <Pager
+                    side="left"
+                    index={indexes[0]}
+                    total={ms[0].canvases.length}
+                    label={ms[0].canvases[indexes[0]].label}
+                    onGo={(to) => go(0, to)}
+                  />
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto p-4 text-sm leading-relaxed whitespace-pre-wrap text-[var(--ds-fg)]" data-testid="text-left">
+                  {a}
+                </div>
+              </section>
+
+              {/* 中央の差分カード */}
+              <section className="flex min-h-0 flex-col rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)]">
+                <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[var(--ds-border)] px-3 py-2">
+                  <p className="text-sm font-bold text-[var(--ds-fg)]">{t('result')}</p>
+                  <p className="rounded-full bg-[var(--ds-primary)]/10 px-2.5 py-0.5 text-xs font-medium tabular-nums text-[var(--ds-primary)]" data-testid="similarity">
+                    {t('distance', { distance })} / {t('similarity', { rate: (rate * 100).toFixed(1) })}
+                  </p>
+                </div>
+                <div
+                  className="min-h-0 flex-1 overflow-y-auto p-4 text-sm leading-relaxed whitespace-pre-wrap text-[var(--ds-fg)]"
+                  data-testid="diff-result"
+                  aria-label={t('result')}
+                >
+                  {ops.map((op, i) =>
+                    op.type === 'delete' ? (
+                      <del key={i} className="rounded-xs bg-red-100 px-0.5 text-red-800 dark:bg-red-950 dark:text-red-200">{op.text}</del>
+                    ) : op.type === 'insert' ? (
+                      <ins key={i} className="rounded-xs bg-green-100 px-0.5 text-green-800 no-underline dark:bg-green-950 dark:text-green-200">{op.text}</ins>
+                    ) : (
+                      <span key={i}>{op.text}</span>
+                    ),
+                  )}
+                </div>
+              </section>
+
+              {/* 右の資料カード */}
+              <section className="flex min-h-0 flex-col rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)]">
+                <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[var(--ds-border)] px-3 py-2">
+                  <p className="truncate text-sm font-bold text-[var(--ds-fg)]">{labelOf(1)}</p>
+                  <Pager
+                    side="right"
+                    index={indexes[1]}
+                    total={ms[1].canvases.length}
+                    label={ms[1].canvases[indexes[1]].label}
+                    onGo={(to) => go(1, to)}
+                  />
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto p-4 text-sm leading-relaxed whitespace-pre-wrap text-[var(--ds-fg)]" data-testid="text-right">
+                  {b}
+                </div>
+              </section>
+            </div>
+          )}
         </div>
       )}
     </div>

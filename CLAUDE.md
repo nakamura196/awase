@@ -26,8 +26,7 @@ Awase は TEI の統合ビューア（Next.js の静的書き出し、GitHub Pag
     npx next dev -p <番号>   # 別の端末で。本体は 3839
     E2E_BASE_URL=http://localhost:<番号> npx playwright test e2e/entryPages.spec.ts
 
-## 配信（GitHub Pages のサブパス）
+## 配信（awase.ldas.jp と GitHub Pages のサブパス検査）
 
-本番は `nakamura196.github.io/awase/` なので、ビルドは `GITHUB_PAGES=true`（basePath `/awase`）。
-クエリに乗せて後で取りに行くパスは `src/lib/basePath.ts` の `withBasePath` を通す。
+本番は `https://awase.ldas.jp/`（ホスト直下）。フォーク先の `github.io/awase/` でも動くよう、クエリに乗せて後で取りに行くパスは `src/lib/basePath.ts` の `withBasePath` を通す。
 `npm run test:basepath` と `npm run test:export` で参照の付け忘れを検査する。

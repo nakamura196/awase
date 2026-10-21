@@ -1,6 +1,5 @@
 // 公開 URL はここ 1 か所で決める(canonical・OGP・robots・sitemap が参照する)。
-// 当面は GitHub Pages(プロジェクトページ)で配る。独自ドメインを付けたらここだけ直す。
-export const SITE_URL = 'https://nakamura196.github.io/awase';
+export const SITE_URL = 'https://awase.ldas.jp';
 
 export const LOCALES = ['ja', 'en'] as const;
 

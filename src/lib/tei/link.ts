@@ -54,6 +54,16 @@ export function findLinked(root: Element, id: string): LinkTargets {
   const ranges: Range[] = [];
   const own = root.querySelector(`[id="${CSS.escape(id)}"]`);
   if (own) elements.push(own);
+  // o-0001 / y-0001 / ja-0001 / z-0001 の並列セグメント対応
+  const pm = /^(?:o|y|ja|z)-(\d+)$/.exec(id);
+  if (pm) {
+    for (const prefix of ['o', 'y', 'ja']) {
+      const pid = `${prefix}-${pm[1]}`;
+      if (pid === id) continue;
+      const peer = root.querySelector(`[id="${CSS.escape(pid)}"]`);
+      if (peer && !elements.includes(peer)) elements.push(peer);
+    }
+  }
   const all = milestones(root);
   for (const el of Array.from(root.querySelectorAll('[corresp]'))) {
     if (!correspIds(el.getAttribute('corresp')).includes(id)) continue;

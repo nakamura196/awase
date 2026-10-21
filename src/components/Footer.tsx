@@ -18,13 +18,12 @@ export default function Footer() {
       LinkComponent={Link}
       copyright={`© ${new Date().getFullYear()} ${t('developers')}`}
       columns={[
-        // 2列目: 4つの画面
+        // 2列目: 主な画面
         {
           heading: t('screensHeading'),
           links: [
             { label: t('viewer'), href: '/viewer' },
             { label: t('compare'), href: '/compare' },
-            { label: t('xsl'), href: '/xsl' },
             { label: t('dts'), href: '/dts' },
           ],
         },

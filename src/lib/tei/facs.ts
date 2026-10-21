@@ -66,7 +66,11 @@ function httpUrl(value: string | null | undefined, base?: string): string | unde
   const v = value?.trim();
   if (!v || v.startsWith('#')) return undefined;
   try {
-    const url = new URL(v, base);
+    const resolvedBase =
+      base && !/^https?:\/\//i.test(base) && typeof window !== 'undefined'
+        ? new URL(base, window.location.href).href
+        : base;
+    const url = new URL(v, resolvedBase);
     return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : undefined;
   } catch {
     return undefined;
@@ -207,5 +211,32 @@ export function addZonePageBreaks(tei: Document): number {
       added++;
     }
   }
-  return added;
+  if (added > 0) return added;
+
+  // facsimile に surface や zone があり、本文に pb が 1 つも無い文書（蒋洲咨文など）では、
+  // 最初の surface（または最初の zone）を指す pb を本文の先頭に 1 つ補う
+  const firstSurface = tei.getElementsByTagNameNS('*', 'surface')[0];
+  const firstBody = tei.getElementsByTagNameNS('*', 'body')[0] ?? tei.getElementsByTagNameNS('*', 'text')[0];
+  if (firstSurface && firstBody) {
+    let sid = xmlId(firstSurface);
+    if (!sid) {
+      const hasUrl = firstUrl(firstSurface, ['sameAs', 'source', 'facs']) || child(firstSurface, 'graphic');
+      if (hasUrl) {
+        sid = 'awase-surface-1';
+        firstSurface.setAttribute('xml:id', sid);
+      } else {
+        const firstZone = firstSurface.getElementsByTagNameNS('*', 'zone')[0];
+        sid = firstZone ? xmlId(firstZone) : null;
+      }
+    }
+    if (sid) {
+      const pb = tei.createElementNS(firstBody.namespaceURI, 'pb');
+      pb.setAttribute('facs', `#${sid}`);
+      pb.setAttribute('n', '1');
+      pb.setAttribute('type', 'awase-surface');
+      firstBody.insertBefore(pb, firstBody.firstChild);
+      return 1;
+    }
+  }
+  return 0;
 }

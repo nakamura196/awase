@@ -29,6 +29,8 @@ interface Props {
   onGo: (index: number) => void;
   /** 選んでいる異文の箇所の画像。あれば、頁の画像の代わりに出す */
   place?: PlaceImages | null;
+  /** カードの上の帯に出す資料名（compare 画面など） */
+  title?: string;
 }
 
 // マニフェストの Canvas id。書かれた Canvas id と www の有無などが違うことがあるので、マニフェストを読んで突き合わせる。
@@ -90,7 +92,7 @@ const button = 'rounded border border-[var(--ds-border)] px-2 py-0.5 text-[var(-
 // 異文の箇所を選び、その箇所に画像の範囲（app@facs）があれば、頁の画像の代わりにそれを出す（koui と同じ）。
 // 範囲が複数（伝本ごとの資料）なら、1 つずつ切り替える。
 // IIIF でない画像（pb@facs に画像の URL だけを書いたもの）は、そのまま 1 枚出す
-export default function ImagePane({ pages, labels, index, onGo, place }: Props) {
+export default function ImagePane({ pages, labels, index, onGo, place, title }: Props) {
   const t = useTranslations('Viewer');
   const locale = useLocale();
   const { resolvedTheme } = useTheme();
@@ -139,7 +141,7 @@ export default function ImagePane({ pages, labels, index, onGo, place }: Props) 
 
   return (
     <div
-      className="flex h-full min-h-0 flex-col gap-2"
+      className="flex h-full min-h-0 flex-col overflow-hidden rounded border border-[var(--ds-border)] bg-[var(--ds-surface)]"
       data-testid="image-pane"
       data-iiif-content={view?.content}
       data-canvas={view?.target?.canvasId}
@@ -147,19 +149,34 @@ export default function ImagePane({ pages, labels, index, onGo, place }: Props) 
       data-place={placeTarget ? place?.n : undefined}
     >
       {/* 頁送りはこの 1 組だけ（ビューアの頁送りは pager={false} で隠す）。本文の頁の順に、別の画像にもまたがって移る */}
-      <div className="flex items-center justify-center gap-2 text-sm" role="group" aria-label={t('pager')}>
-        <button type="button" disabled={prev < 0} onClick={() => go(prev)} className={button} aria-label={t('prevPage')} title={t('prevPage')}>
-          ‹
-        </button>
-        <span className="tabular-nums text-[var(--ds-fg)]" data-testid="image-page" aria-live="polite">
-          {label ? t('pageLabel', { n: label }) : t('pageIndex', { index: index + 1, total: pages.length })}
-        </span>
-        <button type="button" disabled={next < 0} onClick={() => go(next)} className={button} aria-label={t('nextPage')} title={t('nextPage')}>
-          ›
-        </button>
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--ds-border)] px-3 py-1.5 text-sm">
+        <div className="flex min-w-0 items-center gap-2">
+          {title && <span className="truncate font-semibold text-[var(--ds-fg)]">{title}</span>}
+          <div className="flex shrink-0 items-center gap-1.5" role="group" aria-label={t('pager')}>
+            <button type="button" disabled={prev < 0} onClick={() => go(prev)} className={button} aria-label={t('prevPage')} title={t('prevPage')}>
+              ‹
+            </button>
+            <span className="tabular-nums text-[var(--ds-fg)]" data-testid="image-page" aria-live="polite">
+              {label ? t('pageLabel', { n: label }) : t('pageIndex', { index: index + 1, total: pages.length })}
+            </span>
+            <button type="button" disabled={next < 0} onClick={() => go(next)} className={button} aria-label={t('nextPage')} title={t('nextPage')}>
+              ›
+            </button>
+          </div>
+        </div>
+        {shown && (shown.manifest || shown.image) && (
+          <a
+            href={shown.manifest ?? shown.image}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 truncate text-xs underline text-[var(--ds-fg-muted)] hover:text-[var(--ds-fg)]"
+          >
+            {shown.manifest ? t('openManifest') : t('openImage')}
+          </a>
+        )}
       </div>
       {place && cur && (
-        <div className="flex flex-wrap items-center gap-2 text-sm" data-testid="place-images">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[var(--ds-border)] px-3 py-1.5 text-sm" data-testid="place-images">
           {cur.off ? (
             <button type="button" onClick={() => setPlaceState({ ...cur, off: false })} className={button}>
               {t('placeImage', { n: place.n, index: cur.k + 1, total: place.targets.length })}
@@ -191,7 +208,7 @@ export default function ImagePane({ pages, labels, index, onGo, place }: Props) 
           )}
         </div>
       )}
-      <div className="relative min-h-0 flex-1 overflow-hidden rounded bg-[var(--ds-surface)]">
+      <div className="relative min-h-0 flex-1 overflow-hidden">
         {view ? (
           // 別のマニフェスト・画像に替わったら、ビューアを作り直す（中の状態を前の画像から持ち越さない）
           <Viewer
@@ -221,18 +238,6 @@ export default function ImagePane({ pages, labels, index, onGo, place }: Props) 
           <p className="p-4 text-sm text-[var(--ds-fg-muted)]">{t('noImage')}</p>
         )}
       </div>
-      {shown && (shown.manifest || shown.image) && (
-        <p className="truncate text-xs">
-          <a
-            href={shown.manifest ?? shown.image}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline text-[var(--ds-fg-muted)]"
-          >
-            {shown.manifest ? t('openManifest') : t('openImage')}
-          </a>
-        </p>
-      )}
     </div>
   );
 }

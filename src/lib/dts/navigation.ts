@@ -16,17 +16,22 @@ export interface UnitNode extends CitableUnit {
 }
 
 export function parseNavigation(json: unknown): CitableUnit[] {
-  if (!isRecord(json) || !Array.isArray(json.member)) return [];
+  if (!isRecord(json)) return [];
+  const rawMember = json.member ?? json['hydra:member'];
+  const list = Array.isArray(rawMember) ? rawMember : isRecord(rawMember) ? [rawMember] : [];
+  if (!list.length) return [];
+  const fallbackLevel = num(json.level) ?? num(json['dts:level']) ?? 1;
+  const fallbackCiteType = str(json.citeType) ?? str(json['dts:citeType']);
   const out: CitableUnit[] = [];
-  for (const m of json.member) {
+  for (const m of list) {
     if (!isRecord(m)) continue;
-    const identifier = str(m.identifier);
+    const identifier = str(m.identifier) ?? str(m.ref) ?? str(m['dts:ref']);
     if (identifier === undefined) continue;
     out.push({
       identifier,
-      level: num(m.level) ?? 1,
+      level: num(m.level) ?? fallbackLevel,
       parent: str(m.parent) ?? null,
-      citeType: str(m.citeType),
+      citeType: str(m.citeType) ?? fallbackCiteType,
       label: str(m.title) ?? identifier,
     });
   }

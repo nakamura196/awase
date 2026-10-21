@@ -135,3 +135,305 @@ body {
 .facsimile-src {
   color: var(--ink-subtle) !important;
 }
+
+/* =============================================================================
+ * 8. リーディングビュー（縦書き・複数セクション・平出／台頭・固有表現・戯曲）
+ * ============================================================================= */
+body {
+  font-family: var(--font-serif) !important;
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+}
+
+/* 単一ストリーム（校異源氏・青空文庫 TEI・ガイド等） */
+main.doc-single-stream {
+  box-sizing: border-box;
+  font-family: var(--font-serif);
+  line-height: 2;
+}
+
+html:not(.is-vertical) main.doc-single-stream {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 2rem clamp(1.25rem, 4vw, 3.5rem);
+}
+
+html.is-vertical body {
+  overflow: hidden;
+}
+
+html.is-vertical main.doc-single-stream {
+  writing-mode: vertical-rl;
+  width: 100%;
+  height: calc(100dvh - var(--tei-bar-h, 52px));
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 1.75rem 2.25rem !important;
+  box-sizing: border-box;
+  line-height: 2.15;
+}
+
+/* 複数セクション並列（蒋洲咨文の 釈文・読み下し・大意 など） */
+main.doc-multi-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem !important;
+  box-sizing: border-box;
+  background: var(--surface-sunken);
+  height: calc(100dvh - var(--tei-bar-h, 52px));
+  overflow: hidden;
+}
+
+.tei-div-card {
+  flex: 1 1 0%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.tei-div-card.is-collapsed {
+  flex: 0 0 auto;
+}
+
+.tei-div-card.is-collapsed .tei-div-card-body {
+  display: none;
+}
+
+.tei-div-card-header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.3rem 0.75rem;
+  background: var(--surface-sunken);
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.tei-div-card-toggle {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-muted);
+  border-radius: 4px;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.tei-div-card-toggle:hover {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.tei-div-card-body {
+  flex: 1 1 0%;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  box-sizing: border-box;
+}
+
+html.is-vertical .tei-div-card-body {
+  writing-mode: vertical-rl;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.85rem 1.25rem;
+  line-height: 1.95;
+  font-size: 0.98rem;
+}
+
+html:not(.is-vertical) .tei-div-card-body {
+  padding: 0.85rem 1.25rem;
+  line-height: 1.9;
+}
+
+/* 段落・ab・平出／台頭 */
+.tei-p,
+.tei-ab {
+  display: block;
+}
+
+html.is-vertical .tei-p,
+html.is-vertical .tei-ab {
+  margin: 0;
+  margin-left: 0.35em;
+}
+
+html:not(.is-vertical) .tei-p,
+html:not(.is-vertical) .tei-ab {
+  margin: 0.6em 0 !important;
+  text-indent: 0 !important;
+  text-align: justify;
+}
+
+/* 釈文の行間空白（<div/> 直下の <lb/>） */
+html.is-vertical .tei-lb-col {
+  display: block;
+  width: 1.4em;
+  height: 100%;
+}
+
+html:not(.is-vertical) .tei-lb-col {
+  display: block;
+  height: 0.75em;
+}
+
+/* 頁の目印 */
+.tei-pb {
+  display: inline-block;
+  margin-inline: 0.35em;
+  padding: 0 0.35em;
+  font-family: var(--font-sans);
+  font-size: 0.7em;
+  line-height: 1.5;
+  color: var(--ink-subtle);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  text-combine-upright: all;
+}
+
+/* 和歌・韻文 */
+.tei-lg {
+  display: block;
+  margin-block: 0.5em;
+}
+.tei-seg .tei-lg,
+.tei-p .tei-lg {
+  display: inline;
+  margin: 0;
+}
+.tei-l {
+  display: inline-block;
+  margin-inline-end: 0.5em;
+}
+
+/* 戯曲（sp / speaker / stage） */
+.tei-sp {
+  display: block;
+  margin-block: 0.65em;
+  padding: 0.15em 0.3em;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+}
+.tei-sp .tei-p {
+  display: inline;
+  margin: 0 !important;
+}
+.tei-speaker {
+  font-weight: 700;
+  color: var(--brand-strong);
+  margin-inline-end: 0.6em;
+}
+.tei-stage {
+  color: var(--ink-muted);
+  font-size: 0.92em;
+}
+div.tei-stage {
+  margin-block: 0.6em;
+  padding-inline-start: 1em;
+}
+
+/* 補入（add）・削除（del）・キーワード・固有表現（蒋洲咨文の配色に準拠） */
+.tei-add {
+  color: #dc2626;
+  font-weight: 500;
+}
+.dark .tei-add {
+  color: #f87171;
+}
+.tei-add.has-note {
+  border-block-end: 1px dotted currentColor;
+  cursor: help;
+}
+
+.tei-del {
+  color: var(--ink-subtle);
+  text-decoration: line-through;
+}
+
+.tei-entity {
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background-color 0.15s;
+}
+
+.tei-persname {
+  color: #c2410c;
+  text-decoration: underline 1px rgba(194, 65, 12, 0.4);
+  text-underline-offset: 0.2em;
+}
+.dark .tei-persname {
+  color: #fb923c;
+  text-decoration-color: rgba(251, 146, 60, 0.45);
+}
+
+.tei-placename {
+  color: #1d4ed8;
+  text-decoration: underline 1px rgba(29, 78, 216, 0.4);
+  text-underline-offset: 0.2em;
+}
+.dark .tei-placename {
+  color: #60a5fa;
+  text-decoration-color: rgba(96, 165, 250, 0.45);
+}
+
+.tei-keyword {
+  color: #15803d;
+  text-decoration: underline 1px rgba(21, 128, 61, 0.45);
+  text-underline-offset: 0.2em;
+  cursor: help;
+}
+.dark .tei-keyword {
+  color: #4ade80;
+  text-decoration-color: rgba(74, 222, 128, 0.45);
+}
+
+.tei-orgname {
+  color: var(--museum);
+  text-decoration: underline 1px color-mix(in srgb, var(--museum) 45%, transparent);
+  text-underline-offset: 0.2em;
+}
+
+.tei-date {
+  color: var(--academia);
+  text-decoration: underline 1px color-mix(in srgb, var(--academia) 45%, transparent);
+  text-underline-offset: 0.2em;
+}
+
+/* 並列セグメント（釈文・読み下し・大意の連動）と選択ハイライト */
+.tei-parallel-item {
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background-color 0.15s;
+}
+
+.tei-parallel-item:hover,
+.tei-Interactive:hover {
+  background: color-mix(in srgb, var(--brand) 10%, transparent);
+}
+
+.is-selected {
+  background: color-mix(in srgb, #f59e0b 28%, transparent) !important;
+  outline: 1.5px solid #d97706;
+  border-radius: 3px;
+}
+
+/* ルビ */
+ruby {
+  ruby-align: center;
+}
+rt {
+  font-size: 0.55em;
+  color: var(--ink-muted);
+}
+

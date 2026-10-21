@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 // ブラウザで実際に画面を開いて確かめるテスト。手元で実行する（GitHub Actions では走らせない）。
 //   npm run test:e2e                                   … next dev を立ち上げて試す
-//   E2E_BASE_URL=https://nakamura196.github.io/awase npm run test:e2e … 本番を試す
+//   E2E_BASE_URL=https://awase.ldas.jp npm run test:e2e … 本番を試す
 const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:3839';
 
 export default defineConfig({

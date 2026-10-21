@@ -40,12 +40,12 @@ export function defaultXslId(xmlText: string): 'ocr' | 'reading' {
     : 'reading';
 }
 
-/** 変換に使う SEF の URL（basePath つきのサイト内パスか、外の URL） */
-export function sefLocation(choice: XslChoice, xmlText: string, sitePath: (p: string) => string): string {
+/** 変換に使う SEF の URL（basePath つきのサイト内パスか、外の URL）。組み込みビュー（line など）は null */
+export function sefLocation(choice: XslChoice, xmlText: string, sitePath: (p: string) => string): string | null {
   if (choice.kind === 'sef') return choice.url;
   const id = choice.kind === 'catalog' ? choice.id : defaultXslId(xmlText);
-  const file = XSL_CATALOG.find((x) => x.id === id)!.file;
-  return sitePath(`/xsl/${file}`);
+  const file = XSL_CATALOG.find((x) => x.id === id)?.file ?? null;
+  return file ? sitePath(`/xsl/${file}`) : null;
 }
 
 /** 出力の HTML に <base> を入れる。iframe の srcdoc には自分の URL が無いので、相対パスの CSS や JS が探せるようにする */
@@ -58,15 +58,54 @@ export function injectBase(html: string, baseHref: string): string {
 
 /** 出力の <html> に dark を付ける（または外す）。awase のダークに合わせて theme.css の .dark を効かせる */
 export function setDarkClass(html: string, dark: boolean): string {
+  return setFrameHtmlAttrs(html, { dark });
+}
+
+/**
+ * 出力の <html> に dark・is-vertical クラスおよび data-focus-id を設定する
+ */
+export function setFrameHtmlAttrs(
+  html: string,
+  opts: { dark?: boolean; vertical?: boolean; focusId?: string | null },
+): string {
   const m = /<html(\s[^>]*)?>/i.exec(html);
   if (!m) return html;
-  let attrs = (m[1] ?? '').replace(/\sclass="([^"]*)"/i, (_, c: string) => {
-    const rest = c.split(/\s+/).filter((x) => x && x !== 'dark');
-    return rest.length ? ` class="${rest.join(' ')}"` : '';
-  });
-  if (dark) {
-    const had = /\sclass="/i.test(m[1] ?? '') && /\sclass="[^"]*"/i.test(attrs);
-    attrs = had ? attrs.replace(/\sclass="([^"]*)"/i, ' class="$1 dark"') : `${attrs} class="dark"`;
+  let attrs = (m[1] ?? '')
+    .replace(/\sdata-focus-id="[^"]*"/gi, '')
+    .replace(/\sclass="([^"]*)"/i, (_, c: string) => {
+      const rest = c.split(/\s+/).filter((x) => x && x !== 'dark' && x !== 'is-vertical');
+      return rest.length ? ` class="${rest.join(' ')}"` : '';
+    });
+
+  const addClasses: string[] = [];
+  if (opts.dark) addClasses.push('dark');
+  if (opts.vertical) addClasses.push('is-vertical');
+
+  if (addClasses.length > 0) {
+    const added = addClasses.join(' ');
+    const had = /\sclass="[^"]*"/i.test(attrs);
+    attrs = had ? attrs.replace(/\sclass="([^"]*)"/i, ` class="$1 ${added}"`) : `${attrs} class="${added}"`;
+  }
+  if (opts.focusId) {
+    const escaped = opts.focusId.replace(/"/g, '&quot;');
+    attrs = `${attrs} data-focus-id="${escaped}"`;
   }
   return html.slice(0, m.index) + `<html${attrs}>` + html.slice(m.index + m[0].length);
+}
+
+/**
+ * リーディングビューで URL に dir が指定されていないとき、既定を縦書き（true）にするか判定する。
+ * - 釈文／読み下し／大意（div@type="original" 等）や ab の平出・台頭がある日本語史料、
+ *   および表（table）を含まない日本語文学・戯曲 TEI は縦書きを既定とする。
+ */
+export function defaultReadingVertical(doc: Document): boolean {
+  const body = doc.getElementsByTagNameNS('*', 'body')[0];
+  if (!body) return false;
+  if (body.getElementsByTagNameNS('*', 'table').length > 0) return false;
+  for (const div of Array.from(body.getElementsByTagNameNS('*', 'div'))) {
+    const t = div.getAttribute('type')?.trim();
+    if (t === 'original' || t === 'yomikudashi' || t === 'japanese') return true;
+  }
+  const text = body.textContent ?? '';
+  return /[\u3040-\u30ff\u4e00-\u9faf]/.test(text);
 }

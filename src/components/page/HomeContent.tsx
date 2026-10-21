@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import Header from '@/components/Header';
@@ -7,21 +8,31 @@ import Footer from '@/components/Footer';
 import PageContainer from '@/components/layout/PageContainer';
 import { SectionHeading, News } from '@nakamura196/react-ui';
 import { NEWS, NEWS_ON_HOME } from '@/lib/news';
+import { localizedUrl, type Locale } from '@/lib/locale';
+import { resolveLegacyRedirect } from '@/lib/viewerParams';
 
 const SCREENS = [
   { key: 'viewer', href: '/viewer', ready: true },
-  { key: 'compare', href: '/compare', ready: false },
-  { key: 'xsl', href: '/xsl', ready: false },
-  { key: 'dts', href: '/dts', ready: false },
+  { key: 'compare', href: '/compare', ready: true },
+  { key: 'dts', href: '/dts', ready: true },
 ] as const;
 
 export default function HomeContent() {
   const t = useTranslations('Home');
   const tNews = useTranslations('News');
   const locale = useLocale();
+  const lang: Locale = locale === 'en' ? 'en' : 'ja';
+
+  // 旧ビューア形式の URL（/?u=... や /#/v2?u=...、/[locale]/?base=... など）でトップに来たときは、対応する画面へ移す
+  useEffect(() => {
+    const { search, hash } = window.location;
+    const legacy = resolveLegacyRedirect(search, hash);
+    if (legacy) {
+      window.location.replace(localizedUrl(lang, legacy.path, legacy.search));
+    }
+  }, [lang]);
 
   // お知らせは content/news/<id>.md（src/lib/news.ts が読む）。トップには新しいものから NEWS_ON_HOME 件
-  const lang = locale === 'en' ? 'en' : 'ja';
   const newsItems = NEWS.slice(0, NEWS_ON_HOME).map((n) => ({
     date: n.date,
     title: n.title[lang],
@@ -46,15 +57,20 @@ export default function HomeContent() {
 
           <section className="mb-16">
             <SectionHeading>{t('screens')}</SectionHeading>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-3 gap-5">
               {SCREENS.map((s) => (
                 <Link
                   key={s.key}
                   href={s.href}
-                  className="block bg-[var(--ds-surface)] border border-[var(--ds-border)] p-6 rounded-lg shadow-md hover:border-[var(--ds-primary)] transition-colors"
+                  className="group flex flex-col justify-between bg-[var(--ds-surface)] border border-[var(--ds-border)] p-6 rounded-xl shadow-xs hover:border-[var(--ds-primary)] hover:shadow-md transition-all"
                 >
-                  <h3 className="text-lg font-semibold mb-2 text-[var(--ds-primary)]">{t(`${s.key}Title`)}</h3>
-                  <p className="text-[var(--ds-fg-muted)]">{t(`${s.key}Description`)}</p>
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <h3 className="text-lg font-semibold text-[var(--ds-primary)]">{t(`${s.key}Title`)}</h3>
+                      <span aria-hidden="true" className="text-[var(--ds-fg-muted)] group-hover:translate-x-0.5 group-hover:text-[var(--ds-primary)] transition-transform">→</span>
+                    </div>
+                    <p className="text-sm leading-relaxed text-[var(--ds-fg-muted)]">{t(`${s.key}Description`)}</p>
+                  </div>
                   {!s.ready && <p className="mt-3 text-xs text-[var(--ds-fg-muted)]">{t('comingSoon')}</p>}
                 </Link>
               ))}

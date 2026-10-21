@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Only the latest version on the `main` branch (deployed at https://nakamura196.github.io/awase/) receives security fixes.
+Only the latest version on the `main` branch (deployed at https://awase.ldas.jp/) receives security fixes.
 
 ## Reporting a vulnerability
 

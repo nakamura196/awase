@@ -46,11 +46,21 @@ jobs:
       - name: Run unit tests
         run: npm test
 
-      # GitHub Pages のプロジェクトページ (nakamura196.github.io/awase/) で配るので、
-      # basePath (/awase) 付きでビルドする。
-      - name: Build static export
+      # サブパス (basePath) 付きのビルドでも参照が壊れないことを先に確かめる。
+      # awase.ldas.jp はホスト直下なので本番では使わないが、basePath の付け忘れは
+      # ホスト直下では隠れるため、フォーク先の github.io 配信などに備えて検査を残す。
+      - name: Verify subpath build (basePath)
         env:
           GITHUB_PAGES: 'true'
+        run: |
+          npm run build
+          ./scripts/check-basepath.sh
+          NEXT_PUBLIC_BASE_PATH=/awase npm run test:export
+          rm -rf out .next
+
+      # 本番 (awase.ldas.jp) はホスト直下で配る。
+      - name: Build static export
+        env:
           # GA4 Measurement ID (公開値). Repo Variables に NEXT_PUBLIC_GA_ID を
           # 設定したデプロイ者だけが計測を有効化する。フォーク先で意図せず
           # オーナーの GA に送信しないため、fallback は持たない。未設定なら
@@ -58,12 +68,7 @@ jobs:
           NEXT_PUBLIC_GA_ID: ${{ vars.NEXT_PUBLIC_GA_ID }}
         run: npm run build
 
-      - name: Verify basePath in the export
-        run: ./scripts/check-basepath.sh
-
       - name: Verify export (links, assets, robots/sitemap)
-        env:
-          NEXT_PUBLIC_BASE_PATH: /awase
         run: npm run test:export
 
       - name: Add .nojekyll

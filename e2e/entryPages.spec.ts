@@ -22,6 +22,10 @@ for (const locale of ['ja', 'en'] as const) {
         await tab.goto(path);
         // 上部の帯（header）のサイト名は除き、ページの中身の最初の見出しを見る
         await expect(tab.locator('h1:not(header *), h2:not(header *)').first()).toBeVisible();
+        if (page === '') {
+          // 4 画面がすべて揃ったので、トップに「準備中 / Coming soon」が出ないこと
+          await expect(tab.getByText(/^(準備中|Coming soon)$/)).toHaveCount(0);
+        }
 
         const overflow = await tab.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
         expect(overflow, '横にスクロールする').toBeLessThanOrEqual(1);

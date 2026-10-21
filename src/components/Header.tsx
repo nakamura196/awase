@@ -8,7 +8,6 @@ import { ThemeToggle, LanguageSwitcher } from '@nakamura196/react-ui';
 const NAV = [
   { href: '/viewer', key: 'viewer' },
   { href: '/compare', key: 'compare' },
-  { href: '/xsl', key: 'xsl' },
   { href: '/dts', key: 'dts' },
   { href: '/help', key: 'help' },
   { href: '/news', key: 'news' },
@@ -36,26 +35,39 @@ const Header = ({ compact = false }: { compact?: boolean }) => {
     router.push(fullPath);
   };
 
+  const currentSection = pathname.replace(/^\/[^/]+/, '');
+
   return (
-    <header className={`${compact ? 'h-10' : 'h-14'} shrink-0 bg-[var(--ds-bg)] border-b border-[var(--ds-border)] flex items-center px-3 sm:px-6 justify-between`}>
-      <div className="flex items-center space-x-2 sm:space-x-4 min-w-0">
+    <header className={`${compact ? 'h-11' : 'h-14'} shrink-0 bg-[var(--ds-surface)]/90 backdrop-blur border-b border-[var(--ds-border)] flex items-center px-3 sm:px-6 justify-between gap-2`}>
+      <div className="flex items-center gap-3 sm:gap-5 min-w-0">
         <Link
           href="/"
           className="hover:opacity-80 transition-opacity shrink-0 flex items-center"
         >
           <h1
-            className={`${compact ? 'text-base sm:text-lg' : 'text-lg sm:text-xl'} font-semibold text-[var(--ds-primary)] leading-none`}
+            className={`${compact ? 'text-base sm:text-lg' : 'text-lg sm:text-xl'} font-semibold text-[var(--ds-primary)] leading-none tracking-tight`}
             style={{ fontFamily: 'var(--ds-font-serif)' }}
           >
             {t('title')}
           </h1>
         </Link>
-        <nav aria-label={t('nav')} className="hidden md:flex items-center gap-4 text-sm">
-          {NAV.map((n) => (
-            <Link key={n.href} href={n.href} className="text-[var(--ds-fg-muted)] hover:text-[var(--ds-fg)] transition-colors">
-              {t(n.key)}
-            </Link>
-          ))}
+        <nav aria-label={t('nav')} className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto text-xs sm:text-sm">
+          {NAV.map((n) => {
+            const active = currentSection === n.href || currentSection.startsWith(`${n.href}/`);
+            return (
+              <Link
+                key={n.href}
+                href={n.href}
+                className={`whitespace-nowrap rounded-md px-2 py-1 transition-colors ${
+                  active
+                    ? 'bg-[var(--ds-primary)]/10 font-medium text-[var(--ds-primary)]'
+                    : 'text-[var(--ds-fg-muted)] hover:bg-[var(--ds-bg)] hover:text-[var(--ds-fg)]'
+                }`}
+              >
+                {t(n.key)}
+              </Link>
+            );
+          })}
         </nav>
       </div>
       <div className="flex items-center space-x-2 sm:space-x-3 ml-2 shrink-0">

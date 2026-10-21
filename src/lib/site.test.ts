@@ -11,8 +11,8 @@ const root = join(__dirname, '../..');
 const read = (p: string) => readFileSync(join(root, p), 'utf8');
 
 describe('公開 URL', () => {
-  it('GitHub Pages のプロジェクトページ', () => {
-    expect(SITE_URL).toBe('https://nakamura196.github.io/awase');
+  it('独自ドメイン awase.ldas.jp', () => {
+    expect(SITE_URL).toBe('https://awase.ldas.jp');
   });
 
   it('canonical はページ自身、言語の組は同じパス', () => {
@@ -43,5 +43,20 @@ describe('公開 URL', () => {
     for (const p of PUBLIC_PATHS) {
       expect(existsSync(join(root, 'src/app/[locale]', p, 'page.tsx'))).toBe(true);
     }
+  });
+});
+
+describe('本番 (awase.ldas.jp) はホスト直下で配る', () => {
+  it('配布するビルドは basePath を付けない (GITHUB_PAGES を立てない)', () => {
+    const wf = read('.github/workflows/deploy-pages.yml');
+    const step = wf.split('- name: Build static export')[1]?.split('- name:')[0];
+    expect(step).toBeTruthy();
+    expect(step).not.toMatch(/GITHUB_PAGES/);
+    // 配布される out/ はこのステップで作り直したもの (サブパスの検査用ビルドは消してある)
+    expect(wf).toMatch(/check-basepath\.sh[\s\S]*rm -rf out \.next[\s\S]*- name: Build static export/);
+  });
+  it('PWA の manifest はホスト直下', () => {
+    const m = JSON.parse(read('public/manifest.json'));
+    expect([m.scope, m.start_url]).toEqual(['/', '/']);
   });
 });

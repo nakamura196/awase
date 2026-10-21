@@ -172,3 +172,12 @@ body {
 .dark-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
   border-left-color: #1f2937;
 }
+
+@media (min-width: 1024px) {
+  .awase-xsl-grid[data-cols='2'] {
+    grid-template-columns: minmax(0, 1.85fr) minmax(22rem, 1fr);
+  }
+  .awase-xsl-grid[data-cols='3'] {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(21rem, 0.95fr);
+  }
+}

@@ -42,11 +42,12 @@ export function parseConfig(text: string, baseUrl?: string): ParallelConfig {
   }
   const c = (json ?? {}) as Record<string, unknown>;
   const sources: string[] = [];
-  for (const key of ['url_main', 'url_sub']) {
+  for (const key of ['url_main', 'urlMain', 'url_sub', 'urlSub']) {
     const v = c[key];
     if (typeof v !== 'string' || !v.trim()) continue;
     try {
-      sources.push(new URL(v.trim(), baseUrl).href);
+      const resolved = new URL(v.trim(), baseUrl).href;
+      if (!sources.includes(resolved)) sources.push(resolved);
     } catch {
       // URL として読めないものは飛ばす
     }

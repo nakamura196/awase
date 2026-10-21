@@ -11,7 +11,7 @@ body:
     attributes:
       label: URL
       description: The Awase URL you opened, including `u=` or other parameters
-      placeholder: https://nakamura196.github.io/awase/en/viewer/?u=...
+      placeholder: https://awase.ldas.jp/en/viewer/?u=...
     validations:
       required: true
   - type: textarea

@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xml:lang="ja">
+    <teiHeader>
+        <fileDesc>
+            <titleStmt>
+                <title>徳川家康復安南国書（慶長六年十月）</title>
+                <author>徳川家康（起草：西笑承兌）</author>
+            </titleStmt>
+            <publicationStmt>
+                <publisher>『外蕃通書』『異国日記』所収本文による翻刻・注釈サンプル</publisher>
+                <availability status="free">
+                    <p>Public Domain (CC0)</p>
+                </availability>
+            </publicationStmt>
+            <sourceDesc>
+                <bibl>近藤正斎編『外蕃通書』第十一冊「安南国書」・以心崇伝編『異国日記』（慶長六年辛丑十月条）</bibl>
+                <listPerson>
+                    <person xml:id="徳川家康">
+                        <persName>徳川家康</persName>
+                        <note type="schema:description">天文11年（1542）生〜元和2年（1616）没。江戸幕府初代将軍。関ヶ原の戦い翌年の慶長6年（1601）10月、山城国伏見城において安南国（広南阮氏）および呂宋（スペイン領フィリピン）に復書を発し、自身の朱印（「源家康忠恕」）を押した書状を正式な渡航許可証とする朱印船制度を創始した。</note>
+                        <note type="schema:url">https://ja.wikipedia.org/wiki/%E5%BE%B3%E5%B7%9D%E5%AE%B6%E5%BA%B7</note>
+                        <note type="schema:image">data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij4KICAgIDxyZWN0IHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgcng9IjE0IiBmaWxsPSIjMmMzZTUwIi8+CiAgICA8Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIzNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZTZiNDIyIiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuNzUiLz4KICAgIDx0ZXh0IHg9IjQ4IiB5PSI1OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIzMiIgZm9udC1mYW1pbHk9IidIaXJhZ2lubyBNaW5jaG8gUHJvTicsICdZdSBNaW5jaG8nLCBzZXJpZiIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iI2ZmZmZmZiI+5a625bq3PC90ZXh0PgogIDwvc3ZnPg==</note>
+                    </person>
+                    <person xml:id="阮潢">
+                        <persName>阮潢（瑞国公）</persName>
+                        <note type="schema:description">嘉靖4年（1525）生〜万暦41年（1613）没。ベトナム中部の順化（フエ）・広南を統治した広南阮氏（グエン氏）政権の初代首長。黎朝から太尉・瑞国公に封じられ「大都統」と称した。会安（ホイアン）を国際貿易港として開放し、日本からの朱印船を歓迎して日本人町の発展を促した。</note>
+                        <note type="schema:url">https://ja.wikipedia.org/wiki/%E3%82%B0%E3%82%A8%E3%83%B3%E3%83%BB%E3%83%9B%E3%82%A2%E3%83%B3</note>
+                        <note type="schema:image">data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij4KICAgIDxyZWN0IHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgcng9IjE0IiBmaWxsPSIjN2IyNDFjIi8+CiAgICA8Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIzNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZjVjYmE3IiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuNzUiLz4KICAgIDx0ZXh0IHg9IjQ4IiB5PSI1OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIzMiIgZm9udC1mYW1pbHk9IidIaXJhZ2lubyBNaW5jaG8gUHJvTicsICdZdSBNaW5jaG8nLCBzZXJpZiIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iI2ZmZmZmZiI+55Ge5YWsPC90ZXh0PgogIDwvc3ZnPg==</note>
+                    </person>
+                    <person xml:id="西笑承兌">
+                        <persName>西笑承兌</persName>
+                        <note type="schema:description">天文17年（1548）生〜慶長12年（1607）没。臨済宗相国寺の禅僧（鹿苑僧録）。豊臣秀吉・徳川家康に外交顧問として仕え、日明講和交渉や初期朱印船外交の漢文外交書簡を起草した。日記『日用集』（『鹿苑日録』）に当時の外交実務の記録を残す。</note>
+                        <note type="schema:url">https://ja.wikipedia.org/wiki/%E8%A5%BF%E7%AC%91%E6%89%BF%E5%85%8C</note>
+                        <note type="schema:image">data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij4KICAgIDxyZWN0IHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgcng9IjE0IiBmaWxsPSIjNGEyMzVhIi8+CiAgICA8Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIzNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZDdiZGUyIiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuNzUiLz4KICAgIDx0ZXh0IHg9IjQ4IiB5PSI1OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIzMiIgZm9udC1mYW1pbHk9IidIaXJhZ2lubyBNaW5jaG8gUHJvTicsICdZdSBNaW5jaG8nLCBzZXJpZiIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iI2ZmZmZmZiI+5om/5YWMPC90ZXh0PgogIDwvc3ZnPg==</note>
+                    </person>
+                    <person xml:id="茶屋四郎次郎">
+                        <persName>茶屋四郎次郎</persName>
+                        <note type="schema:description">京都の豪商・呉服師であり、徳川家康の側近として朱印船貿易を主導した御用商人。交趾（ベトナム中部・会安）への朱印船派遣を重ね、生糸・伽羅などの輸入と日本からの銅・武具などの交易に携わった。</note>
+                        <note type="schema:url">https://ja.wikipedia.org/wiki/%E8%8C%B6%E5%B1%8B%E5%9B%9B%E9%83%8E%E6%AC%A1%E9%83%8E</note>
+                        <note type="schema:image">data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij4KICAgIDxyZWN0IHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgcng9IjE0IiBmaWxsPSIjMWU4NDQ5Ii8+CiAgICA8Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIzNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYWJlYmM2IiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuNzUiLz4KICAgIDx0ZXh0IHg9IjQ4IiB5PSI1OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIzMiIgZm9udC1mYW1pbHk9IidIaXJhZ2lubyBNaW5jaG8gUHJvTicsICdZdSBNaW5jaG8nLCBzZXJpZiIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iI2ZmZmZmZiI+6Iy25bGLPC90ZXh0PgogIDwvc3ZnPg==</note>
+                    </person>
+                </listPerson>
+                <listPlace>
+                    <place xml:id="伏見">
+                        <placeName>伏見（山城国伏見城）</placeName>
+                        <note type="schema:description">現在の京都市伏見区。関ヶ原の戦い後、徳川家康が政務および外交の拠点とした城郭。慶長6年（1601）10月の安南国・呂宋宛復書はこの伏見において発給された。</note>
+                        <note type="schema:url">https://ja.wikipedia.org/wiki/%E4%BC%8F%E8%A6%8B%E5%9F%8E</note>
+                        <location><geo>34.9394 135.7764</geo></location>
+                    </place>
+                    <place xml:id="長崎">
+                        <placeName>長崎</placeName>
+                        <note type="schema:description">現在の長崎県長崎市。近世初期における南蛮貿易・朱印船貿易の最大の出港地であり、安南（交趾・会安）へ向かう商船の多くが長崎から東シナ海・南シナ海へ出帆した。</note>
+                        <note type="schema:url">https://ja.wikipedia.org/wiki/%E9%95%B7%E5%B4%8E%E6%B8%AF</note>
+                        <location><geo>32.7503 129.8779</geo></location>
+                    </place>
+                    <place xml:id="会安">
+                        <placeName>会安（ホイアン）</placeName>
+                        <note type="schema:description">ベトナム中部クアンナム省の港市（トゥーボン川河口）。広南阮氏政権下で最大の国際貿易港として栄え、17世紀初頭には日本からの朱印船が毎年来航して日本人町（日本橋・来遠橋）が形成された。</note>
+                        <note type="schema:url">https://ja.wikipedia.org/wiki/%E3%83%9B%E3%82%A4%E3%82%A2%E3%83%B3</note>
+                        <location><geo>15.8801 108.3380</geo></location>
+                    </place>
+                    <place xml:id="順化">
+                        <placeName>順化（フエ・安南国）</placeName>
+                        <note type="schema:description">ベトナム中部の要衝（現在のフエ周辺）。広南阮氏の初代・阮潢（瑞国公）が本拠を置いた政治中心地であり、会安港の背後に位置する統治拠点であった。</note>
+                        <note type="schema:url">https://ja.wikipedia.org/wiki/%E3%83%95%E3%82%A8</note>
+                        <location><geo>16.4637 107.5909</geo></location>
+                    </place>
+                </listPlace>
+            </sourceDesc>
+        </fileDesc>
+        <profileDesc>
+            <correspDesc xml:id="corresp-annan-1601">
+                <correspAction type="sent">
+                    <persName ref="#徳川家康">徳川家康</persName>
+                    <placeName ref="#伏見">山城国伏見城</placeName>
+                    <date when="1601-11">慶長六年十月</date>
+                </correspAction>
+                <correspAction type="received">
+                    <persName ref="#阮潢">安南国大都統瑞国公（阮潢）</persName>
+                    <placeName ref="#順化">安南国順化</placeName>
+                </correspAction>
+            </correspDesc>
+        </profileDesc>
+    </teiHeader>
+    <text>
+        <body>
+            <div type="original">
+                <div>
+                    <!-- 1文字下げ：差出人 -->
+                    <ab style="margin-top: 2rem; text-indent: -1rem;">
+                        <lb style="display: none"/>
+                        <seg type="parallel" xml:id="o-0001">日本国　源家康　回章</seg>
+                    </ab>
+
+                    <!-- 平出（2文字上げ）：宛先への敬意表現 -->
+                    <ab style="margin-top: 2rem; text-indent: -2rem;" type="parallel" xml:id="o-0002">
+                        <lb style="display: none"/>
+安南国大都統瑞国公　足下
+                    </ab>
+
+                    <ab type="parallel" xml:id="o-0003" style="margin-top: 2em;">
+                        <lb style="display: none"/>
+華緘手裏、披而読之、則近似見眉目、殊以祝着、如芳書、本邦之商客、毎年到
+                    </ab>
+
+                    <!-- 台頭（1文字上げ）：相手国領域への敬意 -->
+                    <ab style="margin-top: 2rem; text-indent: -1rem;" type="parallel" xml:id="o-0004">
+                        <lb style="display: none"/>
+貴域、偏蒙慈恵之段、不浅感悦、自今以往、益厚信義、互可通商船者也、
+                    </ab>
+
+                    <ab type="parallel" xml:id="o-0005" style="margin-top: 2em;">
+                        <lb style="display: none"/>
+抑本邦之舟、異日到其地、以此書之<add xml:id="note01">押</add>印、可表信印、無印之舟者、不可許通交焉、
+                    </ab>
+                    <note target="#note01" type="translatorsNotes">
+                        <p>『外蕃通書』所収本文による校訂。他本では「朱印」に作る異同があり、朱印船制度の創始を示す重要語句である。</p>
+                    </note>
+
+                    <!-- 台頭（1文字上げ）：貴国への敬意 -->
+                    <ab style="margin-top: 2rem; text-indent: -1rem;" type="parallel" xml:id="o-0006">
+                        <lb style="display: none"/>
+貴国商客之来本邦、亦復如是、海路雖隔万里、両国之情、豈有異哉、
+                    </ab>
+
+                    <ab type="parallel" xml:id="o-0007" style="margin-top: 2em;">
+                        <lb style="display: none"/>
+使者並船主<add xml:id="note02">茶屋</add>等、帰帆之次、命<add xml:id="note02">兌長老</add>述大概、本邦之兵器、以別幅投贈之、余期後音、不宣、
+                    </ab>
+                    <note target="#note02" type="translatorsNotes">
+                        <p>起草にあたった相国寺鹿苑僧録・西笑承兌（兌長老）および朱印船貿易商・茶屋四郎次郎らの記録（『異国日記』『鹿苑日録』）により補注。</p>
+                    </note>
+                </div>
+                <div>
+                    <lb/>
+                    <ab type="parallel" xml:id="o-0008" style="margin-top: 2em;">
+                        <lb style="display: none"/>
+慶長六年辛丑　十月　日
+                    </ab>
+                    <lb/>
+                    <ab type="parallel" xml:id="o-0009" style="margin-top: 2em;">
+                        <lb style="display: none"/>
+御朱印（源家康忠恕）
+                    </ab>
+                </div>
+            </div>
+
+            <div type="yomikudashi">
+                <ab>
+                    <seg type="parallel" xml:id="y-0001">
+                        <persName corresp="#徳川家康">日本国　源家康</persName>、回章を
+                    </seg>、
+                    <seg type="parallel" xml:id="y-0002">
+                        <placeName corresp="#順化">安南国</placeName><name type="keyword" xml:id="name-0001">大都統</name>
+                        <note target="#name-0001" type="nameNotes">
+                            <p>ベトナム中部（順化・広南）を統治した阮氏政権の首長に対する称号。当時は黎朝復興を掲げつつ実質的な独立政権を築いていた。</p>
+                        </note><persName corresp="#阮潢">瑞国公</persName>の足下に呈す。
+                    </seg>
+                    <seg type="parallel" xml:id="y-0003">華緘手裏にあり、披きてこれを読めば、すなわちおおよそ眉目を見るに似たり、殊に以て祝着なり。芳書の如く、本邦の商客、毎年</seg>
+                    <seg type="parallel" xml:id="y-0004"><placeName corresp="#会安">貴域</placeName>に到り、ひとえに慈恵を蒙るの段、浅からず感悦す。自今以往、ますます信義を厚くし、互いに商船を通ずべきものなり。</seg>
+                    <seg type="parallel" xml:id="y-0005">そもそも<placeName corresp="#長崎">本邦</placeName>の舟、異日その地に到らば、この書の<name type="keyword" xml:id="name-0002">押印</name>
+                        <note target="#name-0002" type="nameNotes">
+                            <p>徳川家康が海外渡航船に発給した朱印状（「源家康忠恕」の朱印）を指す。この慶長6年（1601）の安南・呂宋宛復書が朱印船制度の起点となった。</p>
+                        </note>を以て、信印を表すべきなり。無印の舟は、通交を許すべからず。
+                    </seg>
+                    <seg type="parallel" xml:id="y-0006">貴国の商客の本邦に来たるも、また復たかくの如し。海路万里を隔つといえども、両国の情、あに異あらんや。</seg>
+                    <seg type="parallel" xml:id="y-0007">使者ならびに船主<persName corresp="#茶屋四郎次郎">茶屋</persName>等、帰帆の次、<persName corresp="#西笑承兌">兌長老</persName>に命じて大概を述べしむ。<placeName corresp="#伏見">本邦</placeName>の兵器、別幅を以てこれを投贈す。余は後音を期す。不宣。</seg>
+                </ab>
+                <ab type="parallel" xml:id="y-0008">
+                    <date when="1601-11">慶長六年辛丑　十月　日</date>
+                </ab>
+                <ab type="parallel" xml:id="y-0009">
+                    御朱印（<persName corresp="#徳川家康">源家康</persName>忠恕）
+                </ab>
+            </div>
+
+            <div type="japanese">
+                <ab>
+                    <seg type="parallel" xml:id="ja-0001"><persName corresp="#徳川家康">日本国の徳川家康</persName>が、謹んで返書を</seg>
+                    <seg type="parallel" xml:id="ja-0002"><placeName corresp="#順化">安南国（順化）</placeName>の大都統である<persName corresp="#阮潢">瑞国公（グエン・ホアン）</persName>殿のもとへ差し上げます。</seg>
+                    <seg type="parallel" xml:id="ja-0003">貴殿からの丁重な書簡を手に取って拝読いたしますと、あたかも直接お目にかかったかのようで、まことに喜ばしい限りです。お手紙にあります通り、我が国の商人が毎年</seg>
+                    <seg type="parallel" xml:id="ja-0004"><placeName corresp="#会安">貴国の港（会安）</placeName>へ渡航し、格別のご厚情を賜っておりますことは、深く感謝し喜んでいる次第です。今後はこれまで以上に信義を厚くし、互いに商船を往来させましょう。</seg>
+                    <seg type="parallel" xml:id="ja-0005">そもそも我が国（<placeName corresp="#長崎">長崎</placeName>）から船が今後そちらの地に到着した際には、この書状に押された朱印をもって正式な渡航許可の証（信印）といたします。この朱印を持たない船には、通商を許可なさらないでください。</seg>
+                    <seg type="parallel" xml:id="ja-0006">貴国の商人が我が国に来航する際も同様に保護いたします。海路は万里を隔てておりますが、日越両国の友好の情にどうして隔たりがありましょうか。</seg>
+                    <seg type="parallel" xml:id="ja-0007">使者および船主の<persName corresp="#茶屋四郎次郎">茶屋四郎次郎</persName>らが帰帆するにあたり、外交僧の<persName corresp="#西笑承兌">西笑承兌</persName>に命じて要旨を記させ、<placeName corresp="#伏見">伏見</placeName>より我が国の武具（太刀・長刀など）を別目録の通り贈呈いたします。詳しくはまた次の便りを期します。以上。</seg>
+                </ab>
+                <ab type="parallel" xml:id="ja-0008">
+                    慶長六年（1601年）十月吉日
+                </ab>
+                <ab type="parallel" xml:id="ja-0009">
+                    朱印（「源家康忠恕」印）
+                </ab>
+            </div>
+        </body>
+    </text>
+    <facsimile source="annan-kokusho/manifest.json">
+        <surface source="https://awase.example.org/samples/annan-kokusho/canvas/p1">
+            <zone xml:id="z-0001" ulx="2070" uly="190" lrx="2190" lry="820"/>
+            <zone xml:id="z-0002" ulx="1860" uly="100" lrx="1980" lry="860"/>
+            <zone xml:id="z-0003" ulx="1645" uly="190" lrx="1755" lry="1470"/>
+            <zone xml:id="z-0004" ulx="1425" uly="145" lrx="1535" lry="1400"/>
+            <zone xml:id="z-0005" ulx="1205" uly="190" lrx="1315" lry="1480"/>
+            <zone xml:id="z-0006" ulx="985" uly="145" lrx="1095" lry="1380"/>
+            <zone xml:id="z-0007" ulx="765" uly="190" lrx="875" lry="1500"/>
+            <zone xml:id="z-0008" ulx="500" uly="220" lrx="620" lry="980"/>
+            <zone xml:id="z-0009" ulx="200" uly="580" lrx="460" lry="1040"/>
+        </surface>
+    </facsimile>
+</TEI>

@@ -396,3 +396,28 @@ LICENSE の著作権者は kasane のまま（中村・小川）。awase で変�
 - e2e の 2 件（ビューアの「1 / 2」「2 / 2」の表示を見ていた）を、ステージの画像の URL とキー操作で確かめる形に直した
 - 確かめたこと: vitest 92 件、e2e 63 件（0.1.4 の tgz を保存せずに入れて）、koui の見本を横書き・縦書きで撮って目視
 - 気づいたが直していないこと: 画像ペインの右端に、資料情報の欄を開く細い帯があり、頁の画像の右が少し隠れる
+
+## 2026-10-20 トップページの整理と旧 URL の転送
+
+- 4 つの画面（viewer・compare・xsl・dts）がすべて動いたので、トップページの「準備中」の札を外し、どのカードからも開けるようにした（`src/components/page/HomeContent.tsx`）
+- 言語なしの入口（`/compare/`・`/xsl/`・`/dts/`）を `/viewer/` と同じ形で足し、ヘルプ（`src/content/{ja,en}/help.md`）も仮ページの記述から実際の画面の案内に書き換えた
+- 旧ビューアの URL の転送（`src/lib/viewerParams.ts` の `resolveLegacyRedirect`、`LocaleRedirect` と `HomeContent` から呼ぶ）
+  - PTV: `/#/v2?u=<config>`、`/?u=<config>` → `/[locale]/viewer/?u=`。config.json の camelCase（`urlMain`・`urlSub`）も読む（`src/lib/tei/load.ts`）
+  - tei_viewer: `?u=…&textDirection=vertical` → `isVertical` で縦書きとして受ける
+  - TEI-EAJ/app・aozora_tei の書簡地図: `?url=["https://…","https://…"]` の JSON 配列を `getSources` で展開する
+  - text-comparison: `?manifest1=…&manifest2=…` → `/[locale]/compare/`
+  - dts-viewer: `?base=…` → `/[locale]/dts/`
+  - tei-tools: `?url=…&xsl=…` → `/[locale]/xsl/`
+
+## 2026-10-20 固有名・日付（entities）・発話（speech）・書簡の地図と年表（map・timeline）
+
+- `entities` ペイン（`src/lib/tei/entities.ts`、`src/components/viewer/EntitiesPane.tsx`）
+  - 本文の `persName`・`placeName`・`orgName`・`date`・`rs`・`name` を文書の順に拾い、`xml:id` が無ければ `awase-entity-<番号>` を振る
+  - `@ref`・`@corresp`・`@key`・`@nymRef` の `#id` を `teiHeader` / `standOff` の `listPerson`・`listPlace`・`listOrg` と突き合わせ、見出し語と外部典拠の URL（`@sameAs`・`idno` など）を引く
+  - 出現数の多い順に並べ、種別（人名・地名・組織・日付）の絞り込みと、本文との双方向の選択・スクロールを入れた
+- `speech` ペイン（`src/lib/tei/speech.ts`、`src/components/viewer/SpeechPane.tsx`、aozora_tei の `performance_texts`・`said.html` 互換）
+  - 本文の `sp` と `said` を文書の順に拾い、`@who`（無ければ `sp` の中の `speaker`）を `listPerson` や `castList/castItem/role` と突き合わせる
+  - 話者ごとの発話数・文字数の横棒と、ト書き（`stage`）を含む台詞の一覧を出し、本文と双方向に結ぶ
+- `map`・`timeline` ペイン（`src/lib/tei/corresp.ts`、`src/components/viewer/MapPane.tsx`、`src/components/viewer/TimelinePane.tsx`、TEI-EAJ/letter・app・tei_viewer 互換）
+  - `correspDesc/correspAction`（発信・受信の人物・場所・日付）と、`listPlace/place` や `placeName` の `geo`（緯度・経度）を読み、kasane から残してあった MapLibre の `MapView` に地点を出す
+  - `correspAction` の日付、`listEvent/event`、本文の `@when` 等を持つ `date` を ISO 日付順で年表に並べ、本文の箇所と行き来できるようにした

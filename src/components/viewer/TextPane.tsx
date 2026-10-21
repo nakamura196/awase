@@ -102,6 +102,7 @@ export default function TextPane({
   const ref = useRef<HTMLDivElement>(null);
   // この列で押して選んだときは、この列は動かさない（押した所が逃げないように）
   const selfSelected = useRef(false);
+  const focusedPageRef = useRef<number | null>(null);
 
   useEffect(() => {
     const el = ref.current;
@@ -146,10 +147,21 @@ export default function TextPane({
     const highlight = highlightRegistry();
     for (const r of ranges) highlight?.add(r);
     if (elements[0] && !keep) elements[0].scrollIntoView({ block: 'center', inline: 'center' });
+    if (elements[0]) {
+      const pbs = Array.from(el.querySelectorAll('tei-pb'));
+      let pbIdx = -1;
+      for (let i = 0; i < pbs.length; i++) {
+        if (pbs[i].compareDocumentPosition(elements[0]) & Node.DOCUMENT_POSITION_FOLLOWING) pbIdx = i;
+      }
+      if (pbIdx >= 0) {
+        focusedPageRef.current = pbIdx;
+        onPageChange?.(pbIdx);
+      }
+    }
     return () => {
       for (const r of ranges) highlight?.delete(r);
     };
-  }, [tei, focusId, vertical]);
+  }, [tei, focusId, vertical, onPageChange]);
 
   // 縦書きは右から読むので、開いたとき右端を見せる（ブラウザによって最初の位置が違う）
   useEffect(() => {
@@ -170,6 +182,15 @@ export default function TextPane({
     let last = -1;
     const measure = () => {
       raf = 0;
+      if (focusedPageRef.current !== null) {
+        const p = focusedPageRef.current;
+        focusedPageRef.current = null;
+        if (p !== last) {
+          last = p;
+          onPageChange(p);
+        }
+        return;
+      }
       const frame = inner
         ? el.getBoundingClientRect()
         : { top: 0, right: window.innerWidth, width: window.innerWidth, height: window.innerHeight };

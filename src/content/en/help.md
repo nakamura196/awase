@@ -1,17 +1,15 @@
 # Help
 
-Awase is an integrated TEI viewer. It aims to bring text, annotations, images and maps together in a single view.
-
-This is only the scaffold for now, and the screens are still placeholders.
+Awase is an integrated TEI viewer. It brings text, annotations, images and maps together in a single view.
 
 ## Screens
 
-- [Viewer](../viewer/): read TEI text side by side with images and annotations.
-- [Compare](../compare/): put two sources or witnesses next to each other.
-- [XSL](../xsl/): transform TEI with XSLT and try out how it looks.
-- [DTS](../dts/): browse and open documents served through DTS (Distributed Text Services).
+- [Viewer](../viewer/): read TEI text side by side with images, variants, names & dates, speech, maps, timelines and parallel translations.
+- [Compare](../compare/): place two sources (IIIF manifests) side by side to compare their images and character-level text differences.
+- [XSL](../xsl/): transform TEI with XSLT (SaxonJS) and try out how it looks.
+- [DTS](../dts/): browse collections served through DTS (Distributed Text Services) and open chosen texts.
 
-Each screen will take what to open, and its settings, from the URL query (everything after `?`). The placeholder screens list the parameters they will accept.
+Each screen takes what to open, and its settings, from the URL query (everything after `?`), so you can share any view by its URL.
 
 ## Design notes
 
