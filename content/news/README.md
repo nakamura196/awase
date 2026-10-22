@@ -29,10 +29,12 @@ Body.
 - 先頭の `---` の間は「key: value」の 1 行ずつ。`.` で入れ子になる（`title.ja` → `title: { ja }`）
 - `date` は YYYY-MM-DD。新しい順に並ぶ。同じ日に複数あるときは `order:`（数字。大きいほど上）
 - 「試す」の行き先（どれか 1 つ）
-  - `action.viewer: <TEI の URL>` と、必要なら `action.params: dir=rtl`
+  - `action.usecase: <ユースケースの id>` … そのユースケースの開き方で開く
+  - `action.viewer: <TEI の URL>` と、必要なら `action.params: dir=v`
   - `action.href: /viewer`（サイト内のパス）。言語で違うときは `action.href.ja` と `action.href.en`
   - 外部の記事なら `action.external: true` と `action.label: readArticle`
 - `video.ja` / `video.en` … YouTube の videoId。片方だけなら両方の言語でそれを出す
+- `usecases: a, b` … 関連するユースケースの id（カンマ区切り）
 - `note:` … 書き手向けの覚え書き。サイトには出ない
 
-書き漏れ（片方の言語、videoId の形）は `src/lib/news.test.ts` が見つける。
+書き漏れ（片方の言語、存在しないユースケース、videoId の形）は `src/lib/news.test.ts` が見つける。

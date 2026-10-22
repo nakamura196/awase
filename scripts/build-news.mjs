@@ -23,7 +23,8 @@ export function parseNewsFile(id, text) {
     const key = line.slice(0, at).trim();
     let value = line.slice(at + 2).trim();
     if (key === 'note') continue; // 書き手向けの覚え書き。サイトには出さない
-    if (value === 'true') value = true;
+    if (key === 'usecases') value = value.split(',').map((s) => s.trim()).filter(Boolean);
+    else if (value === 'true') value = true;
     else if (key === 'order') value = Number(value);
     const path = key.split('.');
     let o = item;

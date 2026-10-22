@@ -4,7 +4,7 @@ export const SITE_URL = 'https://awase.ldas.jp';
 export const LOCALES = ['ja', 'en'] as const;
 
 // sitemap に載せるページ(ロケールの後ろのパス。trailingSlash: true)
-export const PUBLIC_PATHS = ['', 'viewer/', 'compare/', 'xsl/', 'dts/', 'news/', 'help/', 'privacy/', 'terms/'];
+export const PUBLIC_PATHS = ['', 'viewer/', 'compare/', 'xsl/', 'dts/', 'usecases/', 'news/', 'help/', 'privacy/', 'terms/'];
 
 /**
  * ページの canonical と言語の組。metadataBase (SITE_URL) からの相対で返す。

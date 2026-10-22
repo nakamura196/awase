@@ -8,6 +8,7 @@ Awase is an integrated TEI viewer. It brings text, annotations, images and maps 
 - [Compare](../compare/): place two sources (IIIF manifests) side by side to compare their images and character-level text differences.
 - [XSL](../xsl/): transform TEI with XSLT (SaxonJS) and try out how it looks.
 - [DTS](../dts/): browse collections served through DTS (Distributed Text Services) and open chosen texts.
+- [Use cases](../usecases/): browse examples of Awase with real TEI collections, accompanied by demo videos and screenshots.
 
 Each screen takes what to open, and its settings, from the URL query (everything after `?`), so you can share any view by its URL.
 

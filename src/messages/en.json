@@ -7,6 +7,7 @@
     "compare": "Compare",
     "xsl": "Style Views",
     "dts": "Catalog",
+    "usecases": "Use cases",
     "help": "Help",
     "news": "News",
     "english": "English",
@@ -20,6 +21,7 @@
     "compare": "Compare",
     "xsl": "Style Views (XSL)",
     "dts": "Catalog (DTS)",
+    "usecases": "Use cases",
     "guideHeading": "Help & Terms",
     "help": "Help",
     "news": "News",
@@ -38,7 +40,8 @@
     "listLead": "New features in Awase and how to use them.",
     "back": "Back to news",
     "tryIt": "Try in Awase",
-    "readArticle": "Read the article"
+    "readArticle": "Read the article",
+    "related": "Related use cases"
   },
   "Home": {
     "title": "Awase",
@@ -53,7 +56,45 @@
     "xslTitle": "Style Views (XSL)",
     "xslDescription": "Switch between reading view, LINE-style dialogue, facsimile edition, footnotes, and tag statistics.",
     "dtsTitle": "Catalog (DTS)",
-    "dtsDescription": "Browse and open texts from Distributed Text Services (DTS) catalogs."
+    "dtsDescription": "Browse and open texts from Distributed Text Services (DTS) catalogs.",
+    "useCasesHeading": "Use cases",
+    "useCasesLead": "Examples of Awase with real TEI collections. Click a card to open the material directly in Awase.",
+    "useCasesAll": "View all use cases ({count})"
+  },
+  "UseCases": {
+    "title": "Use cases",
+    "lead": "Examples of Awase with real TEI collections. Watch the video, then open the same material with “Open in Awase”.",
+    "open": "Open in Awase",
+    "sourceXml": "TEI/XML",
+    "manifest": "Manifest",
+    "endpoint": "Endpoint",
+    "site": "Original project",
+    "videoPending": "Video coming soon",
+    "features": {
+      "text": "Text",
+      "image": "Image & IIIF",
+      "parallel": "Parallel texts",
+      "apparatus": "Critical apparatus",
+      "entities": "Named entities",
+      "speech": "Speech & appellations",
+      "map": "Map & timeline",
+      "xsl": "Styles & XSL",
+      "video": "Video & audio",
+      "compare": "Compare",
+      "dts": "DTS"
+    },
+    "back": "Back to all use cases",
+    "details": "Details",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "others": "More use cases",
+    "newsHeading": "News about this example",
+    "filter": "Filter by tag",
+    "all": "All",
+    "sort": "Order",
+    "sortDefault": "Recommended",
+    "sortNewest": "Newest first",
+    "added": "Added"
   },
   "Placeholder": {
     "comingSoon": "Coming soon",

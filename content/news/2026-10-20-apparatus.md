@@ -3,7 +3,8 @@ date: 2026-10-20
 order: 2
 title.ja: 異文の一覧と伝本の読みの切り替えができるようになりました
 title.en: Compare variant readings and switch witnesses
-action.href: /viewer
+action.usecase: koui-genji-apparatus
+usecases: koui-genji-apparatus
 ---
 
 ## ja

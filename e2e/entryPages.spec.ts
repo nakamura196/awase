@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 // 見ること: 画面の JS がエラーを出さない / 最初の見出しが見える / 横にスクロールしない。
 // 日英 × パソコン幅・スマートフォン幅。ページの一覧は、ページを足したらここにも足す。
 
-const PAGES = ['', 'viewer', 'compare', 'xsl', 'dts', 'help', 'news'];
+const PAGES = ['', 'viewer', 'compare', 'xsl', 'dts', 'usecases', 'help', 'news'];
 const VIEWPORTS = [
   { name: 'desktop', width: 1280, height: 800 },
   { name: 'phone', width: 390, height: 844 },

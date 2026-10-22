@@ -6,8 +6,10 @@ import { Link } from '@/i18n/routing';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import PageContainer from '@/components/layout/PageContainer';
-import { SectionHeading, News } from '@nakamura196/react-ui';
+import UseCaseClip from '@/components/usecases/UseCaseClip';
+import { SectionHeading, News, buttonClass } from '@nakamura196/react-ui';
 import { NEWS, NEWS_ON_HOME } from '@/lib/news';
+import { FEATURED_USE_CASES, USE_CASES, clipOf, hrefOf, thumbnailOf } from '@/lib/usecases';
 import { localizedUrl, type Locale } from '@/lib/locale';
 import { resolveLegacyRedirect } from '@/lib/viewerParams';
 
@@ -74,6 +76,50 @@ export default function HomeContent() {
                   {!s.ready && <p className="mt-3 text-xs text-[var(--ds-fg-muted)]">{t('comingSoon')}</p>}
                 </Link>
               ))}
+            </div>
+          </section>
+
+          <section className="mb-16">
+            <SectionHeading>{t('useCasesHeading')}</SectionHeading>
+            <p className="mb-4 text-sm text-[var(--ds-fg-muted)]">{t('useCasesLead')}</p>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-left">
+              {FEATURED_USE_CASES.map((u) => (
+                <li key={u.id}>
+                  <Link
+                    href={hrefOf(u.open)}
+                    className="group block h-full rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] overflow-hidden hover:border-[var(--ds-primary)] transition-colors"
+                  >
+                    {u.clip ? (
+                      <UseCaseClip src={clipOf(u, lang)} poster={thumbnailOf(u, lang)} />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element -- 静的書き出しなので next/image の最適化は使えない
+                      <img
+                        src={thumbnailOf(u, lang)}
+                        alt=""
+                        width={640}
+                        height={400}
+                        loading="lazy"
+                        className="w-full aspect-[16/10] object-cover bg-[var(--ds-surface-2)]"
+                      />
+                    )}
+                    <span className="block p-3">
+                      <span className="block font-medium text-sm text-[var(--ds-primary)] group-hover:underline">
+                        {u.headline?.[lang] ?? u.title[lang]}
+                      </span>
+                      {u.headline ? (
+                        <span className="mt-1 block text-xs text-[var(--ds-fg-muted)]">
+                          {u.title[lang]}
+                        </span>
+                      ) : null}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 flex justify-center">
+              <Link href="/usecases" className={buttonClass('primary', 'lg', 'w-full sm:w-auto')}>
+                {t('useCasesAll', { count: USE_CASES.length })} →
+              </Link>
             </div>
           </section>
 

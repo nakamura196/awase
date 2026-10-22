@@ -7,6 +7,7 @@
     "compare": "比較",
     "xsl": "表示スタイル",
     "dts": "資料目録",
+    "usecases": "ユースケース",
     "help": "ヘルプ",
     "news": "お知らせ",
     "english": "English",
@@ -20,6 +21,7 @@
     "compare": "比較",
     "xsl": "表示スタイル（XSL）",
     "dts": "資料目録（DTS）",
+    "usecases": "ユースケース",
     "guideHeading": "ヘルプ・規約",
     "help": "ヘルプ",
     "news": "お知らせ",
@@ -38,7 +40,8 @@
     "listLead": "Awase に足した機能と、その使い方を紹介します。",
     "back": "お知らせの一覧へ",
     "tryIt": "Awase で試す",
-    "readArticle": "記事を読む"
+    "readArticle": "記事を読む",
+    "related": "関連するユースケース"
   },
   "Home": {
     "title": "Awase（合せ）",
@@ -53,7 +56,45 @@
     "xslTitle": "表示スタイル（XSL）",
     "xslDescription": "縦書き読書ビュー・LINE風対話・影印翻刻・脚注・統計など、表示スタイルを切り替えて読みます。",
     "dtsTitle": "資料目録（DTS）",
-    "dtsDescription": "公開されている古典・歴史資料の目録（DTS）をたどり、選んで開きます。"
+    "dtsDescription": "公開されている古典・歴史資料の目録（DTS）をたどり、選んで開きます。",
+    "useCasesHeading": "ユースケース（利用例）",
+    "useCasesLead": "実際の TEI 資料で Awase を使った例です。カードを押すと、そのまま Awase で開きます。",
+    "useCasesAll": "すべてのユースケースを見る（{count} 件）"
+  },
+  "UseCases": {
+    "title": "ユースケース",
+    "lead": "Awase を実際の TEI 資料で使った例です。動画で動きを見てから、「Awase で開く」で同じ資料をそのまま開けます。",
+    "open": "Awase で開く",
+    "sourceXml": "TEI/XML",
+    "manifest": "マニフェスト",
+    "endpoint": "エンドポイント",
+    "site": "元のプロジェクト",
+    "videoPending": "動画は準備中です",
+    "features": {
+      "text": "本文",
+      "image": "画像・IIIF",
+      "parallel": "対訳・並置",
+      "apparatus": "校異・異文",
+      "entities": "固有名",
+      "speech": "発話・呼称",
+      "map": "地図・年表",
+      "xsl": "表示スタイル・XSL",
+      "video": "映像・音声",
+      "compare": "資料比較",
+      "dts": "DTS"
+    },
+    "back": "ユースケースの一覧へ",
+    "details": "詳しく見る",
+    "copyLink": "リンクをコピー",
+    "copied": "コピーしました",
+    "others": "ほかのユースケース",
+    "newsHeading": "この例を取り上げたお知らせ",
+    "filter": "札で絞り込む",
+    "all": "すべて",
+    "sort": "並べ方",
+    "sortDefault": "おすすめ順",
+    "sortNewest": "新しい順",
+    "added": "追加"
   },
   "Placeholder": {
     "comingSoon": "準備中",

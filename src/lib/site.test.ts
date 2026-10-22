@@ -6,6 +6,7 @@ import { LOCALES, PUBLIC_PATHS, SITE_URL, alternatesFor } from './site';
 import robots from '@/app/robots';
 import sitemap from '@/app/sitemap';
 import { NEWS } from './news';
+import { USE_CASES } from './usecases';
 
 const root = join(__dirname, '../..');
 const read = (p: string) => readFileSync(join(root, p), 'utf8');
@@ -36,10 +37,11 @@ describe('公開 URL', () => {
 
   it('sitemap は全ロケール×全ページで、ページは実在する', () => {
     const urls = sitemap().map((e) => e.url);
-    expect(urls).toHaveLength(LOCALES.length * (PUBLIC_PATHS.length + NEWS.length));
+    expect(urls).toHaveLength(LOCALES.length * (PUBLIC_PATHS.length + NEWS.length + USE_CASES.length));
     expect(urls).toContain(`${SITE_URL}/ja/`);
     expect(urls).toContain(`${SITE_URL}/en/viewer/`);
     expect(urls).toContain(`${SITE_URL}/ja/news/${NEWS[0].id}/`);
+    expect(urls).toContain(`${SITE_URL}/ja/usecases/${USE_CASES[0].id}/`);
     for (const p of PUBLIC_PATHS) {
       expect(existsSync(join(root, 'src/app/[locale]', p, 'page.tsx'))).toBe(true);
     }

@@ -3,7 +3,8 @@ date: 2026-10-20
 order: 5
 title.ja: 固有名・発話・地図・年表のペインを追加しました
 title.en: Added entities, speech, map, and timeline panes
-action.href: /viewer
+action.usecase: melos-speech
+usecases: melos-speech, annan-kokusho-diplomatic
 ---
 
 ## ja

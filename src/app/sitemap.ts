@@ -1,14 +1,16 @@
 import type { MetadataRoute } from 'next';
 import { LOCALES, PUBLIC_PATHS, SITE_URL } from '@/lib/site';
 import { NEWS } from '@/lib/news';
+import { USE_CASES } from '@/lib/usecases';
 
 export const dynamic = 'force-static';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  // お知らせの詳細ページ（/news/<id>/ など）も載せる
+  // お知らせ・ユースケースの詳細ページ（/news/<id>/ など）も載せる
   const paths = [
     ...PUBLIC_PATHS,
     ...NEWS.map((n) => `news/${n.id}/`),
+    ...USE_CASES.map((u) => `usecases/${u.id}/`),
   ];
   return LOCALES.flatMap((locale) =>
     paths.map((p) => ({

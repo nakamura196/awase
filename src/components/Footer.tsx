@@ -25,6 +25,7 @@ export default function Footer() {
             { label: t('viewer'), href: '/viewer' },
             { label: t('compare'), href: '/compare' },
             { label: t('dts'), href: '/dts' },
+            { label: t('usecases'), href: '/usecases' },
           ],
         },
         // 3列目: 説明系（ヘルプ・お知らせ・規約）
