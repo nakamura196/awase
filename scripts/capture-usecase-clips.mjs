@@ -59,16 +59,18 @@ const CLIPS = {
     wait: 7000,
     seconds: 6,
     act: async (page) => {
-      const items = page.locator('[data-testid="apparatus-item"]');
+      const items = page.locator('[data-testid="apparatus-pane"] [data-awase-entry] button');
       for (const idx of [0, 2, 4]) {
         await items.nth(idx).click({ timeout: 10000 }).catch(() => {});
-        await sleep(1400);
+        await sleep(1200);
       }
-      const sel = page.locator('[data-testid="witness-select"]');
+      await page.locator('[data-testid="witness-distances"] > summary').click({ timeout: 10000 }).catch(() => {});
+      await sleep(1200);
+      const sel = page.locator('[data-testid="apparatus-pane"] select');
       const val = await sel.locator('option').nth(2).getAttribute('value').catch(() => null);
       if (val) {
         await sel.selectOption(val).catch(() => {});
-        await sleep(1600);
+        await sleep(1500);
       }
     },
   },

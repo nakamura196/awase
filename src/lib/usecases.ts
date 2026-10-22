@@ -169,7 +169,7 @@ export const USE_CASES: UseCase[] = [
     },
     open: {
       page: 'viewer',
-      u: 'https://w3id.org/kouigenjimonogatari/tei/01.xml',
+      u: 'https://tei-eaj.github.io/koui/data/01_with_wit_images.xml',
       dir: 'v',
     },
     features: ['text', 'image', 'apparatus'],
@@ -194,12 +194,8 @@ export const USE_CASES: UseCase[] = [
     },
     open: {
       page: 'viewer',
-      u: [
-        'https://tei-eaj.github.io/parallel_text_viewer/data/eiri_1650_01_with_link.xml',
-        'https://tei-eaj.github.io/parallel_text_viewer/data/yosano.xml',
-      ],
+      u: 'https://tei-eaj.github.io/parallel_text_viewer/data/pt/config.json',
       dir: 'v',
-      panes: 'text,image',
     },
     features: ['text', 'image', 'parallel'],
     site: 'https://tei-eaj.github.io/parallel_text_viewer/',
@@ -369,7 +365,7 @@ export const USE_CASES: UseCase[] = [
     },
     open: {
       page: 'xsl',
-      u: 'https://tei-tools.toyobunko-lab.jp/xml/ocr/with_facs.xml',
+      u: 'https://tei-tools.toyobunko-lab.jp/xml/ocr-sample/tei.xml',
       xsl: 'ocr',
     },
     features: ['text', 'image', 'xsl'],
@@ -389,11 +385,11 @@ export const USE_CASES: UseCase[] = [
     },
     open: {
       page: 'dts',
-      base: 'https://raw.githubusercontent.com/TEI-EAJ/koui-dts/main/docs/dts/api/entry.json',
-      url: 'https://raw.githubusercontent.com/TEI-EAJ/koui-dts/main/docs/dts/api/collection/01.json',
+      base: 'https://dts.ldas.jp/api/v2/dts',
+      url: 'https://dts.ldas.jp/api/v2/dts/collection?id=urn:kouigenjimonogatari.1',
     },
     features: ['text', 'dts'],
-    site: 'https://github.com/TEI-EAJ/koui-dts',
+    site: 'https://dts.ldas.jp/',
     clip: true,
   },
 ];

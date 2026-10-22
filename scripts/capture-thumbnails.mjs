@@ -43,7 +43,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // 撮る前にページで行う操作（id ごと）。見どころの状態にしてから撮る
 const PREPARE = {
   'koui-genji-apparatus': async (page) => {
-    await page.locator('[data-testid="apparatus-item"]').first().click({ timeout: 15000 }).catch(() => {});
+    await page.locator('[data-testid="apparatus-pane"] [data-awase-entry] button').first().click({ timeout: 15000 }).catch(() => {});
+    await page.locator('[data-testid="witness-distances"] > summary').click({ timeout: 10000 }).catch(() => {});
     await sleep(1500);
   },
   'eiri-yosano-parallel': async (page) => {
