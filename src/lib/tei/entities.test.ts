@@ -318,7 +318,7 @@ describe('textEntities と readEntities', () => {
     expect(mentions[0].text).toBe('藤原道長');
   });
 
-  it('schema:description・schema:url・schema:image と # 無し @corresp（wakozukan 形式）を解決する', () => {
+  it('schema:description・schema:url・schema:image と # 無し @corresp を解決する', () => {
     const doc = buildDoc({
       tag: 'TEI',
       children: [

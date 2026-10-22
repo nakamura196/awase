@@ -7,7 +7,7 @@
 `/[locale]/dts/` を作った。
 DTS の入口からコレクションをたどり、資料の書誌情報と引用できる単位を見せる。
 本文は描かない。全体にも各単位にも「viewer で開く」「XSL で開く」のリンクを付けた。
-元は dts-viewer（`~/git/genji/dts-viewer`）。画面と URL の考え方だけ移し、UI の部品は移していない。
+元は dts-viewer（`nakamura196/dts-viewer`）。画面と URL の考え方だけ移し、UI の部品は移していない。
 
 ### 実際の応答（https://dts.ldas.jp/api/dts）
 

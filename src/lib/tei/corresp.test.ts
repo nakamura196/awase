@@ -424,7 +424,7 @@ describe('extractTimeline', () => {
 });
 
 describe('schema:geo GeoJSON URL と computeGeoJsonCenter', () => {
-  it('wakozukan 形式の <note type="schema:geo">（相対・絶対 GeoJSON URL）と schema:description を抽出する', () => {
+  it('<note type="schema:geo">（相対・絶対 GeoJSON URL）と schema:description を抽出する', () => {
     const doc = buildDoc({
       tag: 'TEI',
       children: [
@@ -477,7 +477,7 @@ describe('schema:geo GeoJSON URL と computeGeoJsonCenter', () => {
       ],
     });
 
-    const baseUrl = 'https://www.hi.u-tokyo.ac.jp/collection/digitalgallery/wakozukan/tei/data/main.xml';
+    const baseUrl = 'https://example.org/tei/data/main.xml';
     expect(hasMapData(doc)).toBe(true);
     const places = extractTeiPlaces(doc, baseUrl);
     expect(places).toHaveLength(1);
@@ -485,7 +485,7 @@ describe('schema:geo GeoJSON URL と computeGeoJsonCenter', () => {
       id: '五島',
       label: '五島',
       coords: null,
-      geoJsonUrl: 'https://www.hi.u-tokyo.ac.jp/collection/digitalgallery/wakozukan/tei/data/geojson/%E4%BA%94%E5%B3%B6.json',
+      geoJsonUrl: 'https://example.org/tei/data/geojson/%E4%BA%94%E5%B3%B6.json',
       description: '五島列島。',
       externalUrl: 'https://ja.wikipedia.org/wiki/五島列島',
       count: 1,

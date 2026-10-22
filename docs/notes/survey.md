@@ -1,8 +1,8 @@
 # 既存 TEI ビューアの棚卸しと awase の方針
 
 awase（合せ）は、TEI-EAJ ほかに散らばった TEI ビューアを 1 つにまとめる統合ビューア。
-IIIF Kasane（~/git/iiif/iiif-kasane）の TEI 版として、同じ作り（Next.js の静的書き出し、
-URL で資料を指定、日英、埋め込み）で作る。持ち主は nakamura196、置き場所は ~/git/genji/awase。
+IIIF Kasane（nakamura196/iiif-kasane）の TEI 版として、同じ作り（Next.js の静的書き出し、
+URL で資料を指定、日英、埋め込み）で作る。持ち主は nakamura196。
 
 ## 2026-10-19 棚卸し（コードの読み取り。実際の画面は一部しか見ていない）
 
@@ -10,17 +10,16 @@ URL で資料を指定、日英、埋め込み）で作る。持ち主は nakamu
 
 | ビューア | 土台・最終更新 | 入力（後方互換で受ける URL） | 他に無いもの |
 |---|---|---|---|
-| TEI-EAJ/parallel_text_viewer（~/git/genji/parallel_text_viewer） | Nuxt 2・2026-10 | `/app/#/v2?u=<config.json>`、`/v2?u=`、`/?u=` | 本文・訳・画像の 3 者連動ハイライト。config.json で束ねる |
+| TEI-EAJ/parallel_text_viewer | Nuxt 2・2026-10 | `/app/#/v2?u=<config.json>`、`/v2?u=`、`/?u=` | 本文・訳・画像の 3 者連動ハイライト。config.json で束ねる |
 | TEI-EAJ/koui（校本風異文可視化） | Nuxt 2・2023-06 | `?u=<TEI>` | `app/lem/rdg@wit` の異文をその場で表示、異文表、伝本間の一致度グラフ、`pb@facs`→zone で画像 |
 | TEI-EAJ/tei_viewer | Nuxt 2・2022-06 | `?u=&textDirection=vertical&area=<JSON>&feature=i&config=&c=` | 人物・地名・日付・地図（Wikidata）・ワードクラウド・年表などの部品、`area` で自由にペインを組む |
-| nakamura196/dts-viewer（~/git/genji/dts-viewer） | Next 15・2026-05 | `/[locale]/?base=<DTS entry>&url=<endpoint>` | DTS の Collection / Navigation を辿る。本文の描画は無い。バックエンドは dts.ldas.jp（dts-typescript） |
-| text-comparison（~/git/genji/text-comparison、iiif-text.vercel.app） | Next・2026-02 | `?manifest1&manifest2&canvas1&canvas2&label1&label2&mode&embed=1` | 画像の左右比較、文字単位の差分、編集距離のネットワーク図、`embed=1` |
+| nakamura196/dts-viewer | Next 15・2026-05 | `/[locale]/?base=<DTS entry>&url=<endpoint>` | DTS の Collection / Navigation を辿る。本文の描画は無い。バックエンドは dts.ldas.jp（dts-typescript） |
+| text-comparison（iiif-text.vercel.app） | Next・2026-02 | `?manifest1&manifest2&canvas1&canvas2&label1&label2&mode&embed=1` | 画像の左右比較、文字単位の差分、編集距離のネットワーク図、`embed=1` |
 | TEI-EAJ/letter | Nuxt 2・2021-02 | `?u=<TEI>` | `correspDesc/correspAction` から送受信地の地図・年表・表 |
 | TEI-EAJ/app（実体は書簡の可視化、未公開） | Nuxt 2・2022-04 | `/letters?url=<TEI URL の配列 JSON>` | 複数 TEI を横断して 1 つの地図・年表・グラフにする |
 | aozora_tei wiki「視覚化ツール」 | 素の HTML + jQuery | `performance_texts/line.html?url=`、`letters/map.html?url=<配列 JSON>`、`facs/?url=`（tei_viewer の `?u=…&feature=i` へ転送）、`display_dazai.html`、`cetei.html`、`said.html` | 台詞 `sp@who` を LINE 風に、`said@who`・`persName@corresp` の人物別集計（d3）、書簡地図 |
 | aozora_tei wiki「視覚化例」 | — | 絵入源氏の PTV（`.../data/pt/config.json`）、dhii.jp genji2.html（大成の校異）、kanzaki.com image-annotator（IIIF v3 音声注釈、生死未確認） | 実例。awase のサンプル集の候補 |
-| toyo-bunko/tei-tools（~/git/toyo/tei-tools、tei-tools.toyobunko-lab.jp） | 静的 HTML | `view.html`（XML × XSL を全画面）、`catalog.json` | **XSL の選び替えで見せ方を変える**（reading / vellum / bibliography / analysis / ner / notes / manchu / ocr-facsimile ほか）。SaxonJS で実行 |
-| archivebase の text アプリ | Next | `/api/{account}/tei/{db}/{id}/xml` | XSL カタログ（DB ごと）、固有表現の集計、検索・権限との統合 |
+| toyo-bunko/tei-tools（tei-tools.toyobunko-lab.jp） | 静的 HTML | `view.html`（XML × XSL を全画面）、`catalog.json` | **XSL の選び替えで見せ方を変える**（reading / vellum / bibliography / analysis / ner / notes / manchu / ocr-facsimile ほか）。SaxonJS で実行 |
 | kuroshima/sketchfab-tei-viewer-next | Next 15・2026-01 | — | Sketchfab の 3D 注釈と TEI の地名の連動（特殊。別モジュール扱い） |
 
 ### TEI の書き方の前提（読めるようにする規約）
@@ -37,7 +36,7 @@ URL で資料を指定、日英、埋め込み）で作る。持ち主は nakamu
 
 - **Chrome 158（2026-11）でブラウザ内蔵の XSLT（`XSLTProcessor`）が消える。** Firefox・WebKit も追随。
   tei-tools は SaxonJS（XSL を事前に SEF へ変換して実行）に移し済み。
-  **archivebase の text アプリは `XSLTProcessor` を使っているので、同じ対応が要る。** awase も最初から SaxonJS で作る
+  awase も最初から SaxonJS で作る
 - 新サイト genji-api.ldas.jp の `public/data/vol/*/config.json` は、まだ旧ドメイン genji.dl.itc.u-tokyo.ac.jp を指している。
   awase に移すとき、新ドメインに直す
 - 旧 AI 版の「文字列の類似度比較」（text-comparison を開くボタン）は genji-api に移っていない。
@@ -45,7 +44,7 @@ URL で資料を指定、日英、埋め込み）で作る。持ち主は nakamu
 
 ## 方針（2026-10-19 決定分と案）
 
-決定: 新しいリポジトリ awase（nakamura196、~/git/genji/awase）。iiif-kasane と同じ作り。
+決定: 新しいリポジトリ awase（nakamura196/awase）。iiif-kasane と同じ作り。
 
 案（次のセッションで詰める）:
 
@@ -151,14 +150,6 @@ GitHub Pages（nakamura196.github.io/awase）。kasane の deploy-pages.yml を�
 - 画像の部品は、kasane の `packages/iiif-viewer` を **npm に公開して使う**（案 A）。公開はまだ
 - 注意: 無料プランでは private リポジトリから GitHub Pages を出せない。配るときは public にするか、
   Cloudflare Pages など別の無料枠に出す
-
-## 2026-10-19 訂正: archivebase の text アプリは XSLTProcessor を使っていなかった
-
-上の「archivebase の text アプリは `XSLTProcessor` を使っているので、同じ対応が要る」は誤り。
-2026-07-13（archivebase c607292f）から、TEI→HTML の変換はサーバ側（libxslt の `xsltproc`、`/api/tei/{id}/html`）で行っている。
-`public/tei/view.html` は使われずに残っていた旧部品で、これを見て誤認した。本番の `/html` が 200 を返すことを確認した。
-旧部品の削除と、サーバ側に移ってから 404 になっていた `theme.css` の参照の修正は archivebase PR #643。
-awase で SaxonJS を使う方針は変えない（静的配信でサーバが無いため）。
 
 ## 2026-10-19 土台を写した
 
@@ -381,8 +372,7 @@ LICENSE の著作権者は kasane のまま（中村・小川）。awase で変�
 - kasane #267 を 0.1.3 として Release に置き、依存を差し替えた。koui の見本の 48 番「事ある時」の 3 つ目（国文研 200003803、canvas/3、範囲 2371,2100,117,532）で、
   そのページ 1 枚に寄り、枠が「ことある時」の行を囲むことを目で確かめた。1・2 つ目（NDL の 2 資料）も前と同じく枠が合う
 - 確かめ方: PR #10（app-facs）の作業ツリーに 0.1.3 を保存せずに入れ、Playwright で 3 枚を撮った
-- 分かったこと: 国文研の画像（kotenseki.nijl.ac.jp/api/iiif/…）は kokusho.nijl.ac.jp へ 301 で転送される。kokusho はカナダの回線からは接続拒否（日本の mdx からは 200）。
-  海外から確かめるときは `ssh -N -D <port> mdx-cpu` の SOCKS を自動ブラウザに通す。海外の利用者には国文研の画像が出ない、という制約でもある
+- 分かったこと: 国文研の画像（kotenseki.nijl.ac.jp/api/iiif/…）は kokusho.nijl.ac.jp へ 301 で転送される。kokusho は海外の回線からは接続拒否される（国内回線からは 200）。海外の利用者には国文研の画像が出ない、という制約がある
 - 確かめたこと: vitest 85 件、build。e2e はこの差し替えでは回していない
 
 ## 2026-10-20 見た目の整理（トグル・異文の印・画像の灰色・頁送り）

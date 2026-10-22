@@ -108,11 +108,11 @@ test('LINE風 対話ビュー（xsl=line）を選択でき、東洋文庫固有�
 });
 
 test('固有表現・地図のサイドパネルを XSL 画面で切り替えられる', async ({ page }) => {
-  const MAP_TEI_URL = 'https://example.org/tei/wakozukan-like.xml';
+  const MAP_TEI_URL = 'https://example.org/tei/sample-diplomatic.xml';
   const mapTeiXml = `<?xml version="1.0" encoding="UTF-8"?>
 <TEI xmlns="http://www.tei-c.org/ns/1.0">
   <teiHeader>
-    <fileDesc><titleStmt><title>蒋洲咨文</title></titleStmt><publicationStmt><p>p</p></publicationStmt><sourceDesc><p>s</p></sourceDesc></fileDesc>
+    <fileDesc><titleStmt><title>復安南国書</title></titleStmt><publicationStmt><p>p</p></publicationStmt><sourceDesc><p>s</p></sourceDesc></fileDesc>
     <profileDesc>
       <particDesc>
         <listPerson>

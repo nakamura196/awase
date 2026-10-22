@@ -1,10 +1,15 @@
 # Awase
 
-Awase (合せ) is an integrated viewer for TEI. It aims to bring text, annotations, images and maps together in a single view.
+Awase (合せ, <https://awase.ldas.jp>) is an integrated viewer for TEI/XML documents, bringing text, parallel translations, critical apparatus, named entities, speech analysis, maps, timelines, IIIF images, and XSL presentation styles together in a single static web application.
 
-This repository is currently a scaffold: the four screens (viewer, compare, XSL, DTS) exist as placeholders that show the URL parameters they will accept. The design is in [docs/notes/survey.md](docs/notes/survey.md).
+Based on the site architecture of [IIIF Kasane](https://github.com/nakamura196/iiif-kasane). Design and implementation notes are in [docs/notes/survey.md](docs/notes/survey.md).
 
-Based on the site skeleton of [IIIF Kasane](https://github.com/nakamura196/iiif-kasane).
+## Screens
+
+- **Viewer (`/[locale]/viewer/`)**: Integrated workspace combining TEI text rendering (vertical/horizontal), IIIF facsimile images, side-by-side parallel texts (`@corresp` / scroll sync), critical apparatus (`app/lem/rdg`), named entities, dialogue & appellation transitions (`sp` / `said` / `persName`), correspondence/place maps, timelines, and XSL style switcher.
+- **Display Styles (`/[locale]/xsl/`)**: Full-screen presentation styles powered by SaxonJS (SEF stylesheets) and interactive views (reading support, line-by-line, dialogue/LINE style, video & audio caption sync).
+- **Compare (`/[locale]/compare/`)**: Side-by-side image and character-level transcription diff for two IIIF manifests.
+- **DTS (`/[locale]/dts/`)**: Browse Distributed Text Services (DTS) collections and open documents or citable units in the viewer.
 
 ## Development
 
