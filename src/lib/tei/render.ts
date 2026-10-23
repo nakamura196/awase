@@ -199,6 +199,13 @@ export function renderTeiText(tei: Document, ctx: RenderContext): DocumentFragme
     for (const t of texts) frag.appendChild(renderElement(t, ctx));
     return frag;
   }
+  const sourceDocs = Array.from(root.getElementsByTagNameNS('*', 'sourceDoc')).filter(
+    (s) => !s.parentElement?.closest('sourceDoc'),
+  );
+  if (sourceDocs.length > 0) {
+    for (const s of sourceDocs) frag.appendChild(renderElement(s, ctx));
+    return frag;
+  }
   // <text> が無い（TEI の断片など）ときは、ヘッダー類を除いて全体を写す
   const el = renderElement(root, ctx);
   for (const skip of Array.from(el.querySelectorAll('tei-teiheader, tei-facsimile, tei-standoff'))) skip.remove();

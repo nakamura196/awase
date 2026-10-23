@@ -35,16 +35,30 @@ function loadRuntime(): Promise<SaxonJSApi> {
   return runtime;
 }
 
-/** 影印の graphic@url を、TEI の置き場所を基準にした絶対 URL にする（iframe の中では相対パスが通じない） */
+/** 影印の graphic@url・source を、TEI の置き場所を基準にした絶対 URL にする（iframe の中では相対パスが通じない） */
 export function absolutizeGraphics(doc: Document, baseUrl: string) {
   const graphics = doc.getElementsByTagNameNS('*', 'graphic');
   for (let i = 0; i < graphics.length; i++) {
-    const u = graphics[i].getAttribute('url');
-    if (!u) continue;
-    try {
-      graphics[i].setAttribute('url', new URL(u, baseUrl).href);
-    } catch {
-      /* そのままにする */
+    for (const attr of ['url', 'source', 'sameAs']) {
+      const u = graphics[i].getAttribute(attr);
+      if (!u || u.startsWith('#')) continue;
+      try {
+        graphics[i].setAttribute(attr, new URL(u, baseUrl).href);
+      } catch {
+        /* そのままにする */
+      }
+    }
+  }
+  const surfaces = doc.getElementsByTagNameNS('*', 'surface');
+  for (let i = 0; i < surfaces.length; i++) {
+    for (const attr of ['facs', 'source', 'sameAs']) {
+      const u = surfaces[i].getAttribute(attr);
+      if (!u || u.startsWith('#')) continue;
+      try {
+        surfaces[i].setAttribute(attr, new URL(u, baseUrl).href);
+      } catch {
+        /* そのままにする */
+      }
     }
   }
 }

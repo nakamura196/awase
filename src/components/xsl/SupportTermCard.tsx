@@ -13,6 +13,29 @@ export interface WikiSummary {
 }
 
 const wikiCache = new Map<string, Promise<WikiSummary | null>>();
+let activeFetches = 0;
+const fetchQueue: (() => void)[] = [];
+const MAX_CONCURRENT_FETCHES = 3;
+
+function scheduleFetch<T>(fn: () => Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const run = () => {
+      activeFetches += 1;
+      fn()
+        .then(resolve, reject)
+        .finally(() => {
+          activeFetches -= 1;
+          const next = fetchQueue.shift();
+          if (next) next();
+        });
+    };
+    if (activeFetches < MAX_CONCURRENT_FETCHES) {
+      run();
+    } else {
+      fetchQueue.push(run);
+    }
+  });
+}
 
 export function fetchWikiSummary(wikiKey: string): Promise<WikiSummary | null> {
   const key = wikiKey.trim();
@@ -20,7 +43,7 @@ export function fetchWikiSummary(wikiKey: string): Promise<WikiSummary | null> {
   const cached = wikiCache.get(key);
   if (cached) return cached;
 
-  const p = (async (): Promise<WikiSummary | null> => {
+  const p = scheduleFetch(async (): Promise<WikiSummary | null> => {
     try {
       const res = await fetch(`https://ja.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(key)}`);
       if (!res.ok) return null;
@@ -39,7 +62,7 @@ export function fetchWikiSummary(wikiKey: string): Promise<WikiSummary | null> {
     } catch {
       return null;
     }
-  })();
+  });
 
   wikiCache.set(key, p);
   return p;
@@ -94,6 +117,7 @@ export default function SupportTermCard({
 }) {
   const t = useTranslations('Xsl');
   const [wiki, setWiki] = useState<WikiSummary | null>(null);
+  const [failedThumb, setFailedThumb] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -106,7 +130,8 @@ export default function SupportTermCard({
   }, [term.wikiKey]);
 
   const stroke = CATEGORY_STROKE_COLORS[term.category];
-  const thumb = wiki?.thumbnail ?? term.image;
+  const rawThumb = wiki?.thumbnail ?? term.image;
+  const thumb = rawThumb && rawThumb !== failedThumb ? rawThumb : undefined;
   const desc = wiki?.description ?? term.description;
   const extract = wiki?.extract;
   const wikiUrl = wiki?.url ?? (term.href && /^https?:\/\//i.test(term.href) ? term.href : undefined);
@@ -139,6 +164,7 @@ export default function SupportTermCard({
             src={thumb}
             alt={term.label}
             loading="lazy"
+            onError={() => setFailedThumb(thumb)}
             className="h-14 w-14 shrink-0 rounded object-cover border border-[var(--ds-border)]"
           />
         )}

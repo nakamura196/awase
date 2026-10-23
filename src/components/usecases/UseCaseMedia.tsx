@@ -2,21 +2,20 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { clipOf, thumbnailOf, videoOf, type Locale, type UseCase } from '@/lib/usecases';
+import { thumbnailOf, videoOf, type Locale, type UseCase } from '@/lib/usecases';
 
 // ユースケースの動画の枠。一覧のカードと詳細ページの両方で使う。
-// 動画（YouTube または短尺デモ動画 clip）があれば Awase の画面に ▶ を重ねて出し、押したらその場で再生する。
+// 動画（YouTube の videoId）があれば Awase の画面に ▶ を重ねて出し、押したらその場で再生する。
 // 動画が無ければ Awase の画面だけを出し、隅に「準備中」の札を付ける。
 // YouTube の埋め込みを最初から並べると、1 本ごとに再生用のプログラムを読み込んで重くなり、
 // YouTube 側の題名やロゴが重なってカードの見た目もそろわないため
 export default function UseCaseMedia({ useCase: u, locale }: { useCase: UseCase; locale: Locale }) {
   const t = useTranslations('UseCases');
   const videoId = videoOf(u, locale);
-  const hasVideo = Boolean(videoId || u.clip);
-  // 押されるまで YouTube・動画は読み込まない
+  // 押されるまで YouTube は読み込まない
   const [playing, setPlaying] = useState(false);
 
-  if (hasVideo && !playing) {
+  if (videoId && !playing) {
     return (
       <button
         type="button"
@@ -55,22 +54,6 @@ export default function UseCaseMedia({ useCase: u, locale }: { useCase: UseCase;
           referrerPolicy="strict-origin-when-cross-origin"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
-        />
-      </div>
-    );
-  }
-  if (u.clip) {
-    return (
-      <div className="mx-auto w-full max-w-4xl overflow-hidden rounded-xl border border-[var(--ds-border)] bg-black shadow-md">
-        <video
-          src={clipOf(u, locale)}
-          poster={thumbnailOf(u, locale)}
-          controls
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="aspect-video w-full object-cover"
         />
       </div>
     );

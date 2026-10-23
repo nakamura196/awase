@@ -106,16 +106,14 @@ test('詳細ページ /ja/usecases/koui-genji-apparatus/ に各要素が出る',
     await expect(page.locator('header li', { hasText: tag })).toBeVisible();
   }
 
-  // メディア枠（サムネイルと再生ボタン）
-  const mediaButton = page.getByRole('button', { name: u.title.ja });
-  await expect(mediaButton).toBeVisible();
+  // メディア枠（サムネイル画像）
   await expect(
-    mediaButton.locator('img[src*="/thumbnails/usecases/koui-genji-apparatus.ja.webp"]'),
+    page.locator('img[src*="/thumbnails/usecases/koui-genji-apparatus.ja.webp"]').first(),
   ).toBeVisible();
 
   // 資料・元のプロジェクトへのリンク
   const xmlLink = page.getByRole('link', { name: 'TEI/XML' });
-  await expect(xmlLink).toHaveAttribute('href', 'https://w3id.org/kouigenjimonogatari/tei/01.xml');
+  await expect(xmlLink).toHaveAttribute('href', 'https://tei-eaj.github.io/koui/data/01_with_wit_images.xml');
   const siteLink = page.getByRole('link', { name: '元のプロジェクト' });
   await expect(siteLink).toHaveAttribute('href', 'https://kouigenjimonogatari.github.io/');
 
@@ -124,7 +122,7 @@ test('詳細ページ /ja/usecases/koui-genji-apparatus/ に各要素が出る',
   await expect(openLink).toBeVisible();
   await expect(openLink).toHaveAttribute(
     'href',
-    /\/ja\/viewer\/?\?u=https%3A%2F%2Fw3id\.org%2Fkouigenjimonogatari%2Ftei%2F01\.xml&dir=v$/,
+    /\/ja\/viewer\/?\?u=https%3A%2F%2Ftei-eaj\.github\.io%2Fkoui%2Fdata%2F01_with_wit_images\.xml&dir=v$/,
   );
   await expect(page.getByRole('button', { name: 'リンクをコピー' })).toBeVisible();
 

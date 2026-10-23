@@ -7,7 +7,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import PageContainer from '@/components/layout/PageContainer';
 import UseCaseClip from '@/components/usecases/UseCaseClip';
-import { SectionHeading, News, buttonClass } from '@nakamura196/react-ui';
+import { SectionHeading, News, VideoEmbed, buttonClass } from '@nakamura196/react-ui';
 import { NEWS, NEWS_ON_HOME } from '@/lib/news';
 import { FEATURED_USE_CASES, USE_CASES, clipOf, hrefOf, thumbnailOf } from '@/lib/usecases';
 import { localizedUrl, type Locale } from '@/lib/locale';
@@ -55,6 +55,9 @@ export default function HomeContent() {
             </h1>
             <p className="text-lg md:text-xl text-[var(--ds-fg-muted)]">{t('subtitle')}</p>
             <p className="mt-4 text-[var(--ds-fg-muted)]">{t('intro')}</p>
+            <div className="mt-8">
+              <VideoEmbed videoId={lang === 'en' ? '18SnJHq1wqc' : 'kEi11XHVg-I'} title={t('title')} />
+            </div>
           </section>
 
           <section className="mb-16">

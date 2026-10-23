@@ -56,131 +56,175 @@ const stageRect = async (page) => {
 // ユースケースごとの撮り方。wait: 開いてから操作を始めるまで。act: 見どころの操作。seconds: 書き出す動画の長さ
 const CLIPS = {
   'koui-genji-apparatus': {
-    wait: 7000,
+    wait: 4000,
     seconds: 6,
+    prepare: async (page) => {
+      await page.locator('[data-testid="apparatus-pane"]').waitFor({ timeout: 25000 });
+      await sleep(1500);
+    },
     act: async (page) => {
       const items = page.locator('[data-testid="apparatus-pane"] [data-awase-entry] button');
-      for (const idx of [0, 2, 4]) {
-        await items.nth(idx).click({ timeout: 10000 }).catch(() => {});
-        await sleep(1200);
-      }
-      await page.locator('[data-testid="witness-distances"] > summary').click({ timeout: 10000 }).catch(() => {});
+      await items.nth(0).click({ timeout: 10000 });
+      await sleep(1400);
+      await items.nth(2).click({ timeout: 10000 });
+      await sleep(1400);
+      await page.locator('[data-testid="witness-distances"] > summary').click({ timeout: 10000 });
       await sleep(1200);
       const sel = page.locator('[data-testid="apparatus-pane"] select');
-      const val = await sel.locator('option').nth(2).getAttribute('value').catch(() => null);
+      const val = await sel.locator('option').nth(2).getAttribute('value');
       if (val) {
-        await sel.selectOption(val).catch(() => {});
+        await sel.selectOption(val);
         await sleep(1500);
       }
     },
   },
   'eiri-yosano-parallel': {
-    wait: 7000,
+    wait: 4000,
     seconds: 6,
+    prepare: async (page) => {
+      await page.locator('.awase-text tei-s[id]').first().waitFor({ timeout: 25000 });
+      await sleep(1500);
+    },
     act: async (page) => {
-      const links = page.locator('[data-corresp-key]');
+      const sents = page.locator('.awase-text tei-s[id]');
       for (const idx of [1, 4, 8, 12]) {
-        await links.nth(idx).click({ timeout: 10000 }).catch(() => {});
+        await sents.nth(idx).click({ timeout: 10000 });
         await sleep(1300);
       }
     },
   },
   'annan-kokusho-diplomatic': {
-    wait: 7000,
+    wait: 4000,
     seconds: 6,
+    prepare: async (page) => {
+      await page.locator('.awase-text [id^="o-"]').first().waitFor({ timeout: 25000 });
+      await sleep(1500);
+    },
     act: async (page) => {
-      const links = page.locator('[data-corresp-key]');
+      const lines = page.locator('.awase-text [id^="o-"]');
       for (const idx of [0, 1, 2]) {
-        await links.nth(idx).click({ timeout: 10000 }).catch(() => {});
+        await lines.nth(idx).click({ timeout: 10000 });
         await sleep(1800);
       }
     },
   },
   'melos-speech': {
-    wait: 7000,
+    wait: 4000,
     seconds: 6,
+    prepare: async (page) => {
+      await page.locator('[data-testid="entities-pane"]').waitFor({ timeout: 25000 });
+      await sleep(1000);
+    },
     act: async (page) => {
-      await page.locator('[data-testid="entity-item"]').first().click({ timeout: 10000 }).catch(() => {});
+      await page.locator('[data-testid="entity-variants"] button').nth(1).click({ timeout: 10000 });
       await sleep(1500);
-      await page.locator('[data-testid="entity-variant-chip"]').nth(1).click({ timeout: 10000 }).catch(() => {});
+      await page.locator('[data-testid="speech-speakers"] ul li button').nth(1).click({ timeout: 10000 });
       await sleep(1500);
-      await page.locator('[data-testid="speech-speaker"]').nth(1).click({ timeout: 10000 }).catch(() => {});
+      await page.locator('[data-testid="speech-item"]').first().click({ timeout: 10000 });
       await sleep(1500);
-      await page.locator('[data-testid="speech-item"]').first().click({ timeout: 10000 }).catch(() => {});
+      await page.locator('[data-testid="entities-pane"] [data-awase-entity-group] > div > button').nth(1).click({ timeout: 10000 });
       await sleep(1500);
     },
   },
   'video-support-news': {
-    wait: 7000,
+    wait: 4000,
     seconds: 6,
+    prepare: async (page) => {
+      await page.locator('[data-testid="video-support-view"]').waitFor({ timeout: 25000 });
+      await sleep(2500);
+    },
     act: async (page) => {
-      const utts = page.locator('[data-testid="video-utterance"]');
-      for (const idx of [1, 3, 5]) {
-        await utts.nth(idx).click({ timeout: 10000 }).catch(() => {});
-        await sleep(1500);
+      const utts = page.locator('[data-testid="video-support-caption-item"]');
+      for (const idx of [1, 2, 4]) {
+        await utts.nth(idx).click({ timeout: 10000 });
+        await sleep(1400);
       }
-      await page.locator('[data-testid="support-term-card"]').first().click({ timeout: 10000 }).catch(() => {});
-      await sleep(1500);
+      await page.locator('[data-testid="video-support-viz-btn"]').click({ timeout: 10000 });
+      await sleep(1600);
     },
   },
   'genji-compare': {
-    wait: 7000,
+    wait: 4000,
     seconds: 6,
+    prepare: async (page) => {
+      await page.locator('[data-testid="diff-result"]').waitFor({ timeout: 25000 });
+      await sleep(1000);
+    },
     act: async (page) => {
-      await sleep(1500);
-      const radios = page.getByRole('radio');
-      await radios.first().click({ timeout: 10000 }).catch(() => {});
-      await sleep(2200);
-      await radios.nth(1).click({ timeout: 10000 }).catch(() => {});
+      await sleep(1200);
+      await page.locator('[data-testid="pager-left"] button').nth(1).click({ timeout: 10000 });
       await sleep(1800);
+      await page.locator('[data-testid="pager-right"] button').nth(1).click({ timeout: 10000 });
+      await sleep(1800);
+      await page.locator('[data-testid="pager-left"] button').nth(0).click({ timeout: 10000 });
+      await sleep(1400);
     },
   },
   'three-treasures-line': {
-    wait: 6000,
+    wait: 4000,
     seconds: 5,
+    prepare: async (page) => {
+      await page.locator('[data-testid="xsl-line-view"]').waitFor({ timeout: 25000 });
+      await sleep(1000);
+    },
     act: async (page) => {
-      for (const top of [220, 480, 740, 0]) {
-        await page.evaluate((y) => {
-          const el = document.querySelector('[data-testid="line-view"]')?.parentElement;
-          if (el) el.scrollTo({ top: y, behavior: 'smooth' });
-        }, top);
-        await sleep(1200);
+      const bubbles = page.locator('[data-testid="line-bubble"]');
+      for (const idx of [1, 4, 8]) {
+        await bubbles.nth(idx).click({ timeout: 10000 });
+        await sleep(1300);
       }
+      await page.locator('[data-testid="speech-speakers"] ul li button').first().click({ timeout: 10000 });
+      await sleep(1400);
     },
   },
   'reading-support-news': {
-    wait: 6000,
+    wait: 4000,
     seconds: 6,
+    prepare: async (page) => {
+      await page.locator('[data-testid="reading-support-view"]').waitFor({ timeout: 25000 });
+      await sleep(2500);
+    },
     act: async (page) => {
-      const terms = page.locator('[data-testid="reading-support-term"]');
+      const cards = page.locator('[data-testid="support-term-card"]');
       for (const idx of [0, 2, 4]) {
-        await terms.nth(idx).click({ timeout: 10000 }).catch(() => {});
-        await sleep(1600);
+        await cards.nth(idx).click({ timeout: 10000 });
+        await sleep(1500);
       }
+      await page.locator('[data-testid="reading-support-viz-btn"]').click({ timeout: 10000 });
+      await sleep(1500);
     },
   },
   'ocr-facsimile-xsl': {
-    wait: 9000,
+    wait: 4000,
     seconds: 5,
+    prepare: async (page) => {
+      await page.locator('[data-testid="xsl-frame"]').waitFor({ timeout: 25000 });
+      const frame = page.frameLocator('[data-testid="xsl-frame"]');
+      await frame.locator('.osd-viewer canvas').first().waitFor({ timeout: 25000 });
+      await sleep(2000);
+    },
     act: async (page) => {
-      for (const y of [150, 320, 480, 0]) {
-        await page.evaluate((top) => {
-          const el = document.querySelector('[data-testid="xsl-output"]');
-          if (el) el.scrollTo({ top, behavior: 'smooth' });
-          window.scrollTo({ top, behavior: 'smooth' });
-        }, y);
+      const frame = page.frameLocator('[data-testid="xsl-frame"]');
+      const lines = frame.locator('li[id^="line-"]');
+      for (const idx of [1, 3, 5, 7]) {
+        await lines.nth(idx).click({ timeout: 10000 });
         await sleep(1200);
       }
     },
   },
   'dts-koui-genji': {
-    wait: 7000,
+    wait: 4000,
     seconds: 5,
+    prepare: async (page) => {
+      await page.locator('main section:not([data-testid="dts-examples"]) ul li a').first().waitFor({ timeout: 25000 });
+      await sleep(1000);
+    },
     act: async (page) => {
-      for (const y of [200, 420, 0]) {
-        await page.evaluate((top) => window.scrollTo({ top, behavior: 'smooth' }), y);
-        await sleep(1400);
-      }
+      await page.locator('main section:not([data-testid="dts-examples"]) ul li a').first().click({ timeout: 10000 });
+      await page.locator('main section ul li button').first().waitFor({ timeout: 20000 });
+      await sleep(1500);
+      await page.evaluate(() => window.scrollTo({ top: 220, behavior: 'smooth' }));
+      await sleep(1500);
     },
   },
 };
@@ -211,6 +255,9 @@ for (const u of USE_CASES) {
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
       await sleep(clip.wait);
       if (clip.prepare) await clip.prepare(page);
+      await page.evaluate(() => {
+        document.querySelectorAll('nextjs-portal, [data-nextjs-toast], [data-nextjs-dialog-overlay]').forEach((el) => el.remove());
+      });
       const rect = await (clip.rect ?? stageRect)(page);
       const start = (Date.now() - t0) / 1000;
       await clip.act(page, rect);
