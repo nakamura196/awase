@@ -33,13 +33,30 @@ export interface VoiceLike {
   localService?: boolean;
 }
 
+// 自然に聞こえる声。Edge の「Online (Natural)」、Mac の「Premium」「Enhanced」（拡張）など
+const NATURAL_VOICE = /natural|neural|online|premium|enhanced|拡張|siri/i;
+// Mac の Chrome に出る、合成の質の低い声（Eloquence 系）と、効果音のような声
+const POOR_VOICE =
+  /^(eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley|albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|junior|ralph|fred|kathy)\b/i;
+
+/**
+ * 声の順位。小さいほど先に選ぶ。
+ * 自然な声 → Google の声 → ふつうの声 → 質の低い声 の順。同じ段では端末内の声・既定の声を先に取る
+ */
+/** これ以上の順位は質の低い声 */
+const POOR_RANK = 30;
+
+export function voiceRank(v: VoiceLike): number {
+  const tier = NATURAL_VOICE.test(v.name) ? 0 : /google/i.test(v.name) ? 1 : POOR_VOICE.test(v.name) ? 3 : 2;
+  return tier * 10 + (v.localService ? 0 : 1) + (v.default ? 0 : 0.5);
+}
+
 /** 言語に合う声を選ぶ。完全一致、先頭一致の順。端末内の声と既定の声を先に取る。合う声が無ければ null */
 export function pickVoice<T extends VoiceLike>(voices: readonly T[], lang: string): T | null {
   const want = lang.trim().replace(/_/g, '-').toLowerCase();
   const prefix = langPrefix(lang);
   if (!prefix) return null;
-  const rank = (v: T) => (v.localService ? 0 : 1) + (v.default ? 0 : 0.5);
-  const sorted = [...voices].sort((a, b) => rank(a) - rank(b));
+  const sorted = [...voices].sort((a, b) => voiceRank(a) - voiceRank(b));
   const norm = (v: T) => v.lang.replace(/_/g, '-').toLowerCase();
   return sorted.find((v) => norm(v) === want) ?? sorted.find((v) => langPrefix(v.lang) === prefix) ?? null;
 }
@@ -106,12 +123,12 @@ export function assignVoices<T extends VoiceLike>(
   lang: string,
 ): Map<string, { voice: T | null; pitch: number }> {
   const prefix = langPrefix(lang);
-  const pool = voices
+  const sameLang = voices
     .filter((v) => langPrefix(v.lang) === prefix)
-    .sort((a, b) => {
-      const rank = (v: T) => (v.localService ? 0 : 1) + (v.default ? 0 : 0.5);
-      return rank(a) - rank(b) || a.name.localeCompare(b.name);
-    });
+    .sort((a, b) => voiceRank(a) - voiceRank(b) || a.name.localeCompare(b.name));
+  // 質の低い声は、ほかに声が無いときだけ使う（無ければ高さで話者を分ける）
+  const good = sameLang.filter((v) => voiceRank(v) < POOR_RANK);
+  const pool = good.length ? good : sameLang;
   const out = new Map<string, { voice: T | null; pitch: number }>();
   const used = new Map<T, number>();
   let rr = 0;
