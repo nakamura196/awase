@@ -111,3 +111,28 @@ describe('togglePane', () => {
     expect(togglePane('text,apparatus', 'apparatus')).toBe('text');
   });
 });
+
+describe('vrm（明示したときだけ出すペイン）', () => {
+  it('panes を書かなければ出さない', () => {
+    expect(paneShown(null, 'vrm')).toBe(false);
+  });
+  it('panes に書いたら出す', () => {
+    expect(paneShown('text,vrm', 'vrm')).toBe(true);
+    expect(paneShown('text,speech', 'vrm')).toBe(false);
+  });
+  it('書いていない状態から出すと、ほかのペインも全部書き出す', () => {
+    expect(togglePane(null, 'vrm')).toBe('text,image,model,apparatus,entities,speech,map,timeline,vrm');
+  });
+  it('消すと、ほかが全部出ていれば書かない', () => {
+    expect(togglePane('text,image,model,apparatus,entities,speech,map,timeline,vrm', 'vrm')).toBeNull();
+  });
+  it('vrm だけが付いたままほかを消しても書く', () => {
+    expect(togglePane('text,image,model,apparatus,entities,speech,map,timeline,vrm', 'image')).toBe(
+      'text,model,apparatus,entities,speech,map,timeline,vrm',
+    );
+  });
+  it('vrm を足しても、ほかのペインの出し入れは変わらない', () => {
+    expect(togglePane('text', 'vrm')).toBe('text,vrm');
+    expect(togglePane('text,vrm', 'vrm')).toBe('text');
+  });
+});

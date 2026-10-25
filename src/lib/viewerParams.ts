@@ -72,18 +72,25 @@ export function resolveLegacyRedirect(search: string, hash: string): { path: '/v
   return null;
 }
 
-// 本文の横に出せるペイン。panes を書かなければ、使えるものを全部出す
+// 本文の横に出せるペイン。panes を書かなければ、使えるものを全部出す（OPT_IN_PANES は除く）
 export const OPTIONAL_PANES = ['image', 'model', 'apparatus', 'entities', 'speech', 'map', 'timeline'] as const;
-export type OptionalPane = (typeof OPTIONAL_PANES)[number];
+// 重い読み込みを伴うので、panes に明示したときだけ出すペイン（panes を書かなければ出さない）
+export const OPT_IN_PANES = ['vrm'] as const;
+export type OptionalPane = (typeof OPTIONAL_PANES)[number] | (typeof OPT_IN_PANES)[number];
+
+const isOptIn = (name: OptionalPane) => (OPT_IN_PANES as readonly string[]).includes(name);
 
 /** panes の値（null は書いていない）で、そのペインを出すか */
 export function paneShown(panes: string | null, name: OptionalPane): boolean {
-  return panes === null || panes.split(',').map((p) => p.trim()).includes(name);
+  if (panes === null) return !isOptIn(name);
+  return panes.split(',').map((p) => p.trim()).includes(name);
 }
 
-/** ペインの出し入れを切り替えた後の panes の値。全部出すときは書かない（null） */
+/** ペインの出し入れを切り替えた後の panes の値。通常のペインが全部出ていて、明示のペインが出ていないときは書かない（null） */
 export function togglePane(panes: string | null, name: OptionalPane): string | null {
-  const shown = OPTIONAL_PANES.filter((p) => (p === name ? !paneShown(panes, p) : paneShown(panes, p)));
-  if (shown.length === OPTIONAL_PANES.length) return null;
+  const all: OptionalPane[] = [...OPTIONAL_PANES, ...OPT_IN_PANES];
+  const shown = all.filter((p) => (p === name ? !paneShown(panes, p) : paneShown(panes, p)));
+  const defaults = OPTIONAL_PANES.every((p) => shown.includes(p)) && !OPT_IN_PANES.some((p) => shown.includes(p));
+  if (defaults) return null;
   return ['text', ...shown].join(',');
 }

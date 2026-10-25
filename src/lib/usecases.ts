@@ -60,6 +60,7 @@ export const USE_CASE_FEATURES = [
   'apparatus',
   'entities',
   'speech',
+  'vrm',
   'map',
   'xsl',
   'video',
@@ -259,6 +260,26 @@ export const USE_CASES: UseCase[] = [
       ja: '誰が誰をどう呼んだか、発話と呼称をたどる',
       en: 'Trace who spoke and how characters addressed each other',
     },
+  },
+  {
+    id: 'melos-vrm',
+    added: '2026-10-25',
+    title: {
+      ja: '太宰治『走れメロス』（アバターによる読み上げ）',
+      en: 'Dazai Osamu’s “Run, Melos!” (read aloud by an avatar)',
+    },
+    note: {
+      ja: '青空文庫 TEI の『走れメロス』の発話（said）を、3D のアバターがブラウザの音声合成で読み上げます。読んでいる行は本文でハイライトされ、口が動き、まばたきをします。アバターは VRoid Project のサンプルです。',
+      en: 'The speech (said) in the Aozora Bunko TEI of “Run, Melos!” is read aloud by a 3D avatar using the browser’s speech synthesis. The line being read is highlighted in the text, and the avatar moves its mouth and blinks. The avatar is a VRoid Project sample.',
+    },
+    open: {
+      page: 'viewer',
+      u: 'https://raw.githubusercontent.com/TEI-EAJ/aozora_tei/master/data/complete/tei_lib_lv4/1567_tei.xml',
+      dir: 'v',
+      panes: 'text,vrm',
+    },
+    features: ['text', 'vrm'],
+    site: 'https://github.com/TEI-EAJ/aozora_tei',
   },
   {
     id: 'video-support-news',
