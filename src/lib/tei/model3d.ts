@@ -10,6 +10,8 @@
 // - 本文の要素の @facs が zone を指す（<div xml:id="…" facs="#zone…">）
 // - zone の @corresp が本文の要素を指す（<zone corresp="#stanza1 #stanza4">）
 
+import { correspIds } from './link';
+
 /** 3D モデルの在り処 */
 export type Model3D =
   | { kind: 'sketchfab'; /** Sketchfab のモデルの uid（32 桁の 16 進） */ uid: string }
@@ -46,22 +48,230 @@ export interface Surface3D {
   zones: Zone3D[];
 }
 
+const XML_NS = 'http://www.w3.org/XML/1998/namespace';
+const xmlId = (el: Element) => el.getAttribute('xml:id') ?? el.getAttributeNS(XML_NS, 'id');
+
+function child(el: Element, name: string): Element | null {
+  return Array.from(el.children).find((c) => c.localName === name) ?? null;
+}
+
+function httpUrl(value: string | null | undefined, base?: string): string | undefined {
+  const v = value?.trim();
+  if (!v || v.startsWith('#')) return undefined;
+  try {
+    const resolvedBase =
+      base && !/^https?:\/\//i.test(base) && typeof window !== 'undefined'
+        ? new URL(base, window.location.href).href
+        : base;
+    const url = new URL(v, resolvedBase);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+const SKETCHFAB_CORRESP = /^(?:#(?:sketchfab-)?)?([0-9a-f]{32})$/i;
+const SKETCHFAB_PATH = /^\/(?:3d-models\/(?:[^/]+-)?|models\/)([0-9a-f]{32})\/?$/i;
+
+function sketchfabUidFromUrl(raw: string | null | undefined): string | undefined {
+  const v = raw?.trim();
+  if (!v) return undefined;
+  try {
+    const u = new URL(v);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return undefined;
+    if (u.hostname !== 'sketchfab.com' && u.hostname !== 'www.sketchfab.com') return undefined;
+    const m = SKETCHFAB_PATH.exec(u.pathname);
+    return m ? m[1].toLowerCase() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function sketchfabUidFromCorresp(raw: string | null | undefined): string | undefined {
+  const v = raw?.trim();
+  if (!v) return undefined;
+  for (const token of v.split(/\s+/)) {
+    const m = SKETCHFAB_CORRESP.exec(token);
+    if (m) return m[1].toLowerCase();
+    const fromUrl = sketchfabUidFromUrl(token);
+    if (fromUrl) return fromUrl;
+  }
+  return undefined;
+}
+
+function gltfUrl(raw: string | null | undefined, base?: string): string | undefined {
+  const v = raw?.trim();
+  if (!v || !/\.gl(?:b|tf)$/i.test(v)) return undefined;
+  return httpUrl(v, base);
+}
+
+// surface@corresp と graphic@url から 3D モデル（Sketchfab または glTF）を判定する
+function surfaceModel(surface: Element, baseUrl?: string): Model3D | null {
+  const corresp = surface.getAttribute('corresp');
+  const graphic = child(surface, 'graphic');
+  const graphicUrl = graphic?.getAttribute('url');
+
+  const uid = sketchfabUidFromCorresp(corresp) ?? sketchfabUidFromUrl(graphicUrl);
+  if (uid) return { kind: 'sketchfab', uid };
+
+  const url = gltfUrl(corresp, baseUrl) ?? gltfUrl(graphicUrl, baseUrl);
+  if (url) return { kind: 'gltf', url };
+
+  return null;
+}
+
+function nonNegInt(raw: string | null | undefined): number | undefined {
+  const s = raw?.trim();
+  if (!s || !/^\d+$/.test(s)) return undefined;
+  const n = Number(s);
+  return Number.isSafeInteger(n) ? n : undefined;
+}
+
+// 注記の番号は @n・@idno・子孫の idno の順に見る
+function readAnnotation(zone: Element): number | undefined {
+  const candidates: (string | null | undefined)[] = [
+    zone.getAttribute('n'),
+    zone.getAttribute('idno'),
+    ...Array.from(zone.getElementsByTagNameNS('*', 'idno')).map((el) => el.textContent),
+  ];
+  for (const c of candidates) {
+    const n = nonNegInt(c);
+    if (n !== undefined) return n;
+  }
+  return undefined;
+}
+
+function finiteNum(raw: string | null | undefined): number | undefined {
+  const s = raw?.trim();
+  if (!s) return undefined;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+// points="x,y,z …" または @x @y @z から 3 次元の座標を読む
+function readPoints(zone: Element): [number, number, number][] | undefined {
+  const rawPoints = zone.getAttribute('points')?.trim();
+  if (rawPoints) {
+    const pts: [number, number, number][] = [];
+    for (const token of rawPoints.split(/\s+/)) {
+      const parts = token.split(',');
+      if (parts.length !== 3) continue;
+      const x = finiteNum(parts[0]);
+      const y = finiteNum(parts[1]);
+      const z = finiteNum(parts[2]);
+      if (x !== undefined && y !== undefined && z !== undefined) {
+        pts.push([x, y, z]);
+      }
+    }
+    if (pts.length > 0) return pts;
+  }
+  const x = finiteNum(zone.getAttribute('x'));
+  const y = finiteNum(zone.getAttribute('y'));
+  const z = finiteNum(zone.getAttribute('z'));
+  if (x !== undefined && y !== undefined && z !== undefined) {
+    return [[x, y, z]];
+  }
+  return undefined;
+}
+
 /** 文書の中の 3D モデルを、書かれた順に。無ければ空 */
 export function readModels(tei: Document, baseUrl?: string): Surface3D[] {
-  void tei;
-  void baseUrl;
-  throw new Error('not implemented');
+  const surfaces = Array.from(tei.getElementsByTagNameNS('*', 'surface'));
+  if (surfaces.length === 0) return [];
+
+  // 文書内の全 xml:id と、本文から各 zone を指す要素の xml:id を集める
+  const docIds = new Set<string>();
+  for (const el of Array.from(tei.getElementsByTagNameNS('*', '*'))) {
+    const id = xmlId(el)?.trim();
+    if (id) docIds.add(id);
+  }
+
+  const textRefsByZone = new Map<string, string[]>();
+  const textRoots = Array.from(tei.getElementsByTagNameNS('*', 'text')).filter((t) => !t.parentElement?.closest('text'));
+  for (const textRoot of textRoots) {
+    for (const el of Array.from(textRoot.getElementsByTagNameNS('*', '*'))) {
+      const eid = xmlId(el)?.trim();
+      if (!eid) continue;
+      const refs = [...correspIds(el.getAttribute('facs')), ...correspIds(el.getAttribute('corresp'))];
+      for (const ref of refs) {
+        const list = textRefsByZone.get(ref);
+        if (list) {
+          if (!list.includes(eid)) list.push(eid);
+        } else {
+          textRefsByZone.set(ref, [eid]);
+        }
+      }
+    }
+  }
+
+  const out: Surface3D[] = [];
+  for (const surface of surfaces) {
+    const model = surfaceModel(surface, baseUrl);
+    if (!model) continue;
+
+    const sid = xmlId(surface)?.trim() || undefined;
+    const surfaceLabel =
+      child(surface, 'label')?.textContent?.trim() ||
+      child(surface, 'desc')?.textContent?.trim() ||
+      undefined;
+
+    const zones: Zone3D[] = [];
+    for (const zone of Array.from(surface.getElementsByTagNameNS('*', 'zone'))) {
+      const zid = xmlId(zone)?.trim();
+      if (!zid) continue;
+
+      const annotation = readAnnotation(zone);
+      const points = readPoints(zone);
+      const notes = Array.from(zone.children).filter((c) => c.localName === 'note');
+      const label =
+        child(zone, 'label')?.textContent?.trim() ||
+        notes.map((n) => child(n, 'label')?.textContent?.trim()).find(Boolean) ||
+        undefined;
+      const note =
+        notes
+          .filter((n) => n.children.length === 0)
+          .map((n) => n.textContent?.trim())
+          .find(Boolean) || undefined;
+
+      const correspTargets = correspIds(zone.getAttribute('corresp'));
+      const textTargets = textRefsByZone.get(zid) ?? [];
+      const ids = Array.from(new Set([zid, ...correspTargets, ...textTargets]));
+      const selectId = correspTargets.find((id) => docIds.has(id)) ?? textTargets[0] ?? zid;
+
+      zones.push({
+        id: zid,
+        ...(annotation !== undefined ? { annotation } : {}),
+        ...(points !== undefined ? { points } : {}),
+        ...(label !== undefined ? { label } : {}),
+        ...(note !== undefined ? { note } : {}),
+        ids,
+        selectId,
+      });
+    }
+
+    out.push({
+      ...(sid ? { id: sid } : {}),
+      model,
+      ...(surfaceLabel ? { label: surfaceLabel } : {}),
+      zones,
+    });
+  }
+
+  return out;
 }
 
 /** 3D モデルを持つ文書か（ペインとツールバーのボタンを出すか） */
 export function hasModelData(tei: Document): boolean {
-  void tei;
-  throw new Error('not implemented');
+  return Array.from(tei.getElementsByTagNameNS('*', 'surface')).some((s) => surfaceModel(s, 'https://example.org/') !== null);
 }
 
 /** URL の id から、それに当たる範囲（どのモデルの、どの zone か）。無ければ null */
 export function zoneForId(surfaces: Surface3D[], id: string | null | undefined): { surface: number; zone: Zone3D } | null {
-  void surfaces;
-  void id;
-  throw new Error('not implemented');
+  if (!id) return null;
+  for (let i = 0; i < surfaces.length; i++) {
+    for (const zone of surfaces[i].zones) {
+      if (zone.ids.includes(id)) return { surface: i, zone };
+    }
+  }
+  return null;
 }
