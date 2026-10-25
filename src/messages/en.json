@@ -81,7 +81,8 @@
       "xsl": "Styles & XSL",
       "video": "Video & audio",
       "compare": "Compare",
-      "dts": "DTS"
+      "dts": "DTS",
+      "vrm": "Read aloud"
     },
     "back": "Back to all use cases",
     "details": "Details",
@@ -379,7 +380,8 @@
     "correspReceived": "Received",
     "timeline": "Timeline",
     "timelineCount": "{count} timeline entries",
-    "changeSource": "Open another"
+    "changeSource": "Open another",
+    "vrm": "Read aloud"
   },
   "Model": {
     "title": "3D model",
@@ -391,5 +393,22 @@
     "loading": "Loading…",
     "error": "Could not load the 3D model.",
     "unsupportedGltf": "This model type is not supported yet."
+  },
+  "Vrm": {
+    "title": "Read aloud",
+    "position": "{index} / {total}",
+    "unknownSpeaker": "(Unknown speaker)",
+    "prev": "Previous",
+    "next": "Next",
+    "play": "Play",
+    "pause": "Pause",
+    "resume": "Resume",
+    "stop": "Stop",
+    "rate": "Speed",
+    "loading": "Loading avatar…",
+    "loadingPercent": "Loading avatar… {percent}%",
+    "error": "Could not show the avatar.",
+    "unsupported": "This browser does not support speech synthesis.",
+    "noVoice": "No voice found for “{lang}”. The default voice will be used."
   }
 }

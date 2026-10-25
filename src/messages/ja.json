@@ -81,7 +81,8 @@
       "xsl": "表示スタイル・XSL",
       "video": "映像・音声",
       "compare": "資料比較",
-      "dts": "DTS"
+      "dts": "DTS",
+      "vrm": "読み上げ"
     },
     "back": "ユースケースの一覧へ",
     "details": "詳しく見る",
@@ -379,7 +380,8 @@
     "correspReceived": "受信",
     "timeline": "年表",
     "timelineCount": "年表 {count} 件",
-    "changeSource": "別の資料を開く"
+    "changeSource": "別の資料を開く",
+    "vrm": "読み上げ"
   },
   "Model": {
     "title": "3D モデル",
@@ -391,5 +393,22 @@
     "loading": "読み込んでいます…",
     "error": "3D モデルを読み込めませんでした。",
     "unsupportedGltf": "この形式の 3D モデルにはまだ対応していません。"
+  },
+  "Vrm": {
+    "title": "読み上げ",
+    "position": "{index} / {total}",
+    "unknownSpeaker": "（話者不明）",
+    "prev": "前へ",
+    "next": "次へ",
+    "play": "再生",
+    "pause": "一時停止",
+    "resume": "再開",
+    "stop": "停止",
+    "rate": "速さ",
+    "loading": "アバターを読み込んでいます…",
+    "loadingPercent": "アバターを読み込んでいます… {percent}%",
+    "error": "アバターを表示できませんでした。",
+    "unsupported": "このブラウザは音声の読み上げに対応していません。",
+    "noVoice": "「{lang}」の声が見つかりません。端末の既定の声で読みます。"
   }
 }

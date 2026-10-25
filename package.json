@@ -21,6 +21,7 @@
     "@nakamura196/iiif-viewer": "https://github.com/nakamura196/iiif-kasane/releases/download/iiif-viewer-v0.1.4/nakamura196-iiif-viewer-0.1.4.tgz",
     "@nakamura196/react-ui": "github:nakamura196/react-ui#v0.5.0",
     "@next/third-parties": "^16.4.0",
+    "@pixiv/three-vrm": "3.5.5",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",
     "@tailwindcss/postcss": "^4.3.3",

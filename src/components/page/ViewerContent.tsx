@@ -10,6 +10,7 @@ import XslViewPane from '@/components/viewer/XslViewPane';
 import HeaderPanel from '@/components/viewer/HeaderPanel';
 import ImagePane, { type PlaceImages } from '@/components/viewer/ImagePane';
 import ModelPane from '@/components/viewer/ModelPane';
+import VrmPane from '@/components/viewer/VrmPane';
 import ApparatusPane from '@/components/viewer/ApparatusPane';
 import EntitiesPane from '@/components/viewer/EntitiesPane';
 import SpeechPane from '@/components/viewer/SpeechPane';
@@ -207,7 +208,7 @@ function Toggle({ pressed, onClick, children }: { pressed: boolean; onClick: () 
   );
 }
 
-type PaneKey = 'image' | 'model' | 'text' | 'apparatus' | 'entities' | 'speech' | 'map' | 'timeline';
+type PaneKey = 'image' | 'model' | 'vrm' | 'text' | 'apparatus' | 'entities' | 'speech' | 'map' | 'timeline';
 
 // ペインを横に並べられないとき（狭い画面と、本文を並べて読むとき）に、1 つずつ切り替えるタブ
 function PaneTabs({
@@ -225,6 +226,7 @@ function PaneTabs({
   const label: Record<PaneKey, string> = {
     image: t('images'),
     model: t('model'),
+    vrm: t('vrm'),
     text: t('textPane'),
     apparatus: t('apparatus'),
     entities: t('entities'),
@@ -282,6 +284,9 @@ function Column({
   onHasImages,
   showModel,
   onHasModel,
+  showVrm,
+  onHasVrm,
+  vrmUrl,
   showApparatus,
   onHasApparatus,
   showEntities,
@@ -308,6 +313,11 @@ function Column({
   showModel: boolean;
   /** この列に 3D モデルがあるか（ツールバーの「3D」を出すかどうか） */
   onHasModel: (index: number, has: boolean) => void;
+  showVrm: boolean;
+  /** この列に読み上げられる発話があるか（ツールバーの「読み上げ」を出すかどうか） */
+  onHasVrm: (index: number, has: boolean) => void;
+  /** URL の vrm（アバターの VRM ファイル）。無ければ同梱のもの */
+  vrmUrl: string | null;
   showApparatus: boolean;
   /** この列に異文（app）があるか（ツールバーの「異文」を出すかどうか） */
   onHasApparatus: (index: number, has: boolean) => void;
@@ -418,6 +428,9 @@ function Column({
   const hasSpeech = useMemo(() => (state.status === 'ready' ? textSpeeches(state.tei).length > 0 : false), [state]);
   useEffect(() => onHasSpeech(index, hasSpeech), [hasSpeech, index, onHasSpeech]);
   const withSpeech = showSpeech && hasSpeech;
+  // VRM の読み上げ。panes に vrm と書いたときだけ出す（20MB のモデルを読むため）
+  useEffect(() => onHasVrm(index, hasSpeech), [hasSpeech, index, onHasVrm]);
+  const withVrm = showVrm && hasSpeech;
   // 地図（listPlace の geo や correspDesc）
   const hasMap = useMemo(() => (state.status === 'ready' ? hasMapData(state.tei) : false), [state]);
   useEffect(() => onHasMap(index, hasMap), [hasMap, index, onHasMap]);
@@ -438,6 +451,7 @@ function Column({
   const panes: PaneKey[] = [
     ...(imaged ? (['image'] as const) : []),
     ...(withModel ? (['model'] as const) : []),
+    ...(withVrm ? (['vrm'] as const) : []),
     'text',
     ...analysisPanes,
   ];
@@ -448,7 +462,7 @@ function Column({
   const paneClass = (p: PaneKey) => `h-full min-h-0 ${p === active ? '' : count === 1 ? 'hidden lg:block' : 'hidden'}`;
   const analysisPaneClass = (p: PaneKey) =>
     `min-h-0 flex-1 overflow-hidden ${p === active ? 'h-full' : count === 1 ? 'hidden lg:block' : 'hidden'}`;
-  const hasVisual = imaged || withModel;
+  const hasVisual = imaged || withModel || withVrm;
   const desktopLayout =
     count !== 1
       ? undefined
@@ -517,6 +531,11 @@ function Column({
               focusId={focusId}
               onSelect={(id) => updateParams({ id })}
             />
+          </div>
+        )}
+        {withVrm && (
+          <div className={paneClass('vrm')}>
+            <VrmPane tei={state.tei} focusId={focusId} onSelect={(id) => updateParams({ id })} vrmUrl={vrmUrl} />
           </div>
         )}
         {xslParam === 'line' ? (
@@ -708,6 +727,8 @@ function Reader({ sources }: { sources: string[] }) {
   const isSupportStyle = xslParam === 'reading-support' || xslParam === 'video';
   const showImages = paneShown(panes, 'image');
   const showModel = paneShown(panes, 'model');
+  const showVrm = paneShown(panes, 'vrm');
+  const vrmUrl = search.get('vrm');
   const showApparatus = paneShown(panes, 'apparatus');
   const showEntities = isSupportStyle && panes === null ? false : paneShown(panes, 'entities');
   const showSpeech = paneShown(panes, 'speech');
@@ -716,6 +737,7 @@ function Reader({ sources }: { sources: string[] }) {
   // 各ペインに出せる中身がある列があるときだけ、ツールバーにそのボタンを出す
   const [imageColumns, onHasImages] = useColumnFlags();
   const [modelColumns, onHasModel] = useColumnFlags();
+  const [vrmColumns, onHasVrm] = useColumnFlags();
   const [apparatusColumns, onHasApparatus] = useColumnFlags();
   const [entityColumns, onHasEntities] = useColumnFlags();
   const [speechColumns, onHasSpeech] = useColumnFlags();
@@ -786,6 +808,11 @@ function Reader({ sources }: { sources: string[] }) {
             {t('speech')}
           </Toggle>
         )}
+        {vrmColumns.size > 0 && (
+          <Toggle pressed={showVrm} onClick={() => updateParams({ panes: togglePane(panes, 'vrm') })}>
+            {t('vrm')}
+          </Toggle>
+        )}
         {mapColumns.size > 0 && (
           <Toggle pressed={showMap} onClick={() => updateParams({ panes: togglePane(panes, 'map') })}>
             {t('map')}
@@ -833,6 +860,9 @@ function Reader({ sources }: { sources: string[] }) {
             onHasImages={onHasImages}
             showModel={showModel}
             onHasModel={onHasModel}
+            showVrm={showVrm}
+            onHasVrm={onHasVrm}
+            vrmUrl={vrmUrl}
             showApparatus={showApparatus}
             onHasApparatus={onHasApparatus}
             showEntities={showEntities}
