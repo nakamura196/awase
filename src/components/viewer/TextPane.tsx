@@ -29,6 +29,8 @@ interface Props {
   wit?: string | null;
   /** この頁（何番目の pb か）へ動かす。seq は同じ頁へ 2 度動かすときのため */
   pageRequest?: { index: number; seq: number } | null;
+  /** ほかのペイン（3D ペインなど）が受け取れる id。@corresp の行き先として選ぶ */
+  linkedIds?: ReadonlySet<string>;
 }
 
 // 本文ペイン。TEI を tei-* の部品に置き換えて（src/lib/tei/render.ts）、この枠の中に置く。
@@ -48,8 +50,9 @@ function highlightRegistry(): Highlight | null {
   return h;
 }
 
-// ほかの列に、この id の要素があるか
-function hasElsewhere(self: Element, id: string): boolean {
+// ほかの列やペインに、この id に当たるものがあるか
+function hasElsewhere(self: Element, id: string, linkedIds?: ReadonlySet<string>): boolean {
+  if (linkedIds?.has(id)) return true;
   const sel = `[id="${CSS.escape(id)}"]`;
   return Array.from(document.querySelectorAll('.awase-text')).some((pane) => pane !== self && pane.querySelector(sel));
 }
@@ -98,6 +101,7 @@ export default function TextPane({
   onPageChange,
   pageRequest,
   wit,
+  linkedIds,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   // この列で押して選んだときは、この列は動かさない（押した所が逃げないように）
@@ -244,7 +248,7 @@ export default function TextPane({
       return;
     }
     if (!onSelect) return;
-    const id = linkIdAt(root, target, pointFromCoords(document, e.clientX, e.clientY), (i) => hasElsewhere(root, i));
+    const id = linkIdAt(root, target, pointFromCoords(document, e.clientX, e.clientY), (i) => hasElsewhere(root, i, linkedIds));
     if (!id || id === focusId) return;
     selfSelected.current = true;
     onSelect(id);

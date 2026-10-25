@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import type { ViewerSelection, ViewerTarget } from '@nakamura196/iiif-viewer';
 import '@nakamura196/iiif-viewer/style.css';
+import PaneCard, { paneButton as button } from './PaneCard';
 import { canvasKey, imageSrcs, manifestCanvasIds, matchCanvas, type FacsTarget } from '@/lib/tei/facs';
 
 // IIIF Kasane の画像ビューア（three.js で描く）。サーバでの書き出しでは描けないので、画面の側でだけ読む
@@ -85,8 +86,6 @@ function viewerOf(
   return null;
 }
 
-const button = 'rounded border border-[var(--ds-border)] px-2 py-0.5 text-[var(--ds-fg)] disabled:opacity-40';
-
 // 画像ペイン。本文で読んでいる頁（pb@facs）の画像を、IIIF Kasane のビューアで出す。
 // その頁の範囲（zone）に寄せ、ビューアの側で頁をめくったら、その Canvas の頁へ本文を動かす。
 // 異文の箇所を選び、その箇所に画像の範囲（app@facs）があれば、頁の画像の代わりにそれを出す（koui と同じ）。
@@ -140,18 +139,21 @@ export default function ImagePane({ pages, labels, index, onGo, place, title }: 
   };
 
   return (
-    <div
-      className="flex h-full min-h-0 flex-col overflow-hidden rounded border border-[var(--ds-border)] bg-[var(--ds-surface)]"
+    <PaneCard
       data-testid="image-pane"
       data-iiif-content={view?.content}
       data-canvas={view?.target?.canvasId}
       data-xywh={view?.target?.xywh?.join(',')}
       data-place={placeTarget ? place?.n : undefined}
-    >
-      {/* 頁送りはこの 1 組だけ（ビューアの頁送りは pager={false} で隠す）。本文の頁の順に、別の画像にもまたがって移る */}
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--ds-border)] px-3 py-1.5 text-sm">
-        <div className="flex min-w-0 items-center gap-2">
+      link={
+        shown && (shown.manifest || shown.image)
+          ? { href: (shown.manifest ?? shown.image)!, label: shown.manifest ? t('openManifest') : t('openImage') }
+          : undefined
+      }
+      bar={
+        <>
           {title && <span className="truncate font-semibold text-[var(--ds-fg)]">{title}</span>}
+          {/* 頁送りはこの 1 組だけ（ビューアの頁送りは pager={false} で隠す）。本文の頁の順に、別の画像にもまたがって移る */}
           <div className="flex shrink-0 items-center gap-1.5" role="group" aria-label={t('pager')}>
             <button type="button" disabled={prev < 0} onClick={() => go(prev)} className={button} aria-label={t('prevPage')} title={t('prevPage')}>
               ‹
@@ -163,81 +165,72 @@ export default function ImagePane({ pages, labels, index, onGo, place, title }: 
               ›
             </button>
           </div>
-        </div>
-        {shown && (shown.manifest || shown.image) && (
-          <a
-            href={shown.manifest ?? shown.image}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 truncate text-xs underline text-[var(--ds-fg-muted)] hover:text-[var(--ds-fg)]"
-          >
-            {shown.manifest ? t('openManifest') : t('openImage')}
-          </a>
-        )}
-      </div>
-      {place && cur && (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[var(--ds-border)] px-3 py-1.5 text-sm" data-testid="place-images">
-          {cur.off ? (
-            <button type="button" onClick={() => setPlaceState({ ...cur, off: false })} className={button}>
-              {t('placeImage', { n: place.n, index: cur.k + 1, total: place.targets.length })}
-            </button>
-          ) : (
-            <>
-              <span className="font-bold text-[var(--ds-fg)]" aria-live="polite">
+        </>
+      }
+      subBar={
+        place && cur && (
+          <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[var(--ds-border)] px-3 py-1.5 text-sm" data-testid="place-images">
+            {cur.off ? (
+              <button type="button" onClick={() => setPlaceState({ ...cur, off: false })} className={button}>
                 {t('placeImage', { n: place.n, index: cur.k + 1, total: place.targets.length })}
-              </span>
-              {place.targets.length > 1 && (
-                <>
-                  <button type="button" disabled={cur.k === 0} onClick={() => setPlaceState({ ...cur, k: cur.k - 1 })} className={button}>
-                    {t('prevPlaceImage')}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={cur.k >= place.targets.length - 1}
-                    onClick={() => setPlaceState({ ...cur, k: cur.k + 1 })}
-                    className={button}
-                  >
-                    {t('nextPlaceImage')}
-                  </button>
-                </>
-              )}
-              <button type="button" onClick={() => setPlaceState({ ...cur, off: true })} className={`${button} ml-auto`}>
-                {t('backToPage')}
               </button>
-            </>
-          )}
-        </div>
+            ) : (
+              <>
+                <span className="font-bold text-[var(--ds-fg)]" aria-live="polite">
+                  {t('placeImage', { n: place.n, index: cur.k + 1, total: place.targets.length })}
+                </span>
+                {place.targets.length > 1 && (
+                  <>
+                    <button type="button" disabled={cur.k === 0} onClick={() => setPlaceState({ ...cur, k: cur.k - 1 })} className={button}>
+                      {t('prevPlaceImage')}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={cur.k >= place.targets.length - 1}
+                      onClick={() => setPlaceState({ ...cur, k: cur.k + 1 })}
+                      className={button}
+                    >
+                      {t('nextPlaceImage')}
+                    </button>
+                  </>
+                )}
+                <button type="button" onClick={() => setPlaceState({ ...cur, off: true })} className={`${button} ml-auto`}>
+                  {t('backToPage')}
+                </button>
+              </>
+            )}
+          </div>
+        )
+      }
+    >
+      {view ? (
+        // 別のマニフェスト・画像に替わったら、ビューアを作り直す（中の状態を前の画像から持ち越さない）
+        <Viewer
+          key={view.content}
+          iiifContent={view.content}
+          target={view.target}
+          onSelect={onSelect}
+          // 本文と並べるので、資料情報の欄は閉じて始める（読む人は開ける）
+          panelOpen={false}
+          // 頁送りは上の 1 組に任せる。矢印キーでめくれば、onSelect で本文が付いてくる
+          pager={false}
+          locale={locale === 'en' ? 'en' : 'ja'}
+          theme={resolvedTheme === 'dark' ? 'dark' : resolvedTheme === 'light' ? 'light' : 'auto'}
+          className="h-full"
+        />
+      ) : waiting ? (
+        <p className="p-4 text-sm text-[var(--ds-fg-muted)]">{t('loading')}</p>
+      ) : shown && imageSrcs(shown)[0] ? (
+        // 外の画像を、大きさを決めずにそのまま出す（next/image の最適化は静的書き出しでは使えない）
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={imageSrcs(shown)[0]}
+          alt={label ? t('pageLabel', { n: label }) : ''}
+          className="h-full w-full object-contain"
+        />
+      ) : (
+        <p className="p-4 text-sm text-[var(--ds-fg-muted)]">{t('noImage')}</p>
       )}
-      <div className="relative min-h-0 flex-1 overflow-hidden">
-        {view ? (
-          // 別のマニフェスト・画像に替わったら、ビューアを作り直す（中の状態を前の画像から持ち越さない）
-          <Viewer
-            key={view.content}
-            iiifContent={view.content}
-            target={view.target}
-            onSelect={onSelect}
-            // 本文と並べるので、資料情報の欄は閉じて始める（読む人は開ける）
-            panelOpen={false}
-            // 頁送りは上の 1 組に任せる。矢印キーでめくれば、onSelect で本文が付いてくる
-            pager={false}
-            locale={locale === 'en' ? 'en' : 'ja'}
-            theme={resolvedTheme === 'dark' ? 'dark' : resolvedTheme === 'light' ? 'light' : 'auto'}
-            className="h-full"
-          />
-        ) : waiting ? (
-          <p className="p-4 text-sm text-[var(--ds-fg-muted)]">{t('loading')}</p>
-        ) : shown && imageSrcs(shown)[0] ? (
-          // 外の画像を、大きさを決めずにそのまま出す（next/image の最適化は静的書き出しでは使えない）
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={imageSrcs(shown)[0]}
-            alt={label ? t('pageLabel', { n: label }) : ''}
-            className="h-full w-full object-contain"
-          />
-        ) : (
-          <p className="p-4 text-sm text-[var(--ds-fg-muted)]">{t('noImage')}</p>
-        )}
-      </div>
-    </div>
+    </PaneCard>
   );
 }

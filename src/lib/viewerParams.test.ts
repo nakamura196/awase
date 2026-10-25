@@ -80,6 +80,7 @@ describe('resolveLegacyRedirect', () => {
 describe('paneShown', () => {
   it('panes を書かなければ全部出す', () => {
     expect(paneShown(null, 'image')).toBe(true);
+    expect(paneShown(null, 'model')).toBe(true);
     expect(paneShown(null, 'apparatus')).toBe(true);
     expect(paneShown(null, 'entities')).toBe(true);
     expect(paneShown(null, 'speech')).toBe(true);
@@ -89,6 +90,7 @@ describe('paneShown', () => {
   it('書いたら、含むものだけ出す（koui の互換 panes=text,apparatus）', () => {
     expect(paneShown('text,apparatus', 'apparatus')).toBe(true);
     expect(paneShown('text,apparatus', 'image')).toBe(false);
+    expect(paneShown('text,model', 'model')).toBe(true);
     expect(paneShown('text,entities', 'entities')).toBe(true);
     expect(paneShown('text,speech', 'speech')).toBe(true);
     expect(paneShown('text,map,timeline', 'map')).toBe(true);
@@ -98,11 +100,11 @@ describe('paneShown', () => {
 
 describe('togglePane', () => {
   it('全部出ているところから 1 つ消す', () => {
-    expect(togglePane(null, 'image')).toBe('text,apparatus,entities,speech,map,timeline');
-    expect(togglePane(null, 'entities')).toBe('text,image,apparatus,speech,map,timeline');
+    expect(togglePane(null, 'image')).toBe('text,model,apparatus,entities,speech,map,timeline');
+    expect(togglePane(null, 'entities')).toBe('text,image,model,apparatus,speech,map,timeline');
   });
   it('消したものを戻して全部そろえば書かない', () => {
-    expect(togglePane('text,apparatus,entities,speech,map,timeline', 'image')).toBeNull();
+    expect(togglePane('text,model,apparatus,entities,speech,map,timeline', 'image')).toBeNull();
   });
   it('指定のペインだけを出し入れする', () => {
     expect(togglePane('text', 'apparatus')).toBe('text,apparatus');

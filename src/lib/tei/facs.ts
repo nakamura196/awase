@@ -62,7 +62,7 @@ const num = (v: string | null) => {
   return Number.isFinite(n) ? n : undefined;
 };
 
-function httpUrl(value: string | null | undefined, base?: string): string | undefined {
+export function httpUrl(value: string | null | undefined, base?: string): string | undefined {
   const v = value?.trim();
   if (!v || v.startsWith('#')) return undefined;
   try {
@@ -86,9 +86,9 @@ function firstUrl(el: Element | null, names: string[], base?: string): string | 
   return undefined;
 }
 
-const xmlId = (el: Element) => el.getAttribute('xml:id') ?? el.getAttributeNS('http://www.w3.org/XML/1998/namespace', 'id');
+export const xmlId = (el: Element) => el.getAttribute('xml:id') ?? el.getAttributeNS('http://www.w3.org/XML/1998/namespace', 'id');
 
-function child(el: Element, name: string): Element | null {
+export function child(el: Element, name: string): Element | null {
   return Array.from(el.children).find((c) => c.localName === name) ?? null;
 }
 

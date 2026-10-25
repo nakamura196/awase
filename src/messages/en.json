@@ -346,6 +346,7 @@
     "openImage": "Open the image",
     "textPane": "Text",
     "panes": "Panes",
+    "model": "3D",
     "entities": "Names & dates",
     "entitiesCount": "{count} name & date mentions",
     "entityAll": "All",
@@ -379,5 +380,16 @@
     "timeline": "Timeline",
     "timelineCount": "{count} timeline entries",
     "changeSource": "Open another"
+  },
+  "Model": {
+    "title": "3D model",
+    "viewerTitle": "3D model viewer",
+    "selectModel": "Select 3D model",
+    "modelIndex": "Model {index}",
+    "openSketchfab": "Open on Sketchfab",
+    "zones": "Zones",
+    "loading": "Loading…",
+    "error": "Could not load the 3D model.",
+    "unsupportedGltf": "This model type is not supported yet."
   }
 }

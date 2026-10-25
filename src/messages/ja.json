@@ -346,6 +346,7 @@
     "openImage": "画像を開く",
     "textPane": "本文",
     "panes": "ペイン",
+    "model": "3D",
     "entities": "固有名・日付",
     "entitiesCount": "固有名・日付 {count} 箇所",
     "entityAll": "すべて",
@@ -379,5 +380,16 @@
     "timeline": "年表",
     "timelineCount": "年表 {count} 件",
     "changeSource": "別の資料を開く"
+  },
+  "Model": {
+    "title": "3D モデル",
+    "viewerTitle": "3D モデルビューア",
+    "selectModel": "3D モデルを選ぶ",
+    "modelIndex": "モデル {index}",
+    "openSketchfab": "Sketchfab で開く",
+    "zones": "範囲",
+    "loading": "読み込んでいます…",
+    "error": "3D モデルを読み込めませんでした。",
+    "unsupportedGltf": "この形式の 3D モデルにはまだ対応していません。"
   }
 }
