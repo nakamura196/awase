@@ -9,6 +9,7 @@ import TextPane from '@/components/viewer/TextPane';
 import XslViewPane from '@/components/viewer/XslViewPane';
 import HeaderPanel from '@/components/viewer/HeaderPanel';
 import ImagePane, { type PlaceImages } from '@/components/viewer/ImagePane';
+import ModelPane from '@/components/viewer/ModelPane';
 import ApparatusPane from '@/components/viewer/ApparatusPane';
 import EntitiesPane from '@/components/viewer/EntitiesPane';
 import SpeechPane from '@/components/viewer/SpeechPane';
@@ -27,6 +28,7 @@ import { readApparatus } from '@/lib/tei/apparatus';
 import { entityId, hasEntitiesData, textEntities } from '@/lib/tei/entities';
 import { textSpeeches } from '@/lib/tei/speech';
 import { hasMapData, hasTimelineData } from '@/lib/tei/corresp';
+import { hasModelData, readModels } from '@/lib/tei/model3d';
 import { XSL_CATALOG, xslTitle } from '@/lib/xsl/catalog';
 import { parseXslChoice } from '@/lib/xsl/params';
 
@@ -205,7 +207,7 @@ function Toggle({ pressed, onClick, children }: { pressed: boolean; onClick: () 
   );
 }
 
-type PaneKey = 'image' | 'text' | 'apparatus' | 'entities' | 'speech' | 'map' | 'timeline';
+type PaneKey = 'image' | 'model' | 'text' | 'apparatus' | 'entities' | 'speech' | 'map' | 'timeline';
 
 // ペインを横に並べられないとき（狭い画面と、本文を並べて読むとき）に、1 つずつ切り替えるタブ
 function PaneTabs({
@@ -222,6 +224,7 @@ function PaneTabs({
   const t = useTranslations('Viewer');
   const label: Record<PaneKey, string> = {
     image: t('images'),
+    model: t('model'),
     text: t('textPane'),
     apparatus: t('apparatus'),
     entities: t('entities'),
@@ -277,6 +280,8 @@ function Column({
   focusId,
   showImages,
   onHasImages,
+  showModel,
+  onHasModel,
   showApparatus,
   onHasApparatus,
   showEntities,
@@ -300,6 +305,9 @@ function Column({
   showImages: boolean;
   /** この列に画像の引ける頁があるか（ツールバーの「画像」を出すかどうか） */
   onHasImages: (index: number, has: boolean) => void;
+  showModel: boolean;
+  /** この列に 3D モデルがあるか（ツールバーの「3D」を出すかどうか） */
+  onHasModel: (index: number, has: boolean) => void;
   showApparatus: boolean;
   /** この列に異文（app）があるか（ツールバーの「異文」を出すかどうか） */
   onHasApparatus: (index: number, has: boolean) => void;
@@ -349,6 +357,11 @@ function Column({
   const facs = useMemo(() => {
     if (state.status !== 'ready') return null;
     const map = readFacsimile(state.tei, src);
+    for (const [id, entry] of map.entries()) {
+      if ((!entry.manifest && !entry.service && !entry.image) || (entry.image && /sketchfab\.com/i.test(entry.image))) {
+        map.delete(id);
+      }
+    }
     const pbs = pageBreaks(state.tei);
     const pages = pbs.map((pb) => pageTarget({ facs: pb.getAttribute('facs'), corresp: pb.getAttribute('corresp') }, map, src));
     const places = new Map<string, PlaceImages>();
@@ -387,6 +400,12 @@ function Column({
   useEffect(() => onHasImages(index, Boolean(facs)), [facs, index, onHasImages]);
   const imaged = showImages && facs !== null;
   const placeIds = useMemo(() => new Set(facs?.places.keys()), [facs]);
+  // 3D モデル（facsimile/surface が 3D モデルを指すもの）
+  const hasModel = useMemo(() => (state.status === 'ready' ? hasModelData(state.tei) : false), [state]);
+  useEffect(() => onHasModel(index, hasModel), [hasModel, index, onHasModel]);
+  const withModel = showModel && hasModel;
+  const models = useMemo(() => (state.status === 'ready' && hasModel ? readModels(state.tei, src) : []), [state, hasModel, src]);
+  const modelIds = useMemo(() => new Set(models.flatMap((s) => s.zones.flatMap((z) => z.ids))), [models]);
   // 異文（app）。1 つでもあれば、異文の一覧を本文の横に出せる
   const hasApparatus = apps.length > 0;
   useEffect(() => onHasApparatus(index, hasApparatus), [hasApparatus, index, onHasApparatus]);
@@ -418,6 +437,7 @@ function Column({
   ];
   const panes: PaneKey[] = [
     ...(imaged ? (['image'] as const) : []),
+    ...(withModel ? (['model'] as const) : []),
     'text',
     ...analysisPanes,
   ];
@@ -428,12 +448,13 @@ function Column({
   const paneClass = (p: PaneKey) => `h-full min-h-0 ${p === active ? '' : count === 1 ? 'hidden lg:block' : 'hidden'}`;
   const analysisPaneClass = (p: PaneKey) =>
     `min-h-0 flex-1 overflow-hidden ${p === active ? 'h-full' : count === 1 ? 'hidden lg:block' : 'hidden'}`;
+  const hasVisual = imaged || withModel;
   const desktopLayout =
     count !== 1
       ? undefined
-      : imaged && analysisPanes.length > 0
+      : hasVisual && analysisPanes.length > 0
         ? 'image-text-analysis'
-        : imaged
+        : hasVisual
           ? 'image-text'
           : analysisPanes.length > 0
             ? 'text-analysis'
@@ -486,6 +507,15 @@ function Column({
                 setPage(i);
                 setPageRequest((r) => ({ index: i, seq: (r?.seq ?? 0) + 1 }));
               }}
+            />
+          </div>
+        )}
+        {withModel && (
+          <div className={paneClass('model')}>
+            <ModelPane
+              surfaces={models}
+              focusId={focusId}
+              onSelect={(id) => updateParams({ id })}
             />
           </div>
         )}
@@ -544,6 +574,7 @@ function Column({
               onPageChange={imaged ? setPage : undefined}
               pageRequest={pageRequest}
               wit={wit}
+              linkedIds={withModel ? modelIds : undefined}
             />
           </div>
         )}
@@ -676,6 +707,7 @@ function Reader({ sources }: { sources: string[] }) {
   const panes = search.get('panes');
   const isSupportStyle = xslParam === 'reading-support' || xslParam === 'video';
   const showImages = paneShown(panes, 'image');
+  const showModel = paneShown(panes, 'model');
   const showApparatus = paneShown(panes, 'apparatus');
   const showEntities = isSupportStyle && panes === null ? false : paneShown(panes, 'entities');
   const showSpeech = paneShown(panes, 'speech');
@@ -683,6 +715,7 @@ function Reader({ sources }: { sources: string[] }) {
   const showTimeline = paneShown(panes, 'timeline');
   // 各ペインに出せる中身がある列があるときだけ、ツールバーにそのボタンを出す
   const [imageColumns, onHasImages] = useColumnFlags();
+  const [modelColumns, onHasModel] = useColumnFlags();
   const [apparatusColumns, onHasApparatus] = useColumnFlags();
   const [entityColumns, onHasEntities] = useColumnFlags();
   const [speechColumns, onHasSpeech] = useColumnFlags();
@@ -731,6 +764,11 @@ function Reader({ sources }: { sources: string[] }) {
         {imageColumns.size > 0 && (
           <Toggle pressed={showImages} onClick={() => updateParams({ panes: togglePane(panes, 'image') })}>
             {t('images')}
+          </Toggle>
+        )}
+        {modelColumns.size > 0 && (
+          <Toggle pressed={showModel} onClick={() => updateParams({ panes: togglePane(panes, 'model') })}>
+            {t('model')}
           </Toggle>
         )}
         {apparatusColumns.size > 0 && (
@@ -793,6 +831,8 @@ function Reader({ sources }: { sources: string[] }) {
             focusId={focusId}
             showImages={showImages}
             onHasImages={onHasImages}
+            showModel={showModel}
+            onHasModel={onHasModel}
             showApparatus={showApparatus}
             onHasApparatus={onHasApparatus}
             showEntities={showEntities}

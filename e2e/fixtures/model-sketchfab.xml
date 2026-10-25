@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>3Dモデルの見本</title></titleStmt>
+      <publicationStmt><p>Awase</p></publicationStmt>
+      <sourceDesc><p>テスト用に作った合成データ</p></sourceDesc>
+    </fileDesc>
+  </teiHeader>
+  <facsimile>
+    <surface xml:id="surf1" corresp="0123456789abcdef0123456789abcdef">
+      <label>見本の石碑</label>
+      <zone xml:id="zone1" n="0">
+        <label>正面上段</label>
+        <note>正面の上段に刻まれた銘文。</note>
+      </zone>
+      <zone xml:id="zone2" n="1">
+        <label>正面下段</label>
+        <note>正面の下段に刻まれた銘文。</note>
+      </zone>
+      <zone xml:id="zone3" n="2" corresp="#lg3">
+        <label>裏面</label>
+        <note>裏面に刻まれた和歌。</note>
+      </zone>
+    </surface>
+  </facsimile>
+  <text>
+    <body>
+      <div>
+        <lg>
+          <l corresp="#zone1">正面の上段に記された一行目の本文。</l>
+        </lg>
+      </div>
+      <div xml:id="sec2" facs="#zone2">
+        <p>正面の下段に記された二段目の本文。</p>
+      </div>
+      <div>
+        <lg xml:id="lg3">
+          <l>裏面に記された三つ目の歌。</l>
+        </lg>
+      </div>
+    </body>
+  </text>
+</TEI>

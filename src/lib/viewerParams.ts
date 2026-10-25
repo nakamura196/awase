@@ -73,7 +73,7 @@ export function resolveLegacyRedirect(search: string, hash: string): { path: '/v
 }
 
 // 本文の横に出せるペイン。panes を書かなければ、使えるものを全部出す
-export const OPTIONAL_PANES = ['image', 'apparatus', 'entities', 'speech', 'map', 'timeline'] as const;
+export const OPTIONAL_PANES = ['image', 'model', 'apparatus', 'entities', 'speech', 'map', 'timeline'] as const;
 export type OptionalPane = (typeof OPTIONAL_PANES)[number];
 
 /** panes の値（null は書いていない）で、そのペインを出すか */

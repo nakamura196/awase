@@ -346,6 +346,7 @@
     "openImage": "画像を開く",
     "textPane": "本文",
     "panes": "ペイン",
+    "model": "3D",
     "entities": "固有名・日付",
     "entitiesCount": "固有名・日付 {count} 箇所",
     "entityAll": "すべて",
