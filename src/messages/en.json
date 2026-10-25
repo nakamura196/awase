@@ -346,6 +346,7 @@
     "openImage": "Open the image",
     "textPane": "Text",
     "panes": "Panes",
+    "model": "3D",
     "entities": "Names & dates",
     "entitiesCount": "{count} name & date mentions",
     "entityAll": "All",
