@@ -10,6 +10,7 @@
 // - 本文の要素の @facs が zone を指す（<div xml:id="…" facs="#zone…">）
 // - zone の @corresp が本文の要素を指す（<zone corresp="#stanza1 #stanza4">）
 
+import { child, httpUrl, xmlId } from './facs';
 import { correspIds } from './link';
 
 /** 3D モデルの在り処 */
@@ -46,28 +47,6 @@ export interface Surface3D {
   /** surface/label、surface/desc */
   label?: string;
   zones: Zone3D[];
-}
-
-const XML_NS = 'http://www.w3.org/XML/1998/namespace';
-const xmlId = (el: Element) => el.getAttribute('xml:id') ?? el.getAttributeNS(XML_NS, 'id');
-
-function child(el: Element, name: string): Element | null {
-  return Array.from(el.children).find((c) => c.localName === name) ?? null;
-}
-
-function httpUrl(value: string | null | undefined, base?: string): string | undefined {
-  const v = value?.trim();
-  if (!v || v.startsWith('#')) return undefined;
-  try {
-    const resolvedBase =
-      base && !/^https?:\/\//i.test(base) && typeof window !== 'undefined'
-        ? new URL(base, window.location.href).href
-        : base;
-    const url = new URL(v, resolvedBase);
-    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : undefined;
-  } catch {
-    return undefined;
-  }
 }
 
 const SKETCHFAB_CORRESP = /^(?:#(?:sketchfab-)?)?([0-9a-f]{32})$/i;

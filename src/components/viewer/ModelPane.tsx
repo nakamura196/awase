@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { zoneForId, type Surface3D, type Zone3D } from '@/lib/tei/model3d';
+import PaneCard from './PaneCard';
 import type { SketchfabApi, SketchfabConstructor } from '@/types/sketchfab';
 
 interface Props {
@@ -38,20 +39,6 @@ function loadSketchfab(): Promise<SketchfabConstructor> {
     });
   }
   return sketchfabPromise;
-}
-
-// URL の id から当たる範囲を引く（別ブランチの実装前でも動くよう、未実装なら手元で探す）
-function findZone(surfaces: Surface3D[], id: string | null | undefined): { surface: number; zone: Zone3D } | null {
-  if (!id) return null;
-  try {
-    return zoneForId(surfaces, id);
-  } catch {
-    for (let i = 0; i < surfaces.length; i++) {
-      const zone = surfaces[i].zones.find((z) => z.id === id || z.ids.includes(id));
-      if (zone) return { surface: i, zone };
-    }
-    return null;
-  }
 }
 
 // Sketchfab の埋め込みビューア。uid が替わったら親の key で作り直す
@@ -190,7 +177,7 @@ function SketchfabViewer({
 // 3D ペイン。Sketchfab のモデルを埋め込み、本文の箇所（focusId）と注記（annotation）を行き来する
 export default function ModelPane({ surfaces, focusId = null, onSelect }: Props) {
   const t = useTranslations('Model');
-  const focused = useMemo(() => findZone(surfaces, focusId), [surfaces, focusId]);
+  const focused = useMemo(() => zoneForId(surfaces, focusId), [surfaces, focusId]);
 
   // 手で選んだモデルと、そのときの focusId。別の範囲が本文で選ばれたら、その範囲のあるモデルへ切り替える
   const [picked, setPicked] = useState<{ index: number; atFocusId: string | null | undefined }>({
@@ -203,15 +190,18 @@ export default function ModelPane({ surfaces, focusId = null, onSelect }: Props)
   const focusedZone = focused && focused.surface === surfaceIndex ? focused.zone : null;
 
   return (
-    <div
-      className="flex h-full min-h-0 flex-col overflow-hidden rounded border border-[var(--ds-border)] bg-[var(--ds-surface)]"
+    <PaneCard
       data-testid="model-pane"
       data-model={surface?.model.kind}
       data-uid={surface?.model.kind === 'sketchfab' ? surface.model.uid : undefined}
       data-zone={focusedZone?.id}
-    >
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--ds-border)] px-3 py-1.5 text-sm">
-        <div className="flex min-w-0 items-center gap-2">
+      link={
+        surface?.model.kind === 'sketchfab'
+          ? { href: `https://sketchfab.com/3d-models/${surface.model.uid}`, label: t('openSketchfab') }
+          : undefined
+      }
+      bar={
+        <>
           <span className="truncate font-semibold text-[var(--ds-fg)]">{surface?.label || t('title')}</span>
           {surfaces.length > 1 && (
             <select
@@ -227,62 +217,52 @@ export default function ModelPane({ surfaces, focusId = null, onSelect }: Props)
               ))}
             </select>
           )}
-        </div>
-        {surface?.model.kind === 'sketchfab' && (
-          <a
-            href={`https://sketchfab.com/3d-models/${surface.model.uid}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 truncate text-xs underline text-[var(--ds-fg-muted)] hover:text-[var(--ds-fg)]"
+        </>
+      }
+      footer={
+        surface &&
+        surface.zones.length > 0 && (
+          <div
+            className="flex shrink-0 flex-wrap items-center gap-1.5 border-t border-[var(--ds-border)] px-3 py-1.5 text-xs"
+            role="group"
+            aria-label={t('zones')}
+            data-testid="model-zones"
           >
-            {t('openSketchfab')}
-          </a>
-        )}
-      </div>
-
-      <div className="relative min-h-0 flex-1 overflow-hidden">
-        {surface?.model.kind === 'sketchfab' ? (
-          <SketchfabViewer
-            key={surface.model.uid}
-            uid={surface.model.uid}
-            zones={surface.zones}
-            focusedZone={focusedZone}
-            onSelect={onSelect}
-          />
-        ) : surface?.model.kind === 'gltf' ? (
-          <p className="p-4 text-sm text-[var(--ds-fg-muted)]">{t('unsupportedGltf')}</p>
-        ) : null}
-      </div>
-
-      {surface && surface.zones.length > 0 && (
-        <div
-          className="flex shrink-0 flex-wrap items-center gap-1.5 border-t border-[var(--ds-border)] px-3 py-1.5 text-xs"
-          role="group"
-          aria-label={t('zones')}
-          data-testid="model-zones"
-        >
-          {surface.zones.map((z, i) => {
-            const active = focusedZone?.id === z.id;
-            return (
-              <button
-                key={z.id}
-                type="button"
-                aria-pressed={active}
-                data-zone-id={z.id}
-                title={z.note ?? z.label ?? z.id}
-                onClick={() => onSelect?.(z.selectId)}
-                className={`rounded border px-2 py-0.5 transition-colors ${
-                  active
-                    ? 'border-[var(--ds-primary)] bg-[color-mix(in_srgb,var(--ds-primary)_20%,transparent)] font-semibold text-[var(--ds-fg)]'
-                    : 'border-[var(--ds-border)] bg-[var(--ds-bg)] text-[var(--ds-fg)] hover:border-[var(--ds-fg-muted)]'
-                }`}
-              >
-                {z.label || `#${z.annotation ?? i + 1}`}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
+            {surface.zones.map((z, i) => {
+              const active = focusedZone?.id === z.id;
+              return (
+                <button
+                  key={z.id}
+                  type="button"
+                  aria-pressed={active}
+                  data-zone-id={z.id}
+                  title={z.note ?? z.label ?? z.id}
+                  onClick={() => onSelect?.(z.selectId)}
+                  className={`rounded border px-2 py-0.5 transition-colors ${
+                    active
+                      ? 'border-[var(--ds-primary)] bg-[color-mix(in_srgb,var(--ds-primary)_20%,transparent)] font-semibold text-[var(--ds-fg)]'
+                      : 'border-[var(--ds-border)] bg-[var(--ds-bg)] text-[var(--ds-fg)] hover:border-[var(--ds-fg-muted)]'
+                  }`}
+                >
+                  {z.label || `#${z.annotation ?? i + 1}`}
+                </button>
+              );
+            })}
+          </div>
+        )
+      }
+    >
+      {surface?.model.kind === 'sketchfab' ? (
+        <SketchfabViewer
+          key={surface.model.uid}
+          uid={surface.model.uid}
+          zones={surface.zones}
+          focusedZone={focusedZone}
+          onSelect={onSelect}
+        />
+      ) : surface?.model.kind === 'gltf' ? (
+        <p className="p-4 text-sm text-[var(--ds-fg-muted)]">{t('unsupportedGltf')}</p>
+      ) : null}
+    </PaneCard>
   );
 }
