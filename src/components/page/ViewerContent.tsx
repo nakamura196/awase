@@ -11,6 +11,7 @@ import HeaderPanel from '@/components/viewer/HeaderPanel';
 import ImagePane, { type PlaceImages } from '@/components/viewer/ImagePane';
 import ModelPane from '@/components/viewer/ModelPane';
 import VrmPane from '@/components/viewer/VrmPane';
+import { parseBoneFilter, type BoneFilter } from '@/lib/vrm/script';
 import ApparatusPane from '@/components/viewer/ApparatusPane';
 import EntitiesPane from '@/components/viewer/EntitiesPane';
 import SpeechPane from '@/components/viewer/SpeechPane';
@@ -287,6 +288,8 @@ function Column({
   showVrm,
   onHasVrm,
   vrmUrl,
+  vrmScriptUrl,
+  vrmFilter,
   showApparatus,
   onHasApparatus,
   showEntities,
@@ -318,6 +321,9 @@ function Column({
   onHasVrm: (index: number, has: boolean) => void;
   /** URL の vrm（アバターの VRM ファイル）。無ければ同梱のもの */
   vrmUrl: string | null;
+  /** URL の json（台本 JSON）と filter（動かすボーン） */
+  vrmScriptUrl: string | null;
+  vrmFilter: BoneFilter;
   showApparatus: boolean;
   /** この列に異文（app）があるか（ツールバーの「異文」を出すかどうか） */
   onHasApparatus: (index: number, has: boolean) => void;
@@ -535,7 +541,14 @@ function Column({
         )}
         {withVrm && (
           <div className={paneClass('vrm')}>
-            <VrmPane tei={state.tei} focusId={focusId} onSelect={(id) => updateParams({ id })} vrmUrl={vrmUrl} />
+            <VrmPane
+              tei={state.tei}
+              focusId={focusId}
+              onSelect={(id) => updateParams({ id })}
+              vrmUrl={vrmUrl}
+              scriptUrl={vrmScriptUrl}
+              boneFilter={vrmFilter}
+            />
           </div>
         )}
         {xslParam === 'line' ? (
@@ -729,6 +742,8 @@ function Reader({ sources }: { sources: string[] }) {
   const showModel = paneShown(panes, 'model');
   const showVrm = paneShown(panes, 'vrm');
   const vrmUrl = search.get('vrm');
+  const vrmScriptUrl = search.get('json');
+  const vrmFilter = parseBoneFilter(search.get('filter'));
   const showApparatus = paneShown(panes, 'apparatus');
   const showEntities = isSupportStyle && panes === null ? false : paneShown(panes, 'entities');
   const showSpeech = paneShown(panes, 'speech');
@@ -863,6 +878,8 @@ function Reader({ sources }: { sources: string[] }) {
             showVrm={showVrm}
             onHasVrm={onHasVrm}
             vrmUrl={vrmUrl}
+            vrmScriptUrl={vrmScriptUrl}
+            vrmFilter={vrmFilter}
             showApparatus={showApparatus}
             onHasApparatus={onHasApparatus}
             showEntities={showEntities}

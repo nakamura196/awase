@@ -28,6 +28,8 @@ export type UseCaseOpen =
       xsl?: string;
       // 開いたときにジャンプする要素の xml:id
       id?: string;
+      // 読み上げペイン（vrm）が再生する台本 JSON（口形素・感情・動き入り）。/ で始まるサイト内パスも書ける
+      json?: string;
     }
   | {
       page: 'xsl';
@@ -116,6 +118,7 @@ export function hrefOf(open: UseCaseOpen): string {
       if (open.wit) q.push(`wit=${encodeURIComponent(open.wit)}`);
       if (open.xsl) q.push(`xsl=${encodeURIComponent(open.xsl)}`);
       if (open.id) q.push(`id=${encodeURIComponent(open.id)}`);
+      if (open.json) q.push(`json=${encodeURIComponent(open.json)}`);
       return `/viewer?${q.join('&')}`;
     }
     case 'xsl': {
@@ -277,6 +280,27 @@ export const USE_CASES: UseCase[] = [
       u: 'https://raw.githubusercontent.com/TEI-EAJ/aozora_tei/master/data/complete/tei_lib_lv4/1567_tei.xml',
       dir: 'v',
       panes: 'text,vrm',
+    },
+    features: ['text', 'vrm'],
+    site: 'https://github.com/TEI-EAJ/aozora_tei',
+  },
+  {
+    id: 'vrm-script-mitsu-no-takara',
+    added: '2026-10-25',
+    title: {
+      ja: '芥川龍之介『三つの宝』（台本 JSON による表情・口形・動き付きの読み上げ）',
+      en: 'Akutagawa Ryūnosuke’s “Mittsu no Takara” (read aloud with expressions, mouth shapes and motion from a script JSON)',
+    },
+    note: {
+      ja: '青空文庫 TEI の『三つの宝』（第一幕）を、台詞ごとの感情・口形素・体の動きを持つ台本 JSON（json=）に沿ってアバターが読みます。台本の台詞は本文の発話に対応づけられ、読んでいる行が本文でハイライトされます。音声ファイルは付いていないため、声はブラウザの音声合成になります（話者ごとに声の高さを変えます）。表情と動きは台本のものです。',
+      en: 'The avatar reads the first act of the Aozora Bunko TEI of “Mittsu no Takara” following a script JSON (json=) that carries emotion, mouth shapes and body motion for each line. Script lines are aligned to the speech in the text, so the line being read is highlighted. No audio files are included, so the voice is the browser’s speech synthesis (with a different pitch per speaker); the expressions and motion come from the script.',
+    },
+    open: {
+      page: 'viewer',
+      u: 'https://raw.githubusercontent.com/TEI-EAJ/aozora_tei/master/data/complete/tei_lib_lv3/1126_tei.xml',
+      dir: 'v',
+      panes: 'text,vrm',
+      json: '/data/vrm/mitsu-no-takara-act1.json',
     },
     features: ['text', 'vrm'],
     site: 'https://github.com/TEI-EAJ/aozora_tei',
