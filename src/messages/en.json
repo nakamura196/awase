@@ -409,6 +409,25 @@
     "loadingPercent": "Loading avatar… {percent}%",
     "error": "Could not show the avatar.",
     "unsupported": "This browser does not support speech synthesis.",
-    "noVoice": "No voice found for “{lang}”. The default voice will be used."
+    "noVoice": "No voice found for “{lang}”. The default voice will be used.",
+    "autoAdvance": "Auto-advance",
+    "resetView": "Reset view",
+    "scriptLoading": "Loading the script…",
+    "scriptError": "Could not load the script (json).",
+    "emotions": {
+      "neutral": "Neutral",
+      "joy": "Joy",
+      "anger": "Anger",
+      "pride": "Pride",
+      "thinking": "Thinking",
+      "fear": "Fear",
+      "anticipation": "Anticipation",
+      "hatred": "Hatred",
+      "disgust": "Disgust",
+      "confusion": "Confusion",
+      "sadness": "Sadness",
+      "surprise": "Surprise",
+      "calm": "Calm"
+    }
   }
 }

@@ -80,3 +80,62 @@ describe('発話の送り', () => {
     expect(firstIndex([{ id: 'x', text: '' }])).toBe(-1);
   });
 });
+
+import { assignVoices, coreVoiceName, estimateSeconds, matchAzureVoice } from './reader';
+
+describe('coreVoiceName / matchAzureVoice', () => {
+  it('Azure の名前から核を取る', () => {
+    expect(coreVoiceName('ja-JP-NanamiNeural')).toBe('Nanami');
+    expect(coreVoiceName('ja-JP-Masaru:DragonHDLatestNeural')).toBe('Masaru');
+    expect(coreVoiceName('en-US-AvaMultilingualNeural')).toBe('Ava');
+    expect(coreVoiceName(null)).toBe('');
+  });
+  it('Edge の声の名前に当たる', () => {
+    const voices = [
+      { lang: 'ja-JP', name: 'Microsoft Ayumi Online (Natural)' },
+      { lang: 'ja-JP', name: 'Microsoft Nanami Online (Natural)' },
+    ];
+    expect(matchAzureVoice(voices, 'ja-JP-NanamiNeural', 'ja')?.name).toContain('Nanami');
+    expect(matchAzureVoice(voices, 'ja-JP-DaichiNeural', 'ja')).toBeNull();
+  });
+});
+
+describe('assignVoices', () => {
+  const voices = [
+    { lang: 'ja-JP', name: 'B', localService: true },
+    { lang: 'ja-JP', name: 'A', localService: true },
+    { lang: 'en-US', name: 'E' },
+  ];
+  it('順に割り当て、同じ入力なら同じ結果', () => {
+    const sp = [{ key: 'x' }, { key: 'y' }, { key: 'z' }];
+    const r1 = assignVoices(sp, voices, 'ja');
+    const r2 = assignVoices(sp, [...voices].reverse(), 'ja');
+    expect(r1.get('x')?.voice?.name).toBe('A');
+    expect(r1.get('y')?.voice?.name).toBe('B');
+    expect(r1.get('z')?.voice?.name).toBe('A');
+    expect(r1.get('x')?.voice?.name).toBe(r2.get('x')?.voice?.name);
+  });
+  it('同じ声を使う話者は高さが違う', () => {
+    const r = assignVoices([{ key: 'x' }, { key: 'y' }], [{ lang: 'ja-JP', name: 'only' }], 'ja');
+    expect(r.get('x')?.pitch).not.toBe(r.get('y')?.pitch);
+  });
+  it('Azure の指定を優先する', () => {
+    const r = assignVoices(
+      [{ key: 'x', voiceName: 'ja-JP-NanamiNeural' }],
+      [{ lang: 'ja-JP', name: 'A', localService: true }, { lang: 'ja-JP', name: 'Microsoft Nanami Online' }],
+      'ja',
+    );
+    expect(r.get('x')?.voice?.name).toContain('Nanami');
+  });
+  it('声が無ければ null', () => {
+    expect(assignVoices([{ key: 'x' }], [], 'ja').get('x')?.voice).toBeNull();
+  });
+});
+
+describe('estimateSeconds', () => {
+  it('音声の長さを優先し、無ければ文字数から', () => {
+    expect(estimateSeconds('abc', 2.5)).toBe(2.5);
+    expect(estimateSeconds('あ'.repeat(100))).toBeCloseTo(17);
+    expect(estimateSeconds('あ')).toBe(1);
+  });
+});

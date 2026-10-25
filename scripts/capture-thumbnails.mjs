@@ -58,6 +58,12 @@ const PREPARE = {
     await page.locator('.awase-text [id^="o-"]').nth(1).click({ timeout: 15000 });
     await sleep(2500);
   },
+  'vrm-script-mitsu-no-takara': async (page) => {
+    await page.locator('[data-testid="vrm-canvas"][data-avatar="ready"]').waitFor({ timeout: 60000 });
+    await page.getByRole('button', { name: /^(次へ|Next)$/ }).click({ timeout: 15000 });
+    await page.getByRole('button', { name: /^(再生|Play)$/ }).click({ timeout: 15000 });
+    await sleep(1500);
+  },
   'melos-speech': async (page) => {
     await page.locator('[data-testid="entities-pane"]').waitFor({ timeout: 25000 });
     await page.locator('[data-testid="speech-speakers"] ul li button').first().click({ timeout: 15000 });

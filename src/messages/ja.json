@@ -409,6 +409,25 @@
     "loadingPercent": "アバターを読み込んでいます… {percent}%",
     "error": "アバターを表示できませんでした。",
     "unsupported": "このブラウザは音声の読み上げに対応していません。",
-    "noVoice": "「{lang}」の声が見つかりません。端末の既定の声で読みます。"
+    "noVoice": "「{lang}」の声が見つかりません。端末の既定の声で読みます。",
+    "autoAdvance": "自動で次へ",
+    "resetView": "視点を戻す",
+    "scriptLoading": "台本を読み込んでいます…",
+    "scriptError": "台本（json）を読み込めませんでした。",
+    "emotions": {
+      "neutral": "ふつう",
+      "joy": "喜び",
+      "anger": "怒り",
+      "pride": "誇り",
+      "thinking": "思案",
+      "fear": "恐れ",
+      "anticipation": "期待",
+      "hatred": "憎しみ",
+      "disgust": "嫌悪",
+      "confusion": "戸惑い",
+      "sadness": "悲しみ",
+      "surprise": "驚き",
+      "calm": "落ち着き"
+    }
   }
 }
