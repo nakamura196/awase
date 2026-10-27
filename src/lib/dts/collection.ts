@@ -12,6 +12,14 @@ export interface DcField {
   values: DcValue[];
 }
 
+export interface CitationTree {
+  /** tree に渡す値。既定の引用構造には無い */
+  identifier?: string;
+  description?: string;
+  /** "page > line" のような文字列 */
+  chain: string;
+}
+
 export interface DtsNode {
   id: string;
   /** "Collection" か "Resource" */
@@ -24,8 +32,8 @@ export interface DtsNode {
   collection?: string;
   navigation?: string;
   document?: string;
-  /** 引用構造の説明（"page > line" のような文字列） */
-  citationTrees: string[];
+  /** 引用構造（複数あれば tree で選ぶ） */
+  citationTrees: CitationTree[];
 }
 
 export interface DtsCollection extends DtsNode {
@@ -69,17 +77,30 @@ function citeChain(structure: unknown): string[] {
   return chain;
 }
 
-function citationTrees(v: unknown): string[] {
+function citationTrees(v: unknown): CitationTree[] {
   if (!Array.isArray(v)) return [];
-  const out: string[] = [];
+  const out: CitationTree[] = [];
   for (const tree of v) {
     if (!isRecord(tree)) continue;
     const chain = citeChain(tree.citeStructure).join(' > ');
     if (!chain) continue;
-    const id = str(tree.identifier);
-    out.push(id ? `${id}: ${chain}` : chain);
+    out.push({ identifier: str(tree.identifier), description: str(tree.description), chain });
   }
   return out;
+}
+
+/** Navigation の応答なら、その資料（resource）と、選ばれていた引用構造（tree）を返す */
+export function parseNavigationResource(json: unknown, url: string): { resource: DtsNode; tree?: string } | null {
+  if (!isRecord(json) || str(json['@type']) !== 'Navigation') return null;
+  const resource = parseNode(json.resource);
+  if (!resource) return null;
+  let tree: string | undefined;
+  try {
+    tree = new URL(url).searchParams.get('tree') || undefined;
+  } catch {
+    tree = undefined;
+  }
+  return { resource, tree };
 }
 
 export function parseNode(json: unknown): DtsNode | null {

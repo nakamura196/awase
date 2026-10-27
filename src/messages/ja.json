@@ -167,6 +167,9 @@
     "wholeText": "全体:",
     "openViewer": "viewer で開く",
     "openXsl": "XSL で開く",
+    "openXml": "XML",
+    "download": "ダウンロード",
+    "json": "JSON",
     "citationTrees": "引用の構造",
     "units": "引用できる単位",
     "noUnits": "引用できる単位はありません。",
@@ -177,7 +180,16 @@
     "errorNavigation": "引用できる単位を取得できませんでした。",
     "errorFetch": "ネットワークに届かないか、サーバが許可していません。",
     "errorStatus": "サーバが {status} を返しました。",
-    "errorNotDts": "DTS の応答ではありませんでした。入口の URL を確かめてください。"
+    "errorNotDts": "DTS の応答ではありませんでした。入口の URL を確かめてください。",
+    "aboutTitle": "DTS について",
+    "aboutDts": "DTS（Distributed Text Services）は、テキストのコレクションとそのメタデータを Web API で公開するための仕様です。この仕様に沿ったサーバであれば、どのデジタルテキストのリポジトリでも同じ方法でたどれます。",
+    "aboutScreen": "この画面では、コレクションを階層的にたどり、Dublin Core などの書誌情報と、引用できる単位（引用の構造）を一覧できます。資料は全体でも単位ごとでも、そのまま viewer や XSL で開けます。上の欄に DTS の入口の URL を入れるか、見本から選んでください。",
+    "aboutMoved": "以前の DTS Viewer（dtsview.ldas.jp）は、2026年10月にこの画面に統合しました。以前の URL は、この画面に転送されます。",
+    "linksTitle": "関連リンク",
+    "linkSpec": "DTS の仕様",
+    "linkKouiApi": "校異源氏物語テキストDB の DTS API",
+    "linkVideo": "解説動画（以前の DTS Viewer）",
+    "linkOldRepo": "以前の DTS Viewer のソースコード（GitHub、アーカイブ済み）"
   },
   "Xsl": {
     "title": "表示スタイル（XSL）",

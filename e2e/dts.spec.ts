@@ -32,6 +32,43 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+const esc = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+test('和歌の引用構造に切り替えると、tree=waka を付けて単位と本文を取る', async ({ page }) => {
+  const navRequests: string[] = [];
+  page.on('request', (r) => {
+    if (r.url().includes('/api/v2/dts/navigation')) navRequests.push(r.url());
+  });
+  await page.goto(open(`&url=${encodeURIComponent(RES_URL)}`));
+  const chooser = page.getByRole('navigation', { name: '引用の構造' });
+  await expect(chooser.getByRole('link', { name: /ページ・行による引用構造/ })).toHaveAttribute('aria-current', 'true');
+  await chooser.getByRole('link', { name: /和歌（短歌）による引用構造/ }).click();
+  await expect(page).toHaveURL(/tree=waka/);
+  await expect(chooser.getByRole('link', { name: /和歌（短歌）による引用構造/ })).toHaveAttribute('aria-current', 'true');
+  await expect(page.getByText('page 5').first()).toBeVisible();
+  expect(navRequests.some((u) => new URL(u).searchParams.get('tree') === 'waka')).toBe(true);
+  const unit5 = page.locator('li', { hasText: 'page 5' }).first().getByRole('link', { name: 'viewer で開く' }).first();
+  await expect(unit5).toHaveAttribute('href', new RegExp(esc(encodeURIComponent('&ref=5&tree=waka'))));
+});
+
+test('資料と単位に XML・JSON・ダウンロードのリンクがある', async ({ page }) => {
+  await page.goto(open(`&url=${encodeURIComponent(RES_URL)}`));
+  await expect(page.getByRole('heading', { level: 2, name: /桐壺/ })).toBeVisible();
+  const whole = `${BASE}/document?resource=${RES}`;
+  await expect(page.getByRole('link', { name: 'XML' }).first()).toHaveAttribute('href', `${whole}&mediaType=application%2Fxml`);
+  await expect(page.getByRole('link', { name: 'ダウンロード' }).first()).toHaveAttribute('href', whole);
+  await expect(page.getByRole('link', { name: 'JSON' }).first()).toHaveAttribute('href', RES_URL);
+  await expect(page.getByRole('link', { name: 'JSON' }).nth(1)).toHaveAttribute('href', /\/navigation\?resource=.*down=1/);
+});
+
+test('以前の DTS Viewer の、url に Navigation を書いたリンクも資料を開く', async ({ page }) => {
+  const nav = `${BASE}/navigation?resource=${RES}&down=1&tree=waka`;
+  await page.goto(open(`&url=${encodeURIComponent(nav)}`));
+  await expect(page.getByRole('heading', { level: 2, name: /桐壺/ })).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`url=${esc(encodeURIComponent(RES_URL))}`));
+  await expect(page).toHaveURL(/tree=waka/);
+});
+
 test('根のコレクションが子を並べ、たどると url= が変わる', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -53,7 +90,7 @@ test('根のコレクションが子を並べ、たどると url= が変わる',
 
   await page.getByRole('link', { name: /桐壺/ }).click();
   await expect(page).toHaveURL(new RegExp(`url=${encodeURIComponent(RES_URL).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
-  await expect(page.getByRole('heading', { level: 2, name: '桐壺' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: /桐壺/ })).toBeVisible();
 
   // 戻るで根に帰る
   await page.goBack();
@@ -63,7 +100,7 @@ test('根のコレクションが子を並べ、たどると url= が変わる',
 
 test('資料は引用できる単位と viewer / XSL への入口を出す', async ({ page }) => {
   await page.goto(open(`&url=${encodeURIComponent(RES_URL)}`));
-  await expect(page.getByRole('heading', { level: 2, name: '桐壺' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: /桐壺/ })).toBeVisible();
   await expect(page.getByText('page > line')).toBeVisible();
   const items = page.locator('li', { hasText: 'page 5' }).first();
   await expect(items).toBeVisible();

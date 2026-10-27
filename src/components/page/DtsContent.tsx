@@ -2,21 +2,21 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import CommonLayout from '@/components/layout/Common';
 import PageContainer from '@/components/layout/PageContainer';
 import { fetchJson } from '@/lib/dts/fetch';
 import { parseEntry, type DtsEntry } from '@/lib/dts/entry';
-import { parseCollection, type DtsCollection, type DtsNode } from '@/lib/dts/collection';
+import { parseCollection, parseNavigationResource, type DtsCollection, type DtsNode } from '@/lib/dts/collection';
 import { buildTree, parseNavigation, shortLabel, type CitableUnit, type UnitNode } from '@/lib/dts/navigation';
 import { collectionUrl, documentUrl, navigationUrl, nodeTarget, DEFAULT_BASE } from '@/lib/dts/urls';
 import { nextPage } from '@/lib/dts/json';
 import { resolveUrl } from '@/lib/dts/url';
 import DtsMetadata from '@/components/dts/DtsMetadata';
 
-// URL で受け取るパラメータ（docs/notes/dts.md）。base は入口、url は開くコレクションか資料
-export const DTS_PARAMS = ['base', 'url'] as const;
+// URL で受け取るパラメータ（docs/notes/dts.md）。base は入口、url は開くコレクションか資料、tree は資料の引用構造
+export const DTS_PARAMS = ['base', 'url', 'tree'] as const;
 
 export const DTS_EXAMPLES = [
   {
@@ -53,10 +53,11 @@ type State =
   | { status: 'ready'; entry: DtsEntry; entryUrl: string; collection: DtsCollection; collectionUrl: string };
 
 /** この画面の中の移動（base は既定のときは書かない） */
-function dtsHref(base: string, url: string | null) {
+function dtsHref(base: string, url: string | null, tree?: string) {
   const query: Record<string, string> = {};
   if (base !== DEFAULT_BASE) query.base = base;
   if (url) query.url = url;
+  if (tree) query.tree = tree;
   return { pathname: '/dts' as const, query };
 }
 
@@ -161,18 +162,30 @@ function MemberList({
   );
 }
 
-/** 開く先の URL（viewer / xsl に渡す u） */
-function OpenLinks({ u }: { u: string }) {
-  const t = useTranslations('Dts');
-  const cls = 'rounded border border-[var(--ds-border)] px-2 py-0.5 text-xs text-[var(--ds-primary)] hover:bg-[var(--ds-surface)]';
+const linkCls = 'rounded border border-[var(--ds-border)] px-2 py-0.5 text-xs text-[var(--ds-primary)] hover:bg-[var(--ds-surface)]';
+
+/** DTS の応答そのもの（JSON・XML）を新しいタブで開く */
+function RawLink({ href, label }: { href: string; label: string }) {
   return (
-    <span className="inline-flex gap-1">
-      <Link href={{ pathname: '/viewer', query: { u } }} className={cls}>
+    <a href={href} target="_blank" rel="noopener noreferrer" className={linkCls}>
+      {label}
+    </a>
+  );
+}
+
+/** 本文の入口。u は viewer / xsl に渡す URL、xml はブラウザで読める形（mediaType=application/xml）の URL */
+function OpenLinks({ u, xml }: { u: string; xml: string }) {
+  const t = useTranslations('Dts');
+  return (
+    <span className="inline-flex flex-wrap gap-1">
+      <Link href={{ pathname: '/viewer', query: { u } }} className={linkCls}>
         {t('openViewer')}
       </Link>
-      <Link href={{ pathname: '/xsl', query: { u } }} className={cls}>
+      <Link href={{ pathname: '/xsl', query: { u } }} className={linkCls}>
         {t('openXsl')}
       </Link>
+      <RawLink href={xml} label={t('openXml')} />
+      {xml !== u && <RawLink href={u} label={t('download')} />}
     </span>
   );
 }
@@ -198,6 +211,7 @@ function UnitItem({
   entryUrl,
   navTemplate,
   docTemplate,
+  tree,
 }: {
   unit: UnitNode;
   resource: string;
@@ -205,6 +219,7 @@ function UnitItem({
   entryUrl: string;
   navTemplate: string;
   docTemplate: string;
+  tree?: string;
 }) {
   const t = useTranslations('Dts');
   const [open, setOpen] = useState(false);
@@ -217,7 +232,7 @@ function UnitItem({
     setOpen(true);
     if (children !== null) return;
     setBusy(true);
-    const got = await loadUnits(navigationUrl(navTemplate, entryUrl, resource, unit.identifier), entryUrl);
+    const got = await loadUnits(navigationUrl(navTemplate, entryUrl, resource, unit.identifier, tree), entryUrl);
     setBusy(false);
     if (!Array.isArray(got)) return setFailed(true);
     // 応答には自分自身も入っている。直接の子だけを取る
@@ -237,7 +252,10 @@ function UnitItem({
           {open ? '▾' : '▸'}
         </button>
         <span className="font-mono text-sm break-all">{shortLabel(unit)}</span>
-        <OpenLinks u={documentUrl(docTemplate, entryUrl, resource, unit.identifier)} />
+        <OpenLinks
+          u={documentUrl(docTemplate, entryUrl, resource, unit.identifier, tree)}
+          xml={documentUrl(docTemplate, entryUrl, resource, unit.identifier, tree, 'application/xml')}
+        />
       </div>
       {open && (
         <div className="ml-5">
@@ -255,6 +273,7 @@ function UnitItem({
                   entryUrl={entryUrl}
                   navTemplate={navTemplate}
                   docTemplate={docTemplate}
+                  tree={tree}
                 />
               ))}
             </ul>
@@ -265,46 +284,112 @@ function UnitItem({
   );
 }
 
-function ResourceView({ resource, entry, entryUrl }: { resource: DtsCollection; entry: DtsEntry; entryUrl: string }) {
+/** 引用構造が複数あるとき（校異源氏物語の頁・行と和歌など）、どれでたどるかを選ぶ */
+function TreeChooser({
+  base,
+  target,
+  resource,
+  tree,
+}: {
+  base: string;
+  target: string | null;
+  resource: DtsCollection;
+  tree?: string;
+}) {
+  const t = useTranslations('Dts');
+  const trees = resource.citationTrees;
+  if (trees.length === 0) return null;
+  if (trees.length === 1) {
+    return (
+      <p className="text-sm text-[var(--ds-fg-muted)]">
+        {t('citationTrees')}: {trees[0].chain}
+      </p>
+    );
+  }
+  return (
+    <nav aria-label={t('citationTrees')} className="flex flex-wrap items-center gap-2 text-sm">
+      <span className="text-[var(--ds-fg-muted)]">{t('citationTrees')}:</span>
+      {trees.map((c) => {
+        const active = (c.identifier ?? '') === (tree ?? '');
+        return (
+          <Link
+            key={c.identifier ?? ''}
+            href={dtsHref(base, target, c.identifier)}
+            aria-current={active ? 'true' : undefined}
+            className={`rounded border px-2 py-0.5 ${
+              active
+                ? 'border-[var(--ds-primary)] bg-[var(--ds-primary)]/10'
+                : 'border-[var(--ds-border)] hover:bg-[var(--ds-surface)]'
+            }`}
+          >
+            {c.description ?? c.identifier ?? c.chain}
+            <span className="ml-1 font-mono text-xs text-[var(--ds-fg-muted)]">{c.chain}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+function ResourceView({
+  base,
+  target,
+  resource,
+  entry,
+  entryUrl,
+  tree,
+}: {
+  base: string;
+  target: string | null;
+  resource: DtsCollection;
+  entry: DtsEntry;
+  entryUrl: string;
+  tree?: string;
+}) {
   const t = useTranslations('Dts');
   const navTemplate = resource.navigation ?? entry.navigation;
   const docTemplate = resource.document ?? entry.document;
-  const [units, setUnits] = useState<UnitNode[] | null>(null);
-  const [error, setError] = useState(false);
+  const navUrl = navTemplate ? navigationUrl(navTemplate, entryUrl, resource.id, undefined, tree) : '';
+  // 取り終えた引用構造と単位。tree を替えたら、取り直すまでは読み込み中に見せる
+  const [loaded, setLoaded] = useState<{ url: string; units: UnitNode[] | null; error: boolean } | null>(null);
+  const units = loaded?.url === navUrl ? loaded.units : null;
+  const error = loaded?.url === navUrl && loaded.error;
 
   useEffect(() => {
-    if (!navTemplate) return;
+    if (!navUrl) return;
     let alive = true;
-    loadUnits(navigationUrl(navTemplate, entryUrl, resource.id), entryUrl).then((got) => {
+    loadUnits(navUrl, entryUrl).then((got) => {
       if (!alive) return;
-      if (Array.isArray(got)) setUnits(buildTree(got));
-      else setError(true);
+      if (Array.isArray(got)) setLoaded({ url: navUrl, units: buildTree(got), error: false });
+      else setLoaded({ url: navUrl, units: null, error: true });
     });
     return () => {
       alive = false;
     };
-  }, [navTemplate, entryUrl, resource.id]);
+  }, [navUrl, entryUrl]);
 
   return (
     <div className="space-y-4">
       {docTemplate && (
         <p className="flex flex-wrap items-center gap-2 text-sm">
           <span>{t('wholeText')}</span>
-          <OpenLinks u={documentUrl(docTemplate, entryUrl, resource.id)} />
+          <OpenLinks
+            u={documentUrl(docTemplate, entryUrl, resource.id)}
+            xml={documentUrl(docTemplate, entryUrl, resource.id, undefined, undefined, 'application/xml')}
+          />
         </p>
       )}
-      {resource.citationTrees.length > 0 && (
-        <p className="text-sm text-[var(--ds-fg-muted)]">
-          {t('citationTrees')}: {resource.citationTrees.join(' / ')}
-        </p>
-      )}
+      <TreeChooser base={base} target={target} resource={resource} tree={tree} />
       <section className="space-y-2">
-        <h2 className="text-lg font-semibold">{t('units')}</h2>
+        <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold">
+          {t('units')}
+          {navUrl && <RawLink href={navUrl} label={t('json')} />}
+        </h2>
         {error && <p role="alert" className="text-sm">{t('errorNavigation')}</p>}
         {!error && units === null && <p className="text-sm text-[var(--ds-fg-muted)]">{t('loading')}</p>}
         {units && units.length === 0 && <p className="text-sm text-[var(--ds-fg-muted)]">{t('noUnits')}</p>}
         {units && units.length > 0 && (
-          <ul className="divide-y divide-[var(--ds-border)] rounded border border-[var(--ds-border)] px-3">
+          <ul key={tree ?? ''} className="divide-y divide-[var(--ds-border)] rounded border border-[var(--ds-border)] px-3">
             {units.map((u) => (
               <UnitItem
                 key={u.identifier}
@@ -314,6 +399,7 @@ function ResourceView({ resource, entry, entryUrl }: { resource: DtsCollection; 
                 entryUrl={entryUrl}
                 navTemplate={navTemplate}
                 docTemplate={docTemplate}
+                tree={tree}
               />
             ))}
           </ul>
@@ -324,15 +410,50 @@ function ResourceView({ resource, entry, entryUrl }: { resource: DtsCollection; 
 }
 
 // 開く先（base と url）が変わったら作り直す。読み込み中の状態に戻すための key
+// 以前の DTS Viewer（nakamura196/dts-viewer、アーカイブ済み）の「このサイトについて」とフッターの関連リンクを引き継ぐ
+function AboutDts() {
+  const t = useTranslations('Dts');
+  const ja = useLocale() !== 'en';
+  const links = [
+    { label: t('linkSpec'), href: 'https://distributed-text-services.github.io/specifications/' },
+    { label: t('linkKouiApi'), href: DEFAULT_BASE },
+    {
+      label: t('linkVideo'),
+      href: ja ? 'https://www.youtube.com/watch?v=gFM5UsNn5dw' : 'https://www.youtube.com/watch?v=uypWo_qEcmA',
+    },
+    { label: t('linkOldRepo'), href: 'https://github.com/nakamura196/dts-viewer' },
+  ];
+  return (
+    <section data-testid="dts-about" className="space-y-3 border-t border-[var(--ds-border)] pt-6 text-sm leading-relaxed">
+      <h2 className="text-lg font-semibold">{t('aboutTitle')}</h2>
+      <p>{t('aboutDts')}</p>
+      <p>{t('aboutScreen')}</p>
+      <p className="text-[var(--ds-fg-muted)]">{t('aboutMoved')}</p>
+      <h3 className="pt-2 font-semibold">{t('linksTitle')}</h3>
+      <ul className="list-disc space-y-1 pl-5">
+        {links.map((l) => (
+          <li key={l.href}>
+            <a href={l.href} target="_blank" rel="noopener noreferrer" className="text-[var(--ds-primary)] underline">
+              {l.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function DtsScreen() {
   const search = useSearchParams();
   const base = search.get('base')?.trim() || DEFAULT_BASE;
   const target = search.get('url')?.trim() || null;
-  return <DtsBody key={`${base}\n${target ?? ''}`} base={base} target={target} />;
+  const tree = search.get('tree')?.trim() || undefined;
+  return <DtsBody key={`${base}\n${target ?? ''}`} base={base} target={target} tree={tree} />;
 }
 
-function DtsBody({ base, target }: { base: string; target: string | null }) {
+function DtsBody({ base, target, tree }: { base: string; target: string | null; tree?: string }) {
   const t = useTranslations('Dts');
+  const router = useRouter();
   const [state, setState] = useState<State>({ status: 'loading' });
   const [more, setMore] = useState<{ members: DtsNode[]; next?: string } | null>(null);
   const [moreBusy, setMoreBusy] = useState(false);
@@ -349,6 +470,9 @@ function DtsBody({ base, target }: { base: string; target: string | null }) {
       const c = await fetchJson(url);
       if (!alive) return;
       if (!c.ok) return setState({ status: 'error', kind: 'collection', code: c.status });
+      // 以前の DTS Viewer は url に Navigation の URL を書いていた。その資料の Collection に置き換えて開き直す
+      const nav = parseNavigationResource(c.json, c.url);
+      if (nav) return router.replace(dtsHref(base, nodeTarget(nav.resource, e.url), tree ?? nav.tree));
       const collection = parseCollection(c.json);
       if (!collection) return setState({ status: 'error', kind: 'notDts' });
       setState({ status: 'ready', entry, entryUrl: e.url, collection, collectionUrl: c.url });
@@ -358,7 +482,7 @@ function DtsBody({ base, target }: { base: string; target: string | null }) {
     return () => {
       alive = false;
     };
-  }, [base, target]);
+  }, [base, target, tree, router]);
 
   async function loadMore() {
     if (!more?.next) return;
@@ -427,14 +551,24 @@ function DtsBody({ base, target }: { base: string; target: string | null }) {
           <>
             <Breadcrumbs base={base} collection={state.collection} entryUrl={state.entryUrl} />
             <section className="space-y-2">
-              <h2 className="text-xl font-semibold">{state.collection.title}</h2>
+              <h2 className="flex flex-wrap items-center gap-2 text-xl font-semibold">
+                {state.collection.title}
+                <RawLink href={state.collectionUrl} label={t('json')} />
+              </h2>
               {state.collection.description && state.collection.description !== state.collection.title && (
                 <p className="text-sm text-[var(--ds-fg-muted)]">{state.collection.description}</p>
               )}
               <DtsMetadata fields={state.collection.dublinCore} />
             </section>
             {state.collection.type === 'Resource' ? (
-              <ResourceView resource={state.collection} entry={state.entry} entryUrl={state.entryUrl} />
+              <ResourceView
+                base={base}
+                target={target}
+                resource={state.collection}
+                entry={state.entry}
+                entryUrl={state.entryUrl}
+                tree={tree}
+              />
             ) : (
               <section className="space-y-2">
                 <h2 className="text-lg font-semibold">
@@ -466,6 +600,7 @@ function DtsBody({ base, target }: { base: string; target: string | null }) {
             )}
           </>
         )}
+        {!target && <AboutDts />}
       </PageContainer>
     </CommonLayout>
   );

@@ -4,7 +4,7 @@ import { resolveUrl, looksLikeUrl } from './url';
 import type { DtsEntry } from './entry';
 
 /** 既定の入口 */
-export const DEFAULT_BASE = 'https://dts.ldas.jp/api/v2/dts';
+export const DEFAULT_BASE = 'https://genji.ldas.jp/api/v2/dts';
 
 function appendQuery(url: string, params: Record<string, string | number | undefined>): string {
   const u = new URL(url);
@@ -25,26 +25,33 @@ export function collectionUrl(entry: DtsEntry, entryUrl: string, target: string 
   return resolveUrl(expandTemplate(entry.collection, { id: target ?? undefined, page }), entryUrl);
 }
 
-/** 資料の Navigation を取りに行く URL。ref を渡すと、その単位とすぐ下の単位が返る */
-export function navigationUrl(template: string, entryUrl: string, resource: string, ref?: string): string {
+/** 資料の Navigation を取りに行く URL。ref を渡すと、その単位とすぐ下の単位が返る。tree は引用構造の選択 */
+export function navigationUrl(template: string, entryUrl: string, resource: string, ref?: string, tree?: string): string {
   if (!template.includes('{')) {
     const base = resolveUrl(template, entryUrl);
     const u = new URL(base);
     const hasResource = u.searchParams.has('resource') || u.searchParams.has('id');
-    return appendQuery(base, { ...(hasResource ? {} : { id: resource }), ref });
+    return appendQuery(base, { ...(hasResource ? {} : { id: resource }), ref, tree });
   }
-  return resolveUrl(expandTemplate(template, { resource, ref, down: 1 }), entryUrl);
+  return resolveUrl(expandTemplate(template, { resource, ref, tree, down: 1 }), entryUrl);
 }
 
-/** 本文（TEI）を取る URL。ref を付けると、その単位だけ */
-export function documentUrl(template: string, entryUrl: string, resource: string, ref?: string): string {
+/** 本文（TEI）を取る URL。ref を付けると、その単位だけ。mediaType はテンプレートが受けるときだけ付く */
+export function documentUrl(
+  template: string,
+  entryUrl: string,
+  resource: string,
+  ref?: string,
+  tree?: string,
+  mediaType?: string,
+): string {
   if (!template.includes('{')) {
     const base = resolveUrl(template, entryUrl);
     const u = new URL(base);
     const hasResource = u.searchParams.has('resource') || u.searchParams.has('id');
-    return appendQuery(base, { ...(hasResource ? {} : { id: resource }), ref });
+    return appendQuery(base, { ...(hasResource ? {} : { id: resource }), ref, tree });
   }
-  return resolveUrl(expandTemplate(template, { resource, ref }), entryUrl);
+  return resolveUrl(expandTemplate(template, { resource, ref, tree, mediaType }), entryUrl);
 }
 
 /** 画面の url に書く値。Collection の窓口のテンプレートを展開した絶対 URL（無ければ id） */
