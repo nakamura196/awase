@@ -4,7 +4,7 @@ import { resolveUrl, looksLikeUrl } from './url';
 import type { DtsEntry } from './entry';
 
 /** 既定の入口 */
-export const DEFAULT_BASE = 'https://dts.ldas.jp/api/v2/dts';
+export const DEFAULT_BASE = 'https://genji.ldas.jp/api/v2/dts';
 
 function appendQuery(url: string, params: Record<string, string | number | undefined>): string {
   const u = new URL(url);

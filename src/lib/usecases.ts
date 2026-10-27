@@ -439,11 +439,11 @@ export const USE_CASES: UseCase[] = [
     },
     open: {
       page: 'dts',
-      base: 'https://dts.ldas.jp/api/v2/dts',
+      base: 'https://genji.ldas.jp/api/v2/dts',
     },
     features: ['text', 'dts'],
     video: { ja: 'vXdsOmzUvUM', en: 'ptVqn6iL7kg' },
-    site: 'https://dts.ldas.jp/',
+    site: 'https://genji.ldas.jp/api/v2/dts',
     clip: true,
   },
 ];
