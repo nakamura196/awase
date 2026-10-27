@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import CommonLayout from '@/components/layout/Common';
 import PageContainer from '@/components/layout/PageContainer';
@@ -324,6 +324,39 @@ function ResourceView({ resource, entry, entryUrl }: { resource: DtsCollection; 
 }
 
 // 開く先（base と url）が変わったら作り直す。読み込み中の状態に戻すための key
+// 以前の DTS Viewer（nakamura196/dts-viewer、アーカイブ済み）の「このサイトについて」とフッターの関連リンクを引き継ぐ
+function AboutDts() {
+  const t = useTranslations('Dts');
+  const ja = useLocale() !== 'en';
+  const links = [
+    { label: t('linkSpec'), href: 'https://distributed-text-services.github.io/specifications/' },
+    { label: t('linkKouiApi'), href: DEFAULT_BASE },
+    {
+      label: t('linkVideo'),
+      href: ja ? 'https://www.youtube.com/watch?v=gFM5UsNn5dw' : 'https://www.youtube.com/watch?v=uypWo_qEcmA',
+    },
+    { label: t('linkOldRepo'), href: 'https://github.com/nakamura196/dts-viewer' },
+  ];
+  return (
+    <section data-testid="dts-about" className="space-y-3 border-t border-[var(--ds-border)] pt-6 text-sm leading-relaxed">
+      <h2 className="text-lg font-semibold">{t('aboutTitle')}</h2>
+      <p>{t('aboutDts')}</p>
+      <p>{t('aboutScreen')}</p>
+      <p className="text-[var(--ds-fg-muted)]">{t('aboutMoved')}</p>
+      <h3 className="pt-2 font-semibold">{t('linksTitle')}</h3>
+      <ul className="list-disc space-y-1 pl-5">
+        {links.map((l) => (
+          <li key={l.href}>
+            <a href={l.href} target="_blank" rel="noopener noreferrer" className="text-[var(--ds-primary)] underline">
+              {l.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function DtsScreen() {
   const search = useSearchParams();
   const base = search.get('base')?.trim() || DEFAULT_BASE;
@@ -466,6 +499,7 @@ function DtsBody({ base, target }: { base: string; target: string | null }) {
             )}
           </>
         )}
+        {!target && <AboutDts />}
       </PageContainer>
     </CommonLayout>
   );

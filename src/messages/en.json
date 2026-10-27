@@ -177,7 +177,16 @@
     "errorNavigation": "Could not load the citable units.",
     "errorFetch": "The network is unreachable or the server does not allow the request.",
     "errorStatus": "The server returned {status}.",
-    "errorNotDts": "The response was not DTS. Check the entry endpoint URL."
+    "errorNotDts": "The response was not DTS. Check the entry endpoint URL.",
+    "aboutTitle": "About DTS",
+    "aboutDts": "DTS (Distributed Text Services) is a specification for exposing collections of texts and their metadata through a web API. Any digital text repository whose server follows it can be browsed in the same way.",
+    "aboutScreen": "This screen lets you browse collections hierarchically and see their metadata (such as Dublin Core) and citable units (citation structure). A resource can be opened in the viewer or with XSL, either as a whole or one unit at a time. Enter a DTS entry point URL above, or pick one of the examples.",
+    "aboutMoved": "The former DTS Viewer (dtsview.ldas.jp) was merged into this screen in October 2026. Its old URLs redirect here.",
+    "linksTitle": "Related links",
+    "linkSpec": "DTS specification",
+    "linkKouiApi": "DTS API of the Kōi Genji Monogatari Text DB",
+    "linkVideo": "Tutorial video (former DTS Viewer)",
+    "linkOldRepo": "Source code of the former DTS Viewer (GitHub, archived)"
   },
   "Xsl": {
     "title": "Style Views (XSL)",
