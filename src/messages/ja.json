@@ -422,6 +422,8 @@
     "error": "アバターを表示できませんでした。",
     "unsupported": "このブラウザは音声の読み上げに対応していません。",
     "noVoice": "「{lang}」の声が見つかりません。端末の既定の声で読みます。",
+    "voice": "声",
+    "voiceAuto": "自動",
     "autoAdvance": "自動で次へ",
     "resetView": "視点を戻す",
     "scriptLoading": "台本を読み込んでいます…",

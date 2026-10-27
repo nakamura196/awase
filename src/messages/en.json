@@ -422,6 +422,8 @@
     "error": "Could not show the avatar.",
     "unsupported": "This browser does not support speech synthesis.",
     "noVoice": "No voice found for “{lang}”. The default voice will be used.",
+    "voice": "Voice",
+    "voiceAuto": "Auto",
     "autoAdvance": "Auto-advance",
     "resetView": "Reset view",
     "scriptLoading": "Loading the script…",

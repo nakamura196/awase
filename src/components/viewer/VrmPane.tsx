@@ -9,10 +9,12 @@ import {
   estimateSeconds,
   firstIndex,
   indexOfId,
+  langPrefix,
   nextIndex,
   pickVoice,
   prevIndex,
   resolveLang,
+  voiceRank,
 } from '@/lib/vrm/reader';
 import {
   alignDialogues,
@@ -120,13 +122,23 @@ function clockTime(c: Clock): number {
 
 type Status = 'idle' | 'playing' | 'paused';
 
+/** この端末に覚えておいた値。読めない環境（非公開ウィンドウなど）では空 */
+function readStored(key: string): string {
+  try {
+    return typeof window === 'undefined' ? '' : (localStorage.getItem(key) ?? '');
+  } catch {
+    return '';
+  }
+}
+
 // three と three-vrm は、このペインが出たときだけ読み込む（モデルは 20MB ある）
 function useAvatar(
   container: React.RefObject<HTMLDivElement | null>,
   url: string,
   anim: React.RefObject<Anim>,
-  view: React.RefObject<ViewApi | null>,
 ) {
+  // 視点を戻す操作。モデルを読み終えたら入る
+  const view = useRef<ViewApi | null>(null);
   const [state, setState] = useState<{ url: string; status: 'loading' | 'ready' | 'error'; progress: number }>({
     url,
     status: 'loading',
@@ -363,10 +375,10 @@ function useAvatar(
       live = false;
       cleanup();
     };
-  }, [container, url, anim, view]);
+  }, [container, url, anim]);
 
   // url が替わった直後は、前の状態を見せない
-  return state.url === url ? state : { url, status: 'loading' as const, progress: 0 };
+  return { ...(state.url === url ? state : { url, status: 'loading' as const, progress: 0 }), view };
 }
 
 // VRM のアバターが、本文の発話（または台本 JSON の台詞）を読み上げるペイン。
@@ -436,8 +448,7 @@ export default function VrmPane({ tei, focusId = null, onSelect, vrmUrl = null, 
 
   const hostRef = useRef<HTMLDivElement>(null);
   const anim = useRef<Anim>({ speaking: false, bump: 0, line: null });
-  const view = useRef<ViewApi | null>(null);
-  const avatar = useAvatar(hostRef, url, anim as React.RefObject<Anim>, view);
+  const avatar = useAvatar(hostRef, url, anim as React.RefObject<Anim>);
 
   const synth = typeof window !== 'undefined' && 'speechSynthesis' in window ? window.speechSynthesis : null;
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -448,13 +459,36 @@ export default function VrmPane({ tei, focusId = null, onSelect, vrmUrl = null, 
     synth.addEventListener('voiceschanged', update);
     return () => synth.removeEventListener('voiceschanged', update);
   }, [synth]);
-  const voice = useMemo(() => pickVoice(voices, lang), [voices, lang]);
-  // 話者ごとの声と高さ。出てくる順に決めるので、同じ資料なら毎回同じ
+  // 利用者が選んだ声（名前）。空なら自動。言語ごとに、この端末に覚えておく
+  const voiceKey = `awase.vrm.voice.${langPrefix(lang)}`;
+  const [chosen, setChosen] = useState(() => ({ key: voiceKey, name: readStored(voiceKey) }));
+  const chosenName = chosen.key === voiceKey ? chosen.name : readStored(voiceKey);
+  const onChooseVoice = (name: string) => {
+    setChosen({ key: voiceKey, name });
+    try {
+      if (name) localStorage.setItem(voiceKey, name);
+      else localStorage.removeItem(voiceKey);
+    } catch {
+      // 覚えておけない環境でも、この画面の間は選んだ声で読む
+    }
+  };
+  const langVoices = useMemo(
+    () =>
+      voices
+        .filter((v) => langPrefix(v.lang) === langPrefix(lang))
+        .sort((a, b) => voiceRank(a) - voiceRank(b) || a.name.localeCompare(b.name)),
+    [voices, lang],
+  );
+  const chosenVoice = langVoices.find((v) => v.name === chosenName) ?? null;
+  const voice = useMemo(() => chosenVoice ?? pickVoice(voices, lang), [chosenVoice, voices, lang]);
+  // 話者ごとの声と高さ。出てくる順に決めるので、同じ資料なら毎回同じ。
+  // 声を選んだときは、全員その声で読み、高さだけで話者を分ける
   const voiceMap = useMemo(() => {
     const specs: { key: string; voiceName?: string | null }[] = [];
     for (const l of lines) specs.push({ key: l.speakerKey, voiceName: l.dialogue?.voice });
+    if (chosenVoice) return assignVoices(specs, [chosenVoice], chosenVoice.lang);
     return assignVoices(specs, voices, lang);
-  }, [lines, voices, lang]);
+  }, [lines, voices, lang, chosenVoice]);
 
   const [rate, setRate] = useState(1);
   const [autoAdvance, setAutoAdvance] = useState(true);
@@ -762,6 +796,24 @@ export default function VrmPane({ tei, focusId = null, onSelect, vrmUrl = null, 
               <input type="checkbox" checked={autoAdvance} onChange={(e) => setAutoAdvance(e.target.checked)} data-testid="vrm-auto-advance" />
               {t('autoAdvance')}
             </label>
+            {langVoices.length > 1 && (
+              <label className="flex items-center gap-1 text-[var(--ds-fg-muted)]">
+                {t('voice')}
+                <select
+                  value={chosenVoice ? chosenVoice.name : ''}
+                  onChange={(e) => onChooseVoice(e.target.value)}
+                  className="max-w-40 rounded border border-[var(--ds-border)] bg-transparent px-1 py-0.5"
+                  data-testid="vrm-voice"
+                >
+                  <option value="">{t('voiceAuto')}</option>
+                  {langVoices.map((v) => (
+                    <option key={v.voiceURI} value={v.name}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label className="ml-auto flex items-center gap-1 text-[var(--ds-fg-muted)]">
               {t('rate')}
               <input
@@ -789,7 +841,7 @@ export default function VrmPane({ tei, focusId = null, onSelect, vrmUrl = null, 
         <button
           type="button"
           className={`${paneButton} absolute right-2 top-2 text-xs`}
-          onClick={() => view.current?.reset()}
+          onClick={() => avatar.view.current?.reset()}
           data-testid="vrm-reset-view"
         >
           {t('resetView')}

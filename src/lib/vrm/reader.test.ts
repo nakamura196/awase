@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { firstIndex, indexOfId, langPrefix, nextIndex, pickVoice, prevIndex, resolveLang } from './reader';
+import { firstIndex, indexOfId, langPrefix, nextIndex, pickVoice, prevIndex, resolveLang, voiceRank } from './reader';
 
 // Node 環境（DOMParser 無し）で使う最小の TEI 文書
 function doc(rootLang?: string, textLang?: string | null): Document {
@@ -137,5 +137,46 @@ describe('estimateSeconds', () => {
     expect(estimateSeconds('abc', 2.5)).toBe(2.5);
     expect(estimateSeconds('あ'.repeat(100))).toBeCloseTo(17);
     expect(estimateSeconds('あ')).toBe(1);
+  });
+});
+
+describe('voiceRank', () => {
+  // Mac の Chrome に並ぶ日本語の声（実際の名前）
+  const mac = [
+    { lang: 'ja-JP', name: 'Eddy (日本語（日本）)', localService: true },
+    { lang: 'ja-JP', name: 'Kyoko', localService: true, default: true },
+    { lang: 'ja-JP', name: 'Google 日本語', localService: false },
+  ];
+  it('Mac の Chrome では、質の低い声より Google の声を先に取る', () => {
+    expect(pickVoice(mac, 'ja')?.name).toBe('Google 日本語');
+    expect(voiceRank(mac[0])).toBeGreaterThan(voiceRank(mac[1]));
+  });
+  it('自然な声（Edge の Natural、Mac の拡張）をいちばん先に取る', () => {
+    const voices = [
+      ...mac,
+      {
+        lang: 'ja-JP',
+        name: 'Microsoft Nanami Online (Natural) - Japanese (Japan)',
+        localService: false,
+      },
+    ];
+    expect(pickVoice(voices, 'ja')?.name).toContain('Nanami');
+    expect(
+      pickVoice([...mac, { lang: 'ja-JP', name: 'Kyoko (Enhanced)', localService: true }], 'ja')
+        ?.name
+    ).toBe('Kyoko (Enhanced)');
+  });
+});
+
+describe('assignVoices と質の低い声', () => {
+  it('話者が多くても、質の低い声は割り当てず、高さで分ける', () => {
+    const voices = [
+      { lang: 'ja-JP', name: 'Kyoko', localService: true },
+      { lang: 'ja-JP', name: 'Eddy (日本語（日本）)', localService: true },
+      { lang: 'ja-JP', name: 'Google 日本語', localService: false },
+    ];
+    const map = assignVoices([{ key: 'a' }, { key: 'b' }, { key: 'c' }], voices, 'ja');
+    expect([...map.values()].map((x) => x.voice?.name)).toEqual(['Google 日本語', 'Kyoko', 'Google 日本語']);
+    expect(map.get('c')?.pitch).not.toBe(map.get('a')?.pitch);
   });
 });
