@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { parseEntry } from './entry';
-import { parseCollection, parseDublinCore } from './collection';
+import { parseCollection, parseDublinCore, parseNavigationResource } from './collection';
 import { buildTree, parseNavigation, shortLabel } from './navigation';
 import { collectionUrl, documentUrl, navigationUrl, nodeTarget } from './urls';
 import { looksLikeUrl, resolveUrl } from './url';
@@ -41,7 +41,10 @@ describe('parseCollection', () => {
     const r = parseCollection(load('resource'));
     expect(r?.type).toBe('Resource');
     expect(r?.navigation).toContain('navigation?resource=urn:kouigenjimonogatari.1');
-    expect(r?.citationTrees).toEqual(['page > line', 'waka: waka > ku']);
+    expect(r?.citationTrees.map((c) => [c.identifier, c.chain])).toEqual([
+      [undefined, 'page > line'],
+      ['waka', 'waka > ku'],
+    ]);
   });
   it('Dublin Core の値は {lang,value} も文字列も読む', () => {
     const f = parseDublinCore({ creator: ['裏源氏勉強会'], title: [{ lang: 'ja', value: '桐壺' }], x: [], y: 3 });
@@ -107,6 +110,23 @@ describe('URL の組み立て', () => {
     expect(navigationUrl(r.navigation!, ENTRY_URL, r.id, 'https://e.org/a.json')).toContain('&ref=https%3A%2F%2Fe.org%2Fa.json&down=1');
     expect(documentUrl(r.document!, ENTRY_URL, r.id)).toBe('https://dts.ldas.jp/api/v2/dts/document?resource=urn:kouigenjimonogatari.1');
     expect(documentUrl(r.document!, ENTRY_URL, r.id, '5')).toBe('https://dts.ldas.jp/api/v2/dts/document?resource=urn:kouigenjimonogatari.1&ref=5');
+  });
+  it('引用構造（tree）と mediaType を URL に入れる', () => {
+    const r = parseCollection(load('resource'))!;
+    expect(navigationUrl(r.navigation!, ENTRY_URL, r.id, undefined, 'waka')).toBe(
+      'https://dts.ldas.jp/api/v2/dts/navigation?resource=urn:kouigenjimonogatari.1&down=1&tree=waka',
+    );
+    expect(documentUrl(r.document!, ENTRY_URL, r.id, 'waka-001', 'waka', 'application/xml')).toBe(
+      'https://dts.ldas.jp/api/v2/dts/document?resource=urn:kouigenjimonogatari.1&ref=waka-001&tree=waka&mediaType=application%2Fxml',
+    );
+  });
+  it('Navigation の応答から、資料と tree を取り出す', () => {
+    const url = 'https://dts.ldas.jp/api/v2/dts/navigation?resource=urn:kouigenjimonogatari.1&down=1&tree=waka';
+    const got = parseNavigationResource(load('navigation-top'), url);
+    expect(got?.resource.id).toBe('urn:kouigenjimonogatari.1');
+    expect(got?.tree).toBe('waka');
+    expect(nodeTarget(got!.resource, ENTRY_URL)).toBe('https://dts.ldas.jp/api/v2/dts/collection?id=urn:kouigenjimonogatari.1');
+    expect(parseNavigationResource(load('resource'), url)).toBeNull();
   });
   it('画面の url に書く値は、窓口を展開した絶対 URL', () => {
     const c = parseCollection(load('collection-root'))!;

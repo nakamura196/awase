@@ -59,3 +59,18 @@ DTS の入口からコレクションをたどり、資料の書誌情報と引�
 - DTS 1.0 の `tree`、`start`/`end` による範囲の指定は使っていない。
 - DTS 0.x（`dts:references` など）の入口は、窓口の名前の揺れを一部受けるだけで、実物では試していない。
 - 資料の `download` や `dublinCore` 以外の `extensions` は出していない。
+
+## 2026-10-26 以前の DTS Viewer から引き継いだもの（tree・XML/JSON・Navigation の URL）
+
+dtsview.ldas.jp（nakamura196/dts-viewer）をこの画面へ転送するにあたり、コードを突き合わせて抜けを洗い出し、使う人の作業が止まる 3 つを埋めた。
+
+- **引用構造の選択（`tree=`）。** 資料の `citationTrees` が 2 つ以上あると、選ぶ欄を出す。選ぶと画面の URL に `tree=` が付き、Navigation と本文（viewer・XSL・XML）の URL にも同じ `tree` を渡す。
+  校異源氏物語の API では「頁・行」と「和歌（`tree=waka`、waka > ku）」の 2 つ。桐壺は waka-001〜009 の 9 首。
+- **応答そのものへのリンク。** 資料・コレクションの見出しと「引用できる単位」の見出しに JSON（Collection と Navigation の応答）を置いた。
+  本文は「XML」（テンプレートが `mediaType` を受けるときは `mediaType=application/xml` を付け、ブラウザで表示できる形にする）と「ダウンロード」（付けない URL）。以前の Viewer の挙動に合わせた。
+  genji.ldas.jp は既定で `application/tei+xml` を返し、`mediaType=application/xml` で `application/xml` を返す（実測）。
+- **`url=` に Navigation の URL を書いた旧リンク。** 以前の Viewer は単位の一覧を開くとき `url` に Navigation の URL を書いていた。
+  応答の `@type` が `Navigation` なら、`resource` の Collection の URL に置き換えて開き直す（`tree` は Navigation の URL から引き継ぐ）。
+- 試験: vitest 2 件、e2e 3 件を追加。本物の genji.ldas.jp でも、旧形式の URL → 桐壺の和歌 9 首 → waka-001 を viewer で開く、まで目で確かめた。
+
+残り（後回しにしたもの）: Navigation の表（identifier・citeType・level の一覧）、Dublin Core の項目名の翻訳、最初・前・最後のページ送り、エラーの詳しい区別、`@id` の表示。いずれも見え方の違いで、たどれない資料は出ない。
