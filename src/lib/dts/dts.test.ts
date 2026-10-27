@@ -8,9 +8,9 @@ import { collectionUrl, documentUrl, navigationUrl, nodeTarget } from './urls';
 import { looksLikeUrl, resolveUrl } from './url';
 import { nextPage } from './json';
 
-// 実際の応答（https://dts.ldas.jp/api/v2/dts、2026-10-20）を短くしたもの
+// 実際の応答（https://dts.ldas.jp/api/v2/dts、2026-10-20。現在は genji.ldas.jp に移転）を短くしたもの
 const load = (name: string): unknown => JSON.parse(readFileSync(path.join(__dirname, 'fixtures', `${name}.json`), 'utf-8'));
-const ENTRY_URL = 'https://dts.ldas.jp/api/v2/dts';
+const ENTRY_URL = 'https://genji.ldas.jp/api/v2/dts';
 
 describe('parseEntry', () => {
   it('三つの窓口のテンプレートを取る', () => {
@@ -87,50 +87,50 @@ describe('navigation', () => {
 describe('URL の組み立て', () => {
   const entry = parseEntry(load('entry'))!;
   it('url を書かなければ根のコレクション', () => {
-    expect(collectionUrl(entry, ENTRY_URL, null)).toBe('https://dts.ldas.jp/api/v2/dts/collection');
+    expect(collectionUrl(entry, ENTRY_URL, null)).toBe('https://genji.ldas.jp/api/v2/dts/collection');
   });
   it('入口のテンプレート（resource が変数）でも展開できる', () => {
     expect(navigationUrl(entry.navigation, ENTRY_URL, 'urn:a.1', '5')).toBe(
-      'https://dts.ldas.jp/api/v2/dts/navigation?resource=urn%3Aa.1&ref=5&down=1',
+      'https://genji.ldas.jp/api/v2/dts/navigation?resource=urn%3Aa.1&ref=5&down=1',
     );
   });
   it('url が id ならテンプレートに入れる', () => {
-    expect(collectionUrl(entry, ENTRY_URL, 'urn:a.1', '2')).toBe('https://dts.ldas.jp/api/v2/dts/collection?id=urn%3Aa.1&page=2');
+    expect(collectionUrl(entry, ENTRY_URL, 'urn:a.1', '2')).toBe('https://genji.ldas.jp/api/v2/dts/collection?id=urn%3Aa.1&page=2');
   });
   it('url が URL ならそのまま（相対なら入口から見た絶対に）', () => {
     expect(collectionUrl(entry, ENTRY_URL, 'https://x.org/c?id=1', undefined)).toBe('https://x.org/c?id=1');
-    expect(collectionUrl(entry, ENTRY_URL, '/api/v2/dts/collection?id=1')).toBe('https://dts.ldas.jp/api/v2/dts/collection?id=1');
+    expect(collectionUrl(entry, ENTRY_URL, '/api/v2/dts/collection?id=1')).toBe('https://genji.ldas.jp/api/v2/dts/collection?id=1');
   });
   // 資料の窓口のテンプレートは resource が書き込み済み。入口のテンプレート（{?resource,…}）でも同じ形になる
   it('資料の Navigation と本文の URL', () => {
     const r = parseCollection(load('resource'))!;
     expect(navigationUrl(r.navigation!, ENTRY_URL, r.id)).toBe(
-      'https://dts.ldas.jp/api/v2/dts/navigation?resource=urn:kouigenjimonogatari.1&down=1',
+      'https://genji.ldas.jp/api/v2/dts/navigation?resource=urn:kouigenjimonogatari.1&down=1',
     );
     expect(navigationUrl(r.navigation!, ENTRY_URL, r.id, 'https://e.org/a.json')).toContain('&ref=https%3A%2F%2Fe.org%2Fa.json&down=1');
-    expect(documentUrl(r.document!, ENTRY_URL, r.id)).toBe('https://dts.ldas.jp/api/v2/dts/document?resource=urn:kouigenjimonogatari.1');
-    expect(documentUrl(r.document!, ENTRY_URL, r.id, '5')).toBe('https://dts.ldas.jp/api/v2/dts/document?resource=urn:kouigenjimonogatari.1&ref=5');
+    expect(documentUrl(r.document!, ENTRY_URL, r.id)).toBe('https://genji.ldas.jp/api/v2/dts/document?resource=urn:kouigenjimonogatari.1');
+    expect(documentUrl(r.document!, ENTRY_URL, r.id, '5')).toBe('https://genji.ldas.jp/api/v2/dts/document?resource=urn:kouigenjimonogatari.1&ref=5');
   });
   it('引用構造（tree）と mediaType を URL に入れる', () => {
     const r = parseCollection(load('resource'))!;
     expect(navigationUrl(r.navigation!, ENTRY_URL, r.id, undefined, 'waka')).toBe(
-      'https://dts.ldas.jp/api/v2/dts/navigation?resource=urn:kouigenjimonogatari.1&down=1&tree=waka',
+      'https://genji.ldas.jp/api/v2/dts/navigation?resource=urn:kouigenjimonogatari.1&down=1&tree=waka',
     );
     expect(documentUrl(r.document!, ENTRY_URL, r.id, 'waka-001', 'waka', 'application/xml')).toBe(
-      'https://dts.ldas.jp/api/v2/dts/document?resource=urn:kouigenjimonogatari.1&ref=waka-001&tree=waka&mediaType=application%2Fxml',
+      'https://genji.ldas.jp/api/v2/dts/document?resource=urn:kouigenjimonogatari.1&ref=waka-001&tree=waka&mediaType=application%2Fxml',
     );
   });
   it('Navigation の応答から、資料と tree を取り出す', () => {
-    const url = 'https://dts.ldas.jp/api/v2/dts/navigation?resource=urn:kouigenjimonogatari.1&down=1&tree=waka';
+    const url = 'https://genji.ldas.jp/api/v2/dts/navigation?resource=urn:kouigenjimonogatari.1&down=1&tree=waka';
     const got = parseNavigationResource(load('navigation-top'), url);
     expect(got?.resource.id).toBe('urn:kouigenjimonogatari.1');
     expect(got?.tree).toBe('waka');
-    expect(nodeTarget(got!.resource, ENTRY_URL)).toBe('https://dts.ldas.jp/api/v2/dts/collection?id=urn:kouigenjimonogatari.1');
+    expect(nodeTarget(got!.resource, ENTRY_URL)).toBe('https://genji.ldas.jp/api/v2/dts/collection?id=urn:kouigenjimonogatari.1');
     expect(parseNavigationResource(load('resource'), url)).toBeNull();
   });
   it('画面の url に書く値は、窓口を展開した絶対 URL', () => {
     const c = parseCollection(load('collection-root'))!;
-    expect(nodeTarget(c.members[0], ENTRY_URL)).toBe('https://dts.ldas.jp/api/v2/dts/collection?id=urn:kouigenjimonogatari.1');
+    expect(nodeTarget(c.members[0], ENTRY_URL)).toBe('https://genji.ldas.jp/api/v2/dts/collection?id=urn:kouigenjimonogatari.1');
     expect(nodeTarget({ id: 'urn:z' }, ENTRY_URL)).toBe('urn:z');
   });
   it('looksLikeUrl / resolveUrl / nextPage', () => {
