@@ -69,11 +69,11 @@ test('以前の DTS Viewer の、url に Navigation を書いたリンクも資�
   await expect(page).toHaveURL(/tree=waka/);
 });
 
-test('根のコレクションが子を並べ、たどると url= が変わる', async ({ page }) => {
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto(open());
-  // トップには移行元（dts-viewer）と同様に見本エンドポイント（Examples）が並ぶ
+test('入口を指定せずに開くと、見本エンドポイントと DTS の説明が並ぶ', async ({ page }) => {
+  // 既定の入口（genji.ldas.jp）には取りに行かせない。見本と説明は読み込みの成否によらず出る
+  await page.route('https://genji.ldas.jp/**', (route) => route.abort());
+  await page.goto('/ja/dts/');
+  // 移行元（dts-viewer）と同様に見本エンドポイント（Examples）が並ぶ
   const examples = page.getByTestId('dts-examples');
   await expect(examples).toBeVisible();
   await expect(examples.getByRole('link', { name: /校異源氏物語テキストDB/ })).toBeVisible();
@@ -81,8 +81,17 @@ test('根のコレクションが子を並べ、たどると url= が変わる',
   await expect(examples.getByRole('link', { name: /Alpheios/ })).toBeVisible();
   await expect(examples.getByRole('link', { name: /Perseids/ })).toBeVisible();
   await expect(examples.getByRole('link', { name: /Epigraphische Datenbank Heidelberg/ })).toBeVisible();
+  await expect(page.getByTestId('dts-about')).toBeVisible();
+});
 
+test('根のコレクションが子を並べ、たどると url= が変わる', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto(open());
   await expect(page.getByRole('heading', { level: 2, name: '校異源氏物語テキストDB' })).toBeVisible();
+  // 入口を指定して開いたときは、見本と DTS の説明を出さない
+  await expect(page.getByTestId('dts-examples')).toHaveCount(0);
+  await expect(page.getByTestId('dts-about')).toHaveCount(0);
   await expect(page.getByRole('link', { name: /桐壺/ })).toBeVisible();
   await expect(page.getByRole('link', { name: /帚木/ })).toBeVisible();
   // 書誌情報（作成者）
