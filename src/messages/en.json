@@ -30,6 +30,7 @@
     "relatedHeading": "Related",
     "relatedTei": "TEI (Text Encoding Initiative)",
     "relatedDts": "DTS (Distributed Text Services)",
+    "relatedMusubi": "Musubi (Linked Data browser)",
     "relatedSource": "Source code (GitHub)",
     "developers": "Satoru Nakamura (The University of Tokyo)"
   },
