@@ -30,6 +30,7 @@
     "relatedHeading": "関連サイト",
     "relatedTei": "TEI（Text Encoding Initiative）",
     "relatedDts": "DTS（Distributed Text Services）",
+    "relatedMusubi": "Musubi（LOD ブラウザ）",
     "relatedSource": "ソースコード（GitHub）",
     "developers": "中村 覚（東京大学）"
   },

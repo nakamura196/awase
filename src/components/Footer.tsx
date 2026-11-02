@@ -44,6 +44,7 @@ export default function Footer() {
           links: [
             { label: t('relatedTei'), href: 'https://tei-c.org/', external: true },
             { label: t('relatedDts'), href: 'https://distributed-text-services.github.io/specifications/', external: true },
+            { label: t('relatedMusubi'), href: 'https://musubi.ldas.jp/', external: true },
             { label: t('relatedSource'), href: 'https://github.com/nakamura196/awase', external: true },
           ],
         },
