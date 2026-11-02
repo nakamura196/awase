@@ -445,13 +445,16 @@ function AboutDts() {
 
 function DtsScreen() {
   const search = useSearchParams();
-  const base = search.get('base')?.trim() || DEFAULT_BASE;
+  const given = search.get('base')?.trim();
+  const base = given || DEFAULT_BASE;
   const target = search.get('url')?.trim() || null;
   const tree = search.get('tree')?.trim() || undefined;
-  return <DtsBody key={`${base}\n${target ?? ''}`} base={base} target={target} tree={tree} />;
+  // 見本と DTS の説明は、入口を指定せずに来たとき（この画面の入口）だけ出す
+  const intro = !given && !target;
+  return <DtsBody key={`${base}\n${target ?? ''}`} base={base} target={target} tree={tree} intro={intro} />;
 }
 
-function DtsBody({ base, target, tree }: { base: string; target: string | null; tree?: string }) {
+function DtsBody({ base, target, tree, intro }: { base: string; target: string | null; tree?: string; intro: boolean }) {
   const t = useTranslations('Dts');
   const router = useRouter();
   const [state, setState] = useState<State>({ status: 'loading' });
@@ -504,7 +507,8 @@ function DtsBody({ base, target, tree }: { base: string; target: string | null; 
           <BaseForm key={base} base={base} />
         </header>
 
-        {!target && (
+        {/* 読み込みに失敗したときは、別の入口を選べるよう見本を出す */}
+        {(intro || state.status === 'error') && (
           <section data-testid="dts-examples" className="space-y-2.5">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--ds-fg-muted)]">
               {t('examples')}
@@ -600,7 +604,7 @@ function DtsBody({ base, target, tree }: { base: string; target: string | null; 
             )}
           </>
         )}
-        {!target && <AboutDts />}
+        {intro && <AboutDts />}
       </PageContainer>
     </CommonLayout>
   );
